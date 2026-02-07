@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Codex CLI from GitHub Releases
+        run: |
+          arch="$(uname -m)"
+          case "${arch}" in
+            x86_64) codex_arch="x86_64" ;;
+            aarch64|arm64) codex_arch="aarch64" ;;
+            *)
+              echo "Unsupported runner architecture: ${arch}"
+              exit 1
+              ;;
+          esac
+          asset="codex-${codex_arch}-unknown-linux-musl.tar.gz"
+          binary_name="${asset%.tar.gz}"
+          curl -fsSL -o codex.tar.gz "https://github.com/openai/codex/releases/latest/download/${asset}"
+          tar -xzf codex.tar.gz
+          install -m 0755 "${binary_name}" "${RUNNER_TEMP}/codex"
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+
+      - name: Verify Codex CLI
+        run: codex --version
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Validate API key secret
+        run: |
+          if [ -z "${OPENAI_API_KEY}" ]; then
+            echo "Missing OPENAI_API_KEY secret. Add it in repo Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+      - name: Run tests
+        run: go test ./...
