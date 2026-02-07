@@ -206,6 +206,11 @@ func TestNotificationError(t *testing.T) {
 	if err := notificationError(note); err == nil || err.Error() != "fail" {
 		t.Fatalf("expected error fail, got %v", err)
 	}
+
+	note = rpc.Notification{Method: "turn/failed", Raw: MustJSON(map[string]any{"threadId": "thr_123", "turn": map[string]any{"status": "failed", "error": map[string]any{"message": "failed hard"}}})}
+	if err := notificationError(note); err == nil || err.Error() != "failed hard" {
+		t.Fatalf("expected error failed hard, got %v", err)
+	}
 }
 
 func TestResolveLogger(t *testing.T) {
@@ -304,6 +309,35 @@ func TestNewSpawnSurvivesInitContextCancellation(t *testing.T) {
 	}
 	if thread.ID() != "thr_test" {
 		t.Fatalf("unexpected thread id: %s", thread.ID())
+	}
+}
+
+func TestStartThreadOnUninitializedClient(t *testing.T) {
+	_, err := (&Codex{}).StartThread(context.Background(), ThreadStartOptions{})
+	if err == nil || err.Error() != "codex client is not initialized" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestResumeThreadOnUninitializedClient(t *testing.T) {
+	_, err := (&Codex{}).ResumeThread(context.Background(), ThreadResumeOptions{ThreadID: "thr_123"})
+	if err == nil || err.Error() != "codex client is not initialized" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestThreadRunOnUninitializedThread(t *testing.T) {
+	_, err := (&Thread{}).Run(context.Background(), "hi", nil)
+	if err == nil || err.Error() != "thread client is not initialized" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNilThreadRun(t *testing.T) {
+	var thread *Thread
+	_, err := thread.Run(context.Background(), "hi", nil)
+	if err == nil || err.Error() != "thread is nil" {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

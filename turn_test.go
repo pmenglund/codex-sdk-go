@@ -40,6 +40,34 @@ func TestThreadRunWithReplay(t *testing.T) {
 	}
 }
 
+func TestThreadRunFailsOnTurnFailedNotification(t *testing.T) {
+	ctx := context.Background()
+	info := protocol.ClientInfo{
+		Name:    "codex-go-test",
+		Title:   stringPtr("Codex Go SDK Test"),
+		Version: "test",
+	}
+
+	client, err := New(ctx, Options{
+		Transport:  rpc.NewReplayTransport(runFailedTranscript(info, "hello", "boom")),
+		ClientInfo: info,
+	})
+	if err != nil {
+		t.Fatalf("new client error: %v", err)
+	}
+	defer client.Close()
+
+	thread, err := client.StartThread(ctx, ThreadStartOptions{})
+	if err != nil {
+		t.Fatalf("start thread error: %v", err)
+	}
+
+	_, err = thread.Run(ctx, "hello", nil)
+	if err == nil || err.Error() != "boom" {
+		t.Fatalf("expected boom error, got %v", err)
+	}
+}
+
 func TestResumeThreadWithReplay(t *testing.T) {
 	ctx := context.Background()
 	info := protocol.ClientInfo{
@@ -114,6 +142,54 @@ func runTranscript(info protocol.ClientInfo, prompt, finalResponse string) []rpc
 		readLine(rpc.JSONRPCNotification{
 			Method: "turn/completed",
 			Params: mustRaw(map[string]any{"threadId": "thr_123", "turn": turnPayload("turn_1", "completed")}),
+		}),
+	}
+}
+
+func runFailedTranscript(info protocol.ClientInfo, prompt, failureMessage string) []rpc.TranscriptEntry {
+	return []rpc.TranscriptEntry{
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(1),
+			Method: "initialize",
+			Params: mustRaw(protocol.InitializeParams{ClientInfo: info}),
+		}),
+		readLine(rpc.JSONRPCResponse{
+			ID:     rpc.NewIntRequestID(1),
+			Result: mustRaw(map[string]any{}),
+		}),
+		writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(2),
+			Method: "thread/start",
+			Params: mustRaw(map[string]any{}),
+		}),
+		readLine(rpc.JSONRPCResponse{
+			ID:     rpc.NewIntRequestID(2),
+			Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123"}}),
+		}),
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(3),
+			Method: "turn/start",
+			Params: mustRaw(turnStartParams(prompt)),
+		}),
+		readLine(rpc.JSONRPCResponse{
+			ID:     rpc.NewIntRequestID(3),
+			Result: mustRaw(map[string]any{"turn": turnPayload("turn_1", "inProgress")}),
+		}),
+		readLine(rpc.JSONRPCNotification{
+			Method: "turn/started",
+			Params: mustRaw(map[string]any{"threadId": "thr_123", "turn": turnPayload("turn_1", "inProgress")}),
+		}),
+		readLine(rpc.JSONRPCNotification{
+			Method: "turn/failed",
+			Params: mustRaw(map[string]any{
+				"threadId": "thr_123",
+				"turn": map[string]any{
+					"id":     "turn_1",
+					"status": "failed",
+					"error":  map[string]any{"message": failureMessage},
+				},
+			}),
 		}),
 	}
 }

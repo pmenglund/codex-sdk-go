@@ -83,14 +83,17 @@ func (c *Codex) Client() *rpc.Client {
 
 // Close closes the underlying transport.
 func (c *Codex) Close() error {
-	if c.client == nil {
-		return errors.New("codex client is nil")
+	if err := c.ensureReady(); err != nil {
+		return err
 	}
 	return c.client.Close()
 }
 
 // StartThread starts a new thread using the app-server.
 func (c *Codex) StartThread(ctx context.Context, options ThreadStartOptions) (*Thread, error) {
+	if err := c.ensureReady(); err != nil {
+		return nil, err
+	}
 	params, err := options.toParams()
 	if err != nil {
 		return nil, err
@@ -109,6 +112,9 @@ func (c *Codex) StartThread(ctx context.Context, options ThreadStartOptions) (*T
 
 // ResumeThread resumes an existing thread.
 func (c *Codex) ResumeThread(ctx context.Context, options ThreadResumeOptions) (*Thread, error) {
+	if err := c.ensureReady(); err != nil {
+		return nil, err
+	}
 	params, err := options.toParams()
 	if err != nil {
 		return nil, err
@@ -149,4 +155,14 @@ func threadIDFromResponse(threadID string, thread *protocol.Thread) (string, err
 		return thread.ID, nil
 	}
 	return "", errors.New("thread id not found in response")
+}
+
+func (c *Codex) ensureReady() error {
+	if c == nil {
+		return errors.New("codex client is nil")
+	}
+	if c.client == nil {
+		return errors.New("codex client is not initialized")
+	}
+	return nil
 }

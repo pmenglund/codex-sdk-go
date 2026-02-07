@@ -32,4 +32,9 @@
 // JSON-typed options (approval policies, sandbox policies, output schemas, etc.)
 // accept any JSON-marshalable value. If you already have raw JSON, pass
 // json.RawMessage or codex.MustJSON(...) to avoid double encoding.
+//
+// For common values, prefer typed constants:
+//   - codex.ApprovalPolicyNever / codex.ApprovalPolicyOnRequest / ...
+//   - codex.SandboxModeReadOnly / codex.SandboxModeWorkspaceWrite / ...
+//   - codex.ReasoningEffortLow / codex.ReasoningEffortMedium / ...
 package codex

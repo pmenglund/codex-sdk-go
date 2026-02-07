@@ -82,6 +82,8 @@ for {
 }
 ```
 
+`RunStreamed` returns thread-scoped events plus notifications that omit `threadId` (for example account/session updates) so global events are not silently dropped.
+
 ## Approvals
 
 Configure approval handling by supplying a handler when constructing the client.
@@ -120,6 +122,12 @@ _, err := thread.RunInputs(ctx, []codex.Input{codex.TextInput(prompt)}, &codex.T
 ## JSON-typed options
 
 Fields like `ApprovalPolicy`, `SandboxPolicy`, `Effort`, `Summary`, and `OutputSchema` accept any JSON-marshalable value. If you already have raw JSON, pass a `json.RawMessage` (or `codex.MustJSON(...)`) to avoid double encoding.
+
+For common values, prefer typed constants from this package:
+
+- `codex.ApprovalPolicyNever`, `codex.ApprovalPolicyOnFailure`, `codex.ApprovalPolicyOnRequest`, `codex.ApprovalPolicyUntrusted`
+- `codex.SandboxModeReadOnly`, `codex.SandboxModeWorkspaceWrite`, `codex.SandboxModeDangerFullAccess`
+- `codex.ReasoningEffortNone`, `codex.ReasoningEffortMinimal`, `codex.ReasoningEffortLow`, `codex.ReasoningEffortMedium`, `codex.ReasoningEffortHigh`, `codex.ReasoningEffortXHigh`
 
 ## Low-level RPC
 

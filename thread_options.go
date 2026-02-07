@@ -7,8 +7,10 @@ type ThreadStartOptions struct {
 	Model string
 	Cwd   string
 	// ApprovalPolicy is marshaled as JSON and sent as "approvalPolicy".
+	// Prefer ApprovalPolicy* constants for simple policies.
 	ApprovalPolicy any
 	// SandboxPolicy is marshaled as JSON and sent as "sandbox".
+	// Prefer SandboxMode* constants for simple policies.
 	SandboxPolicy         any
 	Config                map[string]any
 	BaseInstructions      string
@@ -51,16 +53,28 @@ func (o ThreadStartOptions) toParams() (protocol.ThreadStartParams, error) {
 }
 
 // ThreadResumeOptions configures a thread/resume request.
+//
+// There are three ways to resume a thread:
+//  1. ThreadID: load from disk by thread id.
+//  2. Path: load from disk by rollout path.
+//  3. History: resume from in-memory history.
+//
+// Precedence is History > Path > ThreadID. Prefer ThreadID when possible.
 type ThreadResumeOptions struct {
-	ThreadID      string
-	History       []protocol.ThreadResumeParamsHistoryElem
+	// ThreadID resumes a persisted thread by id.
+	ThreadID string
+	// History is an unstable API used for in-memory resume and takes precedence over ThreadID.
+	History []protocol.ThreadResumeParamsHistoryElem
+	// Path is an unstable API used for rollout resume and takes precedence over ThreadID.
 	Path          string
 	Model         string
 	ModelProvider string
 	Cwd           string
 	// ApprovalPolicy is marshaled as JSON and sent as "approvalPolicy".
+	// Prefer ApprovalPolicy* constants for simple policies.
 	ApprovalPolicy any
 	// Sandbox is marshaled as JSON and sent as "sandbox".
+	// Prefer SandboxMode* constants for simple policies.
 	Sandbox               any
 	Config                map[string]any
 	BaseInstructions      string

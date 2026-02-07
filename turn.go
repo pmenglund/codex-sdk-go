@@ -13,11 +13,14 @@ import (
 type TurnOptions struct {
 	Cwd string
 	// ApprovalPolicy is marshaled as JSON and sent as "approvalPolicy".
+	// Prefer ApprovalPolicy* constants for simple policies.
 	ApprovalPolicy any
 	// SandboxPolicy is marshaled as JSON and sent as "sandboxPolicy".
+	// Prefer SandboxMode* constants for simple policies.
 	SandboxPolicy any
 	Model         string
 	// Effort is marshaled as JSON and sent as "effort".
+	// Prefer ReasoningEffort* constants for standard values.
 	Effort any
 	// Summary is marshaled as JSON and sent as "summary".
 	Summary any
@@ -36,15 +39,21 @@ type TurnResult struct {
 	FinalResponse string
 }
 
-// TurnStream iterates turn notifications.
+// TurnStream iterates notifications for a running turn.
+// Notifications that omit threadId are still emitted to avoid dropping
+// global events sent during the turn.
 type TurnStream struct {
 	iter     *rpc.NotificationIterator
 	threadID string
 }
 
 // Next returns the next notification for this turn.
-// Notifications without a thread id are treated as belonging to the active thread.
+// Notifications without threadId are treated as belonging to the active stream.
 func (s *TurnStream) Next(ctx context.Context) (rpc.Notification, error) {
+	if s == nil || s.iter == nil {
+		return rpc.Notification{}, errors.New("turn stream is not initialized")
+	}
+
 	for {
 		note, err := s.iter.Next(ctx)
 		if err != nil {
@@ -61,11 +70,14 @@ func (s *TurnStream) Next(ctx context.Context) (rpc.Notification, error) {
 
 // Close stops the iterator.
 func (s *TurnStream) Close() {
+	if s == nil || s.iter == nil {
+		return
+	}
 	s.iter.Close()
 }
 
 func updateTurnResult(result *TurnResult, note rpc.Notification) {
-	if note.Method != "item/completed" && note.Method != "turn/started" && note.Method != "turn/completed" {
+	if note.Method != "item/completed" && note.Method != "turn/started" && note.Method != "turn/completed" && note.Method != "turn/failed" {
 		return
 	}
 
@@ -83,7 +95,7 @@ func updateTurnResult(result *TurnResult, note rpc.Notification) {
 		}
 	}
 
-	if note.Method == "turn/started" || note.Method == "turn/completed" {
+	if note.Method == "turn/started" || note.Method == "turn/completed" || note.Method == "turn/failed" {
 		if payload.Turn != nil && payload.Turn.ID != "" {
 			result.TurnID = payload.Turn.ID
 		}
@@ -110,11 +122,21 @@ func notificationError(note rpc.Notification) error {
 			return nil
 		}
 		if payload.Turn != nil && payload.Turn.Status == "failed" {
-			if payload.Turn.Error != nil && payload.Turn.Error.Message != "" {
-				return errors.New(payload.Turn.Error.Message)
+			if message := payloadErrorMessage(payload); message != "" {
+				return errors.New(message)
 			}
 			return errors.New("turn failed")
 		}
+	}
+	if note.Method == "turn/failed" {
+		payload, err := parseTurnNotification(note)
+		if err != nil {
+			return errors.New("turn failed")
+		}
+		if message := payloadErrorMessage(payload); message != "" {
+			return errors.New(message)
+		}
+		return errors.New("turn failed")
 	}
 	return nil
 }
@@ -194,6 +216,16 @@ func parseTurnNotification(note rpc.Notification) (turnNotificationPayload, erro
 		return payload, err
 	}
 	return payload, nil
+}
+
+func payloadErrorMessage(payload turnNotificationPayload) string {
+	if payload.Turn != nil && payload.Turn.Error != nil && payload.Turn.Error.Message != "" {
+		return payload.Turn.Error.Message
+	}
+	if payload.Error != nil && payload.Error.Message != "" {
+		return payload.Error.Message
+	}
+	return ""
 }
 
 func buildTurnParams(threadID string, inputs []Input, opts *TurnOptions) (protocol.TurnStartParams, error) {
