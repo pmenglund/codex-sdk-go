@@ -87,6 +87,10 @@ func TestHandleServerRequestErrors(t *testing.T) {
 
 type errorHandler struct{}
 
+func (h *errorHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	return nil, errors.New("nope")
+}
+
 func (h *errorHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	return nil, errors.New("nope")
 }
@@ -103,7 +107,19 @@ func (h *errorHandler) ItemFileChangeRequestApproval(ctx context.Context, params
 	return nil, errors.New("nope")
 }
 
+func (h *errorHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	return nil, errors.New("nope")
+}
+
+func (h *errorHandler) ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	return nil, errors.New("nope")
+}
+
 func (h *errorHandler) ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
+	return nil, errors.New("nope")
+}
+
+func (h *errorHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
 	return nil, errors.New("nope")
 }
 

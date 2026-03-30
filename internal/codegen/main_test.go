@@ -324,6 +324,7 @@ func TestCodexRepoRootDefault(t *testing.T) {
 	base := t.TempDir()
 	sdkRoot := filepath.Join(base, "codex-sdk-go")
 	codexRoot := filepath.Join(base, "codex")
+	t.Setenv(codexRepoRootEnv, "")
 	if err := os.MkdirAll(filepath.Join(sdkRoot, "internal"), 0o755); err != nil {
 		t.Fatalf("mkdir sdk root: %v", err)
 	}

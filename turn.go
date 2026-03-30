@@ -26,7 +26,9 @@ type TurnOptions struct {
 	Summary any
 	// OutputSchema is marshaled as JSON and sent as "outputSchema".
 	OutputSchema any
-	// CollaborationMode is marshaled as JSON and sent as "collaborationMode".
+	// CollaborationMode is retained for source compatibility, but the current
+	// app-server protocol no longer supports this option. Setting it returns an
+	// error from buildTurnParams.
 	CollaborationMode any
 }
 
@@ -272,10 +274,11 @@ func buildTurnParams(threadID string, inputs []Input, opts *TurnOptions) (protoc
 	} else if raw != nil {
 		params.OutputSchema = raw
 	}
-	if raw, err := normalizeJSONValue("collaborationMode", opts.CollaborationMode); err != nil {
-		return params, err
-	} else if raw != nil {
-		params.CollaborationMode = raw
+	if opts.CollaborationMode != nil {
+		if _, err := normalizeJSONValue("collaborationMode", opts.CollaborationMode); err != nil {
+			return params, err
+		}
+		return params, errors.New("collaboration mode is no longer supported by the current app-server protocol")
 	}
 
 	return params, nil

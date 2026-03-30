@@ -679,12 +679,24 @@ func paramsType(name string) string {
 
 func manualProtocolTypes() map[string]struct{} {
 	return map[string]struct{}{
-		"ErrorNotification":         {},
-		"ItemCompletedNotification": {},
-		"ThreadResumeResponse":      {},
-		"ThreadStartResponse":       {},
-		"TurnCompletedNotification": {},
-		"TurnStartedNotification":   {},
+		"ApplyPatchApprovalParams":                {},
+		"ApplyPatchApprovalResponse":              {},
+		"CommandExecutionRequestApprovalParams":   {},
+		"CommandExecutionRequestApprovalResponse": {},
+		"ErrorNotification":                       {},
+		"ExecCommandApprovalParams":               {},
+		"ExecCommandApprovalResponse":             {},
+		"FileChangeRequestApprovalParams":         {},
+		"FileChangeRequestApprovalResponse":       {},
+		"ItemCompletedNotification":               {},
+		"PermissionsRequestApprovalParams":        {},
+		"PermissionsRequestApprovalResponse":      {},
+		"ThreadResumeResponse":                    {},
+		"ThreadStartResponse":                     {},
+		"ToolRequestUserInputParams":              {},
+		"ToolRequestUserInputResponse":            {},
+		"TurnCompletedNotification":               {},
+		"TurnStartedNotification":                 {},
 	}
 }
 

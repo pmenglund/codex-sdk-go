@@ -3,13 +3,13 @@ package codex
 import "github.com/pmenglund/codex-sdk-go/protocol"
 
 // ApprovalPolicy is a typed alias for common approval policy values.
-type ApprovalPolicy = protocol.AskForApproval
+type ApprovalPolicy = string
 
 const (
-	ApprovalPolicyNever     ApprovalPolicy = protocol.AskForApprovalNever
-	ApprovalPolicyOnFailure ApprovalPolicy = protocol.AskForApprovalOnFailure
-	ApprovalPolicyOnRequest ApprovalPolicy = protocol.AskForApprovalOnRequest
-	ApprovalPolicyUntrusted ApprovalPolicy = protocol.AskForApprovalUntrusted
+	ApprovalPolicyNever     ApprovalPolicy = "never"
+	ApprovalPolicyOnFailure ApprovalPolicy = "on-failure"
+	ApprovalPolicyOnRequest ApprovalPolicy = "on-request"
+	ApprovalPolicyUntrusted ApprovalPolicy = "untrusted"
 )
 
 // SandboxMode is a typed alias for simple sandbox mode values.

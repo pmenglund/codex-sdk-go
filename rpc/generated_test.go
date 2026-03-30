@@ -212,30 +212,50 @@ type scriptedResponse struct {
 
 func (h *recordingHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	h.lastMethod = "applyPatchApproval"
-	resp := protocol.ApplyPatchApprovalResponse(map[string]any{"decision": "approved"})
+	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
 	return &resp, nil
+}
+
+func (h *recordingHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	h.lastMethod = "account/chatgptAuthTokens/refresh"
+	return nil, nil
 }
 
 func (h *recordingHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	h.lastMethod = "execCommandApproval"
-	resp := protocol.ExecCommandApprovalResponse(map[string]any{"decision": "approved"})
+	resp := protocol.ExecCommandApprovalResponse{Decision: "approved"}
 	return &resp, nil
 }
 
 func (h *recordingHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	h.lastMethod = "item/commandExecution/requestApproval"
-	resp := protocol.CommandExecutionRequestApprovalResponse(map[string]any{"decision": "accept"})
+	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: "accept"}
 	return &resp, nil
 }
 
 func (h *recordingHandler) ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
 	h.lastMethod = "item/fileChange/requestApproval"
-	resp := protocol.FileChangeRequestApprovalResponse(map[string]any{"decision": "accept"})
+	resp := protocol.FileChangeRequestApprovalResponse{Decision: "accept"}
 	return &resp, nil
+}
+
+func (h *recordingHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	h.lastMethod = "item/permissions/requestApproval"
+	return &protocol.PermissionsRequestApprovalResponse{Permissions: params.Permissions}, nil
+}
+
+func (h *recordingHandler) ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	h.lastMethod = "item/tool/call"
+	return nil, nil
+}
+
+func (h *recordingHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+	h.lastMethod = "mcpServer/elicitation/request"
+	return nil, nil
 }
 
 func (h *recordingHandler) ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
 	h.lastMethod = "item/tool/requestUserInput"
-	resp := protocol.ToolRequestUserInputResponse(map[string]any{"answers": map[string]any{}})
+	resp := protocol.ToolRequestUserInputResponse{Answers: map[string]protocol.ToolRequestUserInputAnswer{}}
 	return &resp, nil
 }

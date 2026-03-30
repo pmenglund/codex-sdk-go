@@ -1,6 +1,11 @@
 package codex
 
-import "github.com/pmenglund/codex-sdk-go/protocol"
+import (
+	"encoding/json"
+	"errors"
+
+	"github.com/pmenglund/codex-sdk-go/protocol"
+)
 
 // ThreadStartOptions configures a thread/start request.
 type ThreadStartOptions struct {
@@ -15,6 +20,9 @@ type ThreadStartOptions struct {
 	Config                map[string]any
 	BaseInstructions      string
 	DeveloperInstructions string
+	// ExperimentalRawEvents is retained for source compatibility, but the current
+	// app-server protocol no longer supports this option. Setting it returns an
+	// error from toParams.
 	ExperimentalRawEvents bool
 }
 
@@ -47,25 +55,27 @@ func (o ThreadStartOptions) toParams() (protocol.ThreadStartParams, error) {
 		params.DeveloperInstructions = stringPtr(o.DeveloperInstructions)
 	}
 	if o.ExperimentalRawEvents {
-		params.ExperimentalRawEvents = true
+		return params, errors.New("experimental raw events are no longer supported by the current app-server protocol")
 	}
 	return params, nil
 }
 
+// ThreadResumeHistoryElem keeps the old unstable history field compilable for
+// callers, but the current app-server protocol no longer accepts history-based
+// thread resume.
+type ThreadResumeHistoryElem = json.RawMessage
+
 // ThreadResumeOptions configures a thread/resume request.
-//
-// There are three ways to resume a thread:
-//  1. ThreadID: load from disk by thread id.
-//  2. Path: load from disk by rollout path.
-//  3. History: resume from in-memory history.
-//
-// Precedence is History > Path > ThreadID. Prefer ThreadID when possible.
 type ThreadResumeOptions struct {
 	// ThreadID resumes a persisted thread by id.
 	ThreadID string
-	// History is an unstable API used for in-memory resume and takes precedence over ThreadID.
-	History []protocol.ThreadResumeParamsHistoryElem
-	// Path is an unstable API used for rollout resume and takes precedence over ThreadID.
+	// History is retained for source compatibility, but the current app-server
+	// protocol no longer supports history-based resume. Passing History returns an
+	// error from toParams.
+	History []ThreadResumeHistoryElem
+	// Path is retained for source compatibility, but the current app-server
+	// protocol no longer supports path-based resume. Passing Path returns an error
+	// from toParams.
 	Path          string
 	Model         string
 	ModelProvider string
@@ -87,21 +97,10 @@ func (o ThreadResumeOptions) toParams() (protocol.ThreadResumeParams, error) {
 		params.ThreadID = o.ThreadID
 	}
 	if len(o.History) > 0 {
-		params.History = make([]protocol.ThreadResumeParamsHistoryElem, 0, len(o.History))
-		for _, entry := range o.History {
-			if entry == nil {
-				params.History = append(params.History, nil)
-				continue
-			}
-			raw, err := normalizeJSONValue("history", entry)
-			if err != nil {
-				return params, err
-			}
-			params.History = append(params.History, raw)
-		}
+		return params, errors.New("thread resume history is no longer supported by the current app-server protocol")
 	}
 	if o.Path != "" {
-		params.Path = stringPtr(o.Path)
+		return params, errors.New("thread resume path is no longer supported by the current app-server protocol")
 	}
 	if o.Model != "" {
 		params.Model = stringPtr(o.Model)

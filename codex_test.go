@@ -25,7 +25,6 @@ func TestThreadStartOptionsToParams(t *testing.T) {
 		Config:                map[string]any{"foo": "bar"},
 		BaseInstructions:      "base",
 		DeveloperInstructions: "dev",
-		ExperimentalRawEvents: true,
 	}
 
 	params, err := opts.toParams()
@@ -43,14 +42,18 @@ func TestThreadStartOptionsToParams(t *testing.T) {
 	assertEqual(t, "config", *params.Config, map[string]any{"foo": "bar"})
 	assertEqual(t, "baseInstructions", params.BaseInstructions, stringPtr("base"))
 	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
-	assertEqual(t, "experimentalRawEvents", params.ExperimentalRawEvents, true)
+}
+
+func TestThreadStartOptionsRejectExperimentalRawEvents(t *testing.T) {
+	_, err := (ThreadStartOptions{ExperimentalRawEvents: true}).toParams()
+	if err == nil {
+		t.Fatalf("expected experimental raw events error")
+	}
 }
 
 func TestThreadResumeOptionsToParams(t *testing.T) {
 	opts := ThreadResumeOptions{
 		ThreadID:              "thr_123",
-		History:               []protocol.ThreadResumeParamsHistoryElem{"h1"},
-		Path:                  "/tmp/rollout",
 		Model:                 "gpt-test",
 		ModelProvider:         "openai",
 		Cwd:                   "/tmp/project",
@@ -67,8 +70,6 @@ func TestThreadResumeOptionsToParams(t *testing.T) {
 	}
 
 	assertEqual(t, "threadId", params.ThreadID, "thr_123")
-	assertEqual(t, "history", params.History, []protocol.ThreadResumeParamsHistoryElem{MustJSON("h1")})
-	assertEqual(t, "path", params.Path, stringPtr("/tmp/rollout"))
 	assertEqual(t, "model", params.Model, stringPtr("gpt-test"))
 	assertEqual(t, "modelProvider", params.ModelProvider, stringPtr("openai"))
 	assertEqual(t, "cwd", params.Cwd, stringPtr("/tmp/project"))
@@ -82,16 +83,35 @@ func TestThreadResumeOptionsToParams(t *testing.T) {
 	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
 }
 
+func TestThreadResumeOptionsRejectHistory(t *testing.T) {
+	_, err := (ThreadResumeOptions{
+		ThreadID: "thr_123",
+		History:  []ThreadResumeHistoryElem{MustJSON("h1")},
+	}).toParams()
+	if err == nil {
+		t.Fatalf("expected history resume error")
+	}
+}
+
+func TestThreadResumeOptionsRejectPath(t *testing.T) {
+	_, err := (ThreadResumeOptions{
+		ThreadID: "thr_123",
+		Path:     "/tmp/rollout",
+	}).toParams()
+	if err == nil {
+		t.Fatalf("expected path resume error")
+	}
+}
+
 func TestBuildTurnParams(t *testing.T) {
 	opts := &TurnOptions{
-		Cwd:               "/tmp",
-		ApprovalPolicy:    "never",
-		SandboxPolicy:     map[string]any{"type": "readOnly"},
-		Model:             "gpt-test",
-		Effort:            "medium",
-		Summary:           "short",
-		OutputSchema:      map[string]any{"type": "object"},
-		CollaborationMode: "default",
+		Cwd:            "/tmp",
+		ApprovalPolicy: "never",
+		SandboxPolicy:  map[string]any{"type": "readOnly"},
+		Model:          "gpt-test",
+		Effort:         "medium",
+		Summary:        "short",
+		OutputSchema:   map[string]any{"type": "object"},
 	}
 
 	params, err := buildTurnParams("thr_123", []Input{TextInput("hello")}, opts)
@@ -108,7 +128,13 @@ func TestBuildTurnParams(t *testing.T) {
 	assertRawEqual(t, "effort", params.Effort, MustJSON("medium"))
 	assertRawEqual(t, "summary", params.Summary, MustJSON("short"))
 	assertRawEqual(t, "outputSchema", params.OutputSchema, MustJSON(map[string]any{"type": "object"}))
-	assertRawEqual(t, "collaborationMode", params.CollaborationMode, MustJSON("default"))
+}
+
+func TestBuildTurnParamsRejectCollaborationMode(t *testing.T) {
+	_, err := buildTurnParams("thr_123", []Input{TextInput("hello")}, &TurnOptions{CollaborationMode: "default"})
+	if err == nil {
+		t.Fatalf("expected collaboration mode error")
+	}
 }
 
 func TestThreadResponseID(t *testing.T) {

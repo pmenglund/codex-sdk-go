@@ -25,7 +25,7 @@ func (h AutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Cont
 		"command", params.Command,
 		"cwd", params.Cwd,
 	)
-	resp := protocol.CommandExecutionRequestApprovalResponse(map[string]any{"decision": "accept"})
+	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: "accept"}
 	return &resp, nil
 }
 
@@ -39,8 +39,28 @@ func (h AutoApproveHandler) ItemFileChangeRequestApproval(ctx context.Context, p
 		"item_id", params.ItemID,
 		"grant_root", params.GrantRoot,
 	)
-	resp := protocol.FileChangeRequestApprovalResponse(map[string]any{"decision": "accept"})
+	resp := protocol.FileChangeRequestApprovalResponse{Decision: "accept"}
 	return &resp, nil
+}
+
+// ItemPermissionsRequestApproval approves permission escalation requests.
+func (h AutoApproveHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	logger := resolveLogger(h.Logger)
+	logger.Info(
+		"codex auto-approving permission request",
+		"thread_id", params.ThreadID,
+		"turn_id", params.TurnID,
+		"item_id", params.ItemID,
+	)
+	resp := protocol.PermissionsRequestApprovalResponse{Permissions: params.Permissions}
+	return &resp, nil
+}
+
+// ItemToolCall returns an error for dynamic tool calls.
+func (h AutoApproveHandler) ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	logger := resolveLogger(h.Logger)
+	logger.Info("codex auto-approve handler cannot execute tool calls")
+	return nil, errors.New("tool calls require a custom handler")
 }
 
 // ItemToolRequestUserInput returns an error for tool user input prompts.
@@ -56,6 +76,20 @@ func (h AutoApproveHandler) ItemToolRequestUserInput(ctx context.Context, params
 	return nil, errors.New("tool user input requires a custom handler")
 }
 
+// McpServerElicitationRequest returns an error for MCP elicitation prompts.
+func (h AutoApproveHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+	logger := resolveLogger(h.Logger)
+	logger.Info("codex auto-approve handler cannot answer MCP elicitation prompts")
+	return nil, errors.New("mcp elicitation requires a custom handler")
+}
+
+// AccountChatgptAuthTokensRefresh returns an error for auth refresh requests.
+func (h AutoApproveHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	logger := resolveLogger(h.Logger)
+	logger.Info("codex auto-approve handler cannot refresh chatgpt auth tokens")
+	return nil, errors.New("chatgpt auth token refresh requires a custom handler")
+}
+
 // ApplyPatchApproval approves legacy patch requests.
 func (h AutoApproveHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	logger := resolveLogger(h.Logger)
@@ -65,7 +99,7 @@ func (h AutoApproveHandler) ApplyPatchApproval(ctx context.Context, params proto
 		"call_id", params.CallID,
 		"file_changes", len(params.FileChanges),
 	)
-	resp := protocol.ApplyPatchApprovalResponse(map[string]any{"decision": "approved"})
+	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
 	return &resp, nil
 }
 
@@ -79,6 +113,6 @@ func (h AutoApproveHandler) ExecCommandApproval(ctx context.Context, params prot
 		"command", params.Command,
 		"cwd", params.Cwd,
 	)
-	resp := protocol.ExecCommandApprovalResponse(map[string]any{"decision": "approved"})
+	resp := protocol.ExecCommandApprovalResponse{Decision: "approved"}
 	return &resp, nil
 }

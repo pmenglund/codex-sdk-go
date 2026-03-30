@@ -131,7 +131,7 @@ func TestNotificationDeliveryDoesNotDropWhenBufferFills(t *testing.T) {
 }
 
 func TestServerRequestDispatch(t *testing.T) {
-	resp := protocol.ApplyPatchApprovalResponse(map[string]any{"decision": "approved"})
+	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
 	handler := &testHandler{
 		called: make(chan struct{}, 1),
 		applyPatch: func(params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
@@ -324,8 +324,12 @@ func (h *testHandler) ApplyPatchApproval(ctx context.Context, params protocol.Ap
 	if h.applyPatch != nil {
 		return h.applyPatch(params)
 	}
-	resp := protocol.ApplyPatchApprovalResponse(map[string]any{"decision": "approved"})
+	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
 	return &resp, nil
+}
+
+func (h *testHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	return nil, errors.New("not implemented")
 }
 
 func (h *testHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
@@ -340,7 +344,19 @@ func (h *testHandler) ItemFileChangeRequestApproval(ctx context.Context, params 
 	return nil, errors.New("not implemented")
 }
 
+func (h *testHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (h *testHandler) ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (h *testHandler) ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (h *testHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
