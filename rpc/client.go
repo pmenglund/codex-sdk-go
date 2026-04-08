@@ -75,6 +75,9 @@ func (c *Client) SetRequestHandler(handler ServerRequestHandler) {
 
 // Call sends a JSON-RPC request and decodes the response into result.
 func (c *Client) Call(ctx context.Context, method string, params any, result any) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := c.ensureOpen(); err != nil {
 		return err
 	}
@@ -92,6 +95,10 @@ func (c *Client) Call(ctx context.Context, method string, params any, result any
 		return err
 	}
 
+	if err := ctx.Err(); err != nil {
+		c.deletePending(id)
+		return err
+	}
 	if err := c.send(payload); err != nil {
 		c.deletePending(id)
 		return err

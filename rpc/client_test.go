@@ -265,14 +265,8 @@ func TestCallErrorResponse(t *testing.T) {
 }
 
 func TestCallContextCancel(t *testing.T) {
-	transcript := []TranscriptEntry{
-		writeLine(JSONRPCRequest{
-			ID:     NewIntRequestID(1),
-			Method: "ping",
-			Params: mustRaw(map[string]any{}),
-		}),
-	}
-	client := NewClient(NewReplayTransport(transcript), ClientOptions{})
+	transport := newChannelTransport()
+	client := NewClient(transport, ClientOptions{})
 	defer client.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -280,6 +274,13 @@ func TestCallContextCancel(t *testing.T) {
 	var result map[string]any
 	if err := client.Call(ctx, "ping", map[string]any{}, &result); err == nil {
 		t.Fatalf("expected context error")
+	}
+
+	transport.mu.Lock()
+	writes := len(transport.writes)
+	transport.mu.Unlock()
+	if writes != 0 {
+		t.Fatalf("expected no writes for canceled call, got %d", writes)
 	}
 }
 
