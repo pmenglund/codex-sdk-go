@@ -279,22 +279,40 @@ func writeFallbackTypes(outDir string, titles []string, generated map[string]str
 		}
 	}
 
-	names := make([]string, 0, len(unique))
+	aliases := map[string]string{}
+	var names []string
 	for name := range unique {
-		if _, exists := generated[name]; !exists {
-			names = append(names, name)
+		if _, exists := generated[name]; exists {
+			continue
 		}
+		if target, ok := sanitizedFallbackTarget(name, generated); ok {
+			aliases[name] = target
+			continue
+		}
+		names = append(names, name)
 	}
-	if len(names) == 0 {
+	if len(names) == 0 && len(aliases) == 0 {
 		_ = os.Remove(fallbackPath)
 		return nil
 	}
 	sort.Strings(names)
+	aliasNames := make([]string, 0, len(aliases))
+	for name := range aliases {
+		aliasNames = append(aliasNames, name)
+	}
+	sort.Strings(aliasNames)
 
 	var b strings.Builder
 	b.WriteString(generatedHeader(codexCommit))
 	b.WriteString("package protocol\n\n")
 	b.WriteString("// Fallback types for schemas that failed to generate.\n")
+	for _, name := range aliasNames {
+		b.WriteString("type ")
+		b.WriteString(name)
+		b.WriteString(" = ")
+		b.WriteString(aliases[name])
+		b.WriteString("\n")
+	}
 	for _, name := range names {
 		b.WriteString("type ")
 		b.WriteString(name)
@@ -302,6 +320,14 @@ func writeFallbackTypes(outDir string, titles []string, generated map[string]str
 	}
 
 	return os.WriteFile(fallbackPath, []byte(b.String()), 0o644)
+}
+
+func sanitizedFallbackTarget(name string, generated map[string]struct{}) (string, bool) {
+	target := "Sanitized" + name + "JSON"
+	if _, ok := generated[target]; ok {
+		return target, true
+	}
+	return "", false
 }
 
 func collectGeneratedTypes(sources map[string][]byte) map[string]struct{} {

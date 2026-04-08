@@ -54,9 +54,19 @@ func exampleClientInfo() protocol.ClientInfo {
 }
 
 func exampleTranscript(info protocol.ClientInfo) []rpc.TranscriptEntry {
-	result := map[string]any{
-		"models": []map[string]any{
-			{"id": "model-1", "title": "Test Model"},
+	result := protocol.ModelListResponse{
+		Data: []protocol.Model{
+			{
+				DefaultReasoningEffort: protocol.ReasoningEffortMedium,
+				Description:            "Test Model",
+				DisplayName:            "Test Model",
+				ID:                     "model-1",
+				IsDefault:              true,
+				Model:                  "model-1",
+				SupportedReasoningEfforts: []protocol.ReasoningEffortOption{
+					{ReasoningEffort: protocol.ReasoningEffortMedium, Description: "Medium"},
+				},
+			},
 		},
 	}
 	return []rpc.TranscriptEntry{

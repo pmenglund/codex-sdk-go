@@ -5,58 +5,91 @@
 package protocol
 
 // Fallback types for schemas that failed to generate.
-type AccountLoginCompletedNotification interface{}
-type AccountRateLimitsUpdatedNotification interface{}
-type AccountUpdatedNotification interface{}
-type AgentMessageDeltaNotification interface{}
-type AppListUpdatedNotification interface{}
-type AppsListResponse interface{}
-type CancelLoginAccountResponse interface{}
-type ChatgptAuthTokensRefreshParams interface{}
-type ChatgptAuthTokensRefreshResponse interface{}
+type AccountLoginCompletedNotification = SanitizedAccountLoginCompletedNotificationJSON
+type AccountRateLimitsUpdatedNotification = SanitizedAccountRateLimitsUpdatedNotificationJSON
+type AccountUpdatedNotification = SanitizedAccountUpdatedNotificationJSON
+type AgentMessageDeltaNotification = SanitizedAgentMessageDeltaNotificationJSON
+type AppListUpdatedNotification = SanitizedAppListUpdatedNotificationJSON
+type AppsListResponse = SanitizedAppsListResponseJSON
+type CancelLoginAccountResponse = SanitizedCancelLoginAccountResponseJSON
+type ChatgptAuthTokensRefreshParams = SanitizedChatgptAuthTokensRefreshParamsJSON
+type ChatgptAuthTokensRefreshResponse = SanitizedChatgptAuthTokensRefreshResponseJSON
+type CommandExecResponse = SanitizedCommandExecResponseJSON
+type CommandExecutionOutputDeltaNotification = SanitizedCommandExecutionOutputDeltaNotificationJSON
+type ConfigRequirementsReadResponse = SanitizedConfigRequirementsReadResponseJSON
+type ConfigWarningNotification = SanitizedConfigWarningNotificationJSON
+type ContextCompactedNotification = SanitizedContextCompactedNotificationJSON
+type DeprecationNoticeNotification = SanitizedDeprecationNoticeNotificationJSON
+type DynamicToolCallParams = SanitizedDynamicToolCallParamsJSON
+type DynamicToolCallResponse = SanitizedDynamicToolCallResponseJSON
+type ExperimentalFeatureEnablementSetResponse = SanitizedExperimentalFeatureEnablementSetResponseJSON
+type ExternalAgentConfigDetectResponse = SanitizedExternalAgentConfigDetectResponseJSON
+type FeedbackUploadResponse = SanitizedFeedbackUploadResponseJSON
+type FileChangeOutputDeltaNotification = SanitizedFileChangeOutputDeltaNotificationJSON
+type FsGetMetadataResponse = SanitizedFsGetMetadataResponseJSON
+type FsReadDirectoryResponse = SanitizedFsReadDirectoryResponseJSON
+type FsReadFileResponse = SanitizedFsReadFileResponseJSON
+type FuzzyFileSearchResponse = SanitizedFuzzyFileSearchResponseJSON
+type FuzzyFileSearchSessionCompletedNotification = SanitizedFuzzyFileSearchSessionCompletedNotificationJSON
+type FuzzyFileSearchSessionUpdatedNotification = SanitizedFuzzyFileSearchSessionUpdatedNotificationJSON
+type GetAccountResponse = SanitizedGetAccountResponseJSON
+type HookCompletedNotification = SanitizedHookCompletedNotificationJSON
+type HookStartedNotification = SanitizedHookStartedNotificationJSON
+type ItemGuardianApprovalReviewCompletedNotification = SanitizedItemGuardianApprovalReviewCompletedNotificationJSON
+type ItemGuardianApprovalReviewStartedNotification = SanitizedItemGuardianApprovalReviewStartedNotificationJSON
+type ModelListResponse = SanitizedModelListResponseJSON
+type ModelReroutedNotification = SanitizedModelReroutedNotificationJSON
+type PlanDeltaNotification = SanitizedPlanDeltaNotificationJSON
+type PluginInstallResponse = SanitizedPluginInstallResponseJSON
+type RawResponseItemCompletedNotification = SanitizedRawResponseItemCompletedNotificationJSON
+type ReasoningSummaryPartAddedNotification = SanitizedReasoningSummaryPartAddedNotificationJSON
+type ReasoningSummaryTextDeltaNotification = SanitizedReasoningSummaryTextDeltaNotificationJSON
+type ReasoningTextDeltaNotification = SanitizedReasoningTextDeltaNotificationJSON
+type ServerRequestResolvedNotification = SanitizedServerRequestResolvedNotificationJSON
+type SkillsConfigWriteResponse = SanitizedSkillsConfigWriteResponseJSON
+type SkillsListResponse = SanitizedSkillsListResponseJSON
+type TerminalInteractionNotification = SanitizedTerminalInteractionNotificationJSON
+type ThreadArchivedNotification = SanitizedThreadArchivedNotificationJSON
+type ThreadClosedNotification = SanitizedThreadClosedNotificationJSON
+type ThreadLoadedListResponse = SanitizedThreadLoadedListResponseJSON
+type ThreadNameUpdatedNotification = SanitizedThreadNameUpdatedNotificationJSON
+type ThreadRealtimeClosedNotification = SanitizedThreadRealtimeClosedNotificationJSON
+type ThreadRealtimeErrorNotification = SanitizedThreadRealtimeErrorNotificationJSON
+type ThreadRealtimeItemAddedNotification = SanitizedThreadRealtimeItemAddedNotificationJSON
+type ThreadRealtimeOutputAudioDeltaNotification = SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON
+type ThreadRealtimeSdpNotification = SanitizedThreadRealtimeSdpNotificationJSON
+type ThreadRealtimeStartedNotification = SanitizedThreadRealtimeStartedNotificationJSON
+type ThreadRealtimeTranscriptUpdatedNotification = SanitizedThreadRealtimeTranscriptUpdatedNotificationJSON
+type ThreadStatusChangedNotification = SanitizedThreadStatusChangedNotificationJSON
+type ThreadTokenUsageUpdatedNotification = SanitizedThreadTokenUsageUpdatedNotificationJSON
+type ThreadUnarchivedNotification = SanitizedThreadUnarchivedNotificationJSON
+type ThreadUnsubscribeResponse = SanitizedThreadUnsubscribeResponseJSON
+type TurnDiffUpdatedNotification = SanitizedTurnDiffUpdatedNotificationJSON
+type TurnPlanUpdatedNotification = SanitizedTurnPlanUpdatedNotificationJSON
+type TurnSteerResponse = SanitizedTurnSteerResponseJSON
+type WindowsSandboxSetupCompletedNotification = SanitizedWindowsSandboxSetupCompletedNotificationJSON
+type WindowsSandboxSetupStartResponse = SanitizedWindowsSandboxSetupStartResponseJSON
+type WindowsWorldWritableWarningNotification = SanitizedWindowsWorldWritableWarningNotificationJSON
 type ClientNotification interface{}
 type ClientRequest interface{}
 type CodexAppServerProtocolV2 interface{}
 type CommandExecOutputDeltaNotification interface{}
 type CommandExecResizeResponse interface{}
-type CommandExecResponse interface{}
 type CommandExecTerminateResponse interface{}
 type CommandExecWriteResponse interface{}
-type CommandExecutionOutputDeltaNotification interface{}
 type ConfigReadResponse interface{}
-type ConfigRequirementsReadResponse interface{}
-type ConfigWarningNotification interface{}
 type ConfigWriteResponse interface{}
-type ContextCompactedNotification interface{}
-type DeprecationNoticeNotification interface{}
-type DynamicToolCallParams interface{}
-type DynamicToolCallResponse interface{}
-type ExperimentalFeatureEnablementSetResponse interface{}
 type ExperimentalFeatureListResponse interface{}
-type ExternalAgentConfigDetectResponse interface{}
 type ExternalAgentConfigImportResponse interface{}
-type FeedbackUploadResponse interface{}
-type FileChangeOutputDeltaNotification interface{}
 type FsChangedNotification interface{}
 type FsCopyResponse interface{}
 type FsCreateDirectoryResponse interface{}
-type FsGetMetadataResponse interface{}
-type FsReadDirectoryResponse interface{}
-type FsReadFileResponse interface{}
 type FsRemoveResponse interface{}
 type FsUnwatchResponse interface{}
 type FsWatchResponse interface{}
 type FsWriteFileResponse interface{}
-type FuzzyFileSearchResponse interface{}
-type FuzzyFileSearchSessionCompletedNotification interface{}
-type FuzzyFileSearchSessionUpdatedNotification interface{}
 type GetAccountRateLimitsResponse interface{}
-type GetAccountResponse interface{}
-type HookCompletedNotification interface{}
-type HookStartedNotification interface{}
 type InitializeResponse interface{}
-type ItemGuardianApprovalReviewCompletedNotification interface{}
-type ItemGuardianApprovalReviewStartedNotification interface{}
 type ItemStartedNotification interface{}
 type ListMcpServerStatusParams interface{}
 type ListMcpServerStatusResponse interface{}
@@ -72,56 +105,23 @@ type McpServerOauthLoginResponse interface{}
 type McpServerRefreshResponse interface{}
 type McpServerStatusUpdatedNotification interface{}
 type McpToolCallProgressNotification interface{}
-type ModelListResponse interface{}
-type ModelReroutedNotification interface{}
-type PlanDeltaNotification interface{}
-type PluginInstallResponse interface{}
 type PluginListResponse interface{}
 type PluginReadResponse interface{}
 type PluginUninstallResponse interface{}
-type RawResponseItemCompletedNotification interface{}
-type ReasoningSummaryPartAddedNotification interface{}
-type ReasoningSummaryTextDeltaNotification interface{}
-type ReasoningTextDeltaNotification interface{}
 type ReviewStartResponse interface{}
 type ServerNotification interface{}
 type ServerRequest interface{}
-type ServerRequestResolvedNotification interface{}
 type SkillsChangedNotification interface{}
-type SkillsConfigWriteResponse interface{}
-type SkillsListResponse interface{}
-type TerminalInteractionNotification interface{}
 type ThreadArchiveResponse interface{}
-type ThreadArchivedNotification interface{}
-type ThreadClosedNotification interface{}
 type ThreadCompactStartResponse interface{}
 type ThreadForkResponse interface{}
 type ThreadListResponse interface{}
-type ThreadLoadedListResponse interface{}
 type ThreadMetadataUpdateResponse interface{}
-type ThreadNameUpdatedNotification interface{}
 type ThreadReadResponse interface{}
-type ThreadRealtimeClosedNotification interface{}
-type ThreadRealtimeErrorNotification interface{}
-type ThreadRealtimeItemAddedNotification interface{}
-type ThreadRealtimeOutputAudioDeltaNotification interface{}
-type ThreadRealtimeSdpNotification interface{}
-type ThreadRealtimeStartedNotification interface{}
-type ThreadRealtimeTranscriptUpdatedNotification interface{}
 type ThreadRollbackResponse interface{}
 type ThreadSetNameResponse interface{}
 type ThreadShellCommandResponse interface{}
 type ThreadStartedNotification interface{}
-type ThreadStatusChangedNotification interface{}
-type ThreadTokenUsageUpdatedNotification interface{}
 type ThreadUnarchiveResponse interface{}
-type ThreadUnarchivedNotification interface{}
-type ThreadUnsubscribeResponse interface{}
-type TurnDiffUpdatedNotification interface{}
 type TurnInterruptResponse interface{}
-type TurnPlanUpdatedNotification interface{}
 type TurnStartResponse interface{}
-type TurnSteerResponse interface{}
-type WindowsSandboxSetupCompletedNotification interface{}
-type WindowsSandboxSetupStartResponse interface{}
-type WindowsWorldWritableWarningNotification interface{}

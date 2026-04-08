@@ -15,10 +15,21 @@ func TestMainReplay(t *testing.T) {
 
 	output := testutil.CaptureOutput(main)
 	expected := `models: {
-  "models": [
+  "data": [
     {
+      "defaultReasoningEffort": "medium",
+      "description": "Test Model",
+      "displayName": "Test Model",
+      "hidden": false,
       "id": "model-1",
-      "title": "Test Model"
+      "isDefault": true,
+      "model": "model-1",
+      "supportedReasoningEfforts": [
+        {
+          "description": "Medium",
+          "reasoningEffort": "medium"
+        }
+      ]
     }
   ]
 }`
@@ -49,8 +60,8 @@ func TestExampleOptionsDefault(t *testing.T) {
 	if formatModels(nil) != "models: <nil>" {
 		t.Fatalf("unexpected nil format")
 	}
-	bad := protocol.ModelListResponse(map[string]any{"bad": func() {}})
-	if !strings.HasPrefix(formatModels(&bad), "models: map") {
-		t.Fatalf("expected fallback formatting")
+	models := protocol.ModelListResponse{}
+	if !strings.HasPrefix(formatModels(&models), "models: {") {
+		t.Fatalf("expected structured formatting")
 	}
 }

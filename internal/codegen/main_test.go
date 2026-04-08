@@ -181,9 +181,10 @@ func TestCollectGeneratedTypes(t *testing.T) {
 func TestWriteFallbackTypesAndAliases(t *testing.T) {
 	dir := t.TempDir()
 	generated := map[string]struct{}{
-		"KnownJSON": {},
+		"KnownJSON":            {},
+		"SanitizedMissingJSON": {},
 	}
-	fallbacks := []string{"Missing"}
+	fallbacks := []string{"Missing", "Opaque"}
 
 	if err := writeFallbackTypes(dir, fallbacks, generated, testCodexCommit); err != nil {
 		t.Fatalf("writeFallbackTypes error: %v", err)
@@ -195,8 +196,11 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 	if !strings.Contains(string(data), "Source codex commit: "+testCodexCommit) {
 		t.Fatalf("expected codex commit header")
 	}
-	if !strings.Contains(string(data), "type Missing interface{}") {
-		t.Fatalf("expected Missing fallback")
+	if !strings.Contains(string(data), "type Missing = SanitizedMissingJSON") {
+		t.Fatalf("expected Missing alias fallback")
+	}
+	if !strings.Contains(string(data), "type Opaque interface{}") {
+		t.Fatalf("expected Opaque interface fallback")
 	}
 
 	if err := writeProtocolAliases(dir, generated, fallbacks, testCodexCommit); err != nil {

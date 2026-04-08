@@ -16,7 +16,7 @@ Workflow: `WORKFLOW.md`. Tracker gap: no Linear issue or epic identifier was pro
 
 - [x] (2026-04-08 02:43Z) Read `AGENTS.md`, `APP.md`, `LANGUAGE.md`, `WORKFLOW.md`, `PLANS.md`, and `GC.md`; confirmed the only existing worktree change was the untracked `GC.md` report from the prior review step.
 - [x] (2026-04-08 02:45Z) Resolved GC finding 1 by checking `ctx.Err()` in `rpc.Client.Call` before request registration and before send, and by changing the canceled-call test to assert no write occurs.
-- [ ] Resolve GC finding 2: reduce or fail unsafe generated protocol fallbacks for public RPC types.
+- [x] (2026-04-08 02:47Z) Resolved GC finding 2 by teaching codegen to alias fallback titles to generated `Sanitized*JSON` structs when available; `protocol/fallback_gen.go` now has 65 aliases and 55 remaining true `interface{}` fallbacks.
 - [ ] Resolve GC finding 3: stop running server request handlers inline on the JSON-RPC reader with `context.Background()`.
 - [ ] Resolve GC finding 4: add high-level validation for invalid zero-value turn/resume requests.
 - [ ] Resolve GC finding 5: make stdio shutdown graceful first and return cleanup errors.
@@ -26,6 +26,9 @@ Workflow: `WORKFLOW.md`. Tracker gap: no Linear issue or epic identifier was pro
 
 - Observation: `GC.md` was untracked at the start of remediation because it was created by the immediately preceding review task and had not been committed yet.
   Evidence: `git status --short` printed `?? GC.md` before this plan was created.
+
+- Observation: Strengthening `protocol.ModelListResponse` exposed that the low-level RPC example transcript used an outdated `models` response shape and tested map fallback behavior.
+  Evidence: `go test ./internal/codegen ./protocol ./rpc ./examples/low_level_rpc` initially failed with `cannot convert map[string]any{...} ... to type protocol.ModelListResponse`; updating the transcript to `data` with a typed `protocol.Model` made the focused test pass.
 
 ## Decision Log
 
