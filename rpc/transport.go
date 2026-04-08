@@ -4,12 +4,16 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 )
+
+const stdioCloseTimeout = 2 * time.Second
 
 // Transport reads and writes JSON-RPC lines.
 type Transport interface {
@@ -83,14 +87,38 @@ func (t *StdioTransport) WriteLine(line string) error {
 
 // Close shuts down the process.
 func (t *StdioTransport) Close() error {
-	_ = t.stdin.Close()
-	if t.cmd != nil && t.cmd.Process != nil {
-		_ = t.cmd.Process.Kill()
+	var errs []error
+	if t.stdin != nil {
+		if err := t.stdin.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("close stdin: %w", err))
+		}
 	}
-	if t.cmd != nil {
-		_ = t.cmd.Wait()
+	if t.cmd == nil {
+		return errors.Join(errs...)
 	}
-	return nil
+
+	waitCh := make(chan error, 1)
+	go func() {
+		waitCh <- t.cmd.Wait()
+	}()
+
+	select {
+	case err := <-waitCh:
+		if err != nil {
+			errs = append(errs, fmt.Errorf("wait for process: %w", err))
+		}
+	case <-time.After(stdioCloseTimeout):
+		if t.cmd.Process != nil {
+			if err := t.cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
+				errs = append(errs, fmt.Errorf("kill process: %w", err))
+			}
+		}
+		if err := <-waitCh; err != nil {
+			errs = append(errs, fmt.Errorf("wait after kill: %w", err))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // ConnTransport wraps an io.ReadWriteCloser.

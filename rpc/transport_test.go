@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -55,7 +56,6 @@ func TestStdioTransportEcho(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnStdio error: %v", err)
 	}
-	defer transport.Close()
 
 	if err := transport.WriteLine("ping"); err != nil {
 		t.Fatalf("WriteLine error: %v", err)
@@ -66,5 +66,27 @@ func TestStdioTransportEcho(t *testing.T) {
 	}
 	if line != "ping" {
 		t.Fatalf("unexpected line: %s", line)
+	}
+	if err := transport.Close(); err != nil {
+		t.Fatalf("Close error: %v", err)
+	}
+}
+
+func TestStdioTransportCloseReportsWaitError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell exit test is unix-only")
+	}
+
+	transport, err := SpawnStdio(context.Background(), "/bin/sh", []string{"-c", "exit 7"}, nil)
+	if err != nil {
+		t.Fatalf("SpawnStdio error: %v", err)
+	}
+
+	err = transport.Close()
+	if err == nil {
+		t.Fatalf("expected close error from process exit")
+	}
+	if !strings.Contains(err.Error(), "wait for process") {
+		t.Fatalf("expected wait error, got %v", err)
 	}
 }

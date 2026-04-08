@@ -19,7 +19,7 @@ Workflow: `WORKFLOW.md`. Tracker gap: no Linear issue or epic identifier was pro
 - [x] (2026-04-08 02:47Z) Resolved GC finding 2 by teaching codegen to alias fallback titles to generated `Sanitized*JSON` structs when available; `protocol/fallback_gen.go` now has 65 aliases and 55 remaining true `interface{}` fallbacks.
 - [x] (2026-04-08 02:48Z) Resolved GC finding 3 by adding a client lifecycle context, canceling it during `finish`, and dispatching server request handling outside the JSON-RPC reader goroutine with a regression test for blocked handlers.
 - [x] (2026-04-08 02:49Z) Resolved GC finding 4 by validating input variants in `buildTurnParams` and rejecting empty `ThreadResumeOptions.ThreadID`.
-- [ ] Resolve GC finding 5: make stdio shutdown graceful first and return cleanup errors.
+- [x] (2026-04-08 02:50Z) Resolved GC finding 5 by making `StdioTransport.Close` close stdin, wait before killing, and return joined cleanup errors.
 - [ ] Run final repository validation and record outcomes.
 
 ## Surprises & Discoveries
