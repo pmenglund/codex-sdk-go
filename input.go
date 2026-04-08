@@ -1,6 +1,11 @@
 package codex
 
-import "github.com/pmenglund/codex-sdk-go/protocol"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/pmenglund/codex-sdk-go/protocol"
+)
 
 const (
 	// InputTypeText represents a plain text input.
@@ -42,4 +47,31 @@ func LocalImageInput(path string) Input {
 // SkillInput creates a skill input entry.
 func SkillInput(name, path string) Input {
 	return Input{Type: InputTypeSkill, Name: name, Path: path}
+}
+
+func (i Input) validate() error {
+	switch i.Type {
+	case InputTypeText:
+		if i.Text == "" && len(i.TextElements) == 0 {
+			return errors.New("text input is empty")
+		}
+	case InputTypeImage:
+		if i.URL == "" {
+			return errors.New("image input URL is empty")
+		}
+	case InputTypeLocalImage:
+		if i.Path == "" {
+			return errors.New("local image input path is empty")
+		}
+	case InputTypeSkill:
+		if i.Name == "" {
+			return errors.New("skill input name is empty")
+		}
+		if i.Path == "" {
+			return errors.New("skill input path is empty")
+		}
+	default:
+		return fmt.Errorf("unknown input type %q", i.Type)
+	}
+	return nil
 }

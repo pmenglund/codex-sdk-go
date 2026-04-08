@@ -83,6 +83,13 @@ func TestThreadResumeOptionsToParams(t *testing.T) {
 	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
 }
 
+func TestThreadResumeOptionsRejectEmptyThreadID(t *testing.T) {
+	_, err := (ThreadResumeOptions{}).toParams()
+	if err == nil {
+		t.Fatalf("expected empty thread id error")
+	}
+}
+
 func TestThreadResumeOptionsRejectHistory(t *testing.T) {
 	_, err := (ThreadResumeOptions{
 		ThreadID: "thr_123",
@@ -137,6 +144,27 @@ func TestBuildTurnParamsRejectCollaborationMode(t *testing.T) {
 	}
 }
 
+func TestBuildTurnParamsRejectInvalidInputs(t *testing.T) {
+	tests := []struct {
+		name  string
+		input Input
+	}{
+		{name: "unknown type", input: Input{Type: "bogus"}},
+		{name: "empty text", input: Input{Type: InputTypeText}},
+		{name: "empty image url", input: ImageInput("")},
+		{name: "empty local image path", input: LocalImageInput("")},
+		{name: "empty skill name", input: SkillInput("", "/tmp/skill")},
+		{name: "empty skill path", input: SkillInput("skill", "")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := buildTurnParams("thr_123", []Input{tt.input}, nil); err == nil {
+				t.Fatalf("expected invalid input error")
+			}
+		})
+	}
+}
+
 func TestThreadResponseID(t *testing.T) {
 	response := protocol.ThreadStartResponse{Thread: &protocol.Thread{ID: "thr_1"}}
 	id, err := threadIDFromResponse(response.ThreadID, response.Thread)
@@ -186,7 +214,7 @@ func TestStartThreadInvalidJSONOptions(t *testing.T) {
 func TestResumeThreadInvalidJSONOptions(t *testing.T) {
 	ctx := context.Background()
 	c := &Codex{logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
-	if _, err := c.ResumeThread(ctx, ThreadResumeOptions{ApprovalPolicy: json.RawMessage("{bad")}); err == nil {
+	if _, err := c.ResumeThread(ctx, ThreadResumeOptions{ThreadID: "thr_123", ApprovalPolicy: json.RawMessage("{bad")}); err == nil {
 		t.Fatalf("expected error for invalid approval policy")
 	}
 }

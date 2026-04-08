@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/rpc"
@@ -236,6 +237,9 @@ func buildTurnParams(threadID string, inputs []Input, opts *TurnOptions) (protoc
 		Input:    make([]protocol.TurnStartParamsInputElem, 0, len(inputs)),
 	}
 	for _, input := range inputs {
+		if err := input.validate(); err != nil {
+			return params, fmt.Errorf("input: %w", err)
+		}
 		params.Input = append(params.Input, input)
 	}
 

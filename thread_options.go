@@ -93,9 +93,10 @@ type ThreadResumeOptions struct {
 
 func (o ThreadResumeOptions) toParams() (protocol.ThreadResumeParams, error) {
 	params := protocol.ThreadResumeParams{}
-	if o.ThreadID != "" {
-		params.ThreadID = o.ThreadID
+	if o.ThreadID == "" {
+		return params, errors.New("thread id is required")
 	}
+	params.ThreadID = o.ThreadID
 	if len(o.History) > 0 {
 		return params, errors.New("thread resume history is no longer supported by the current app-server protocol")
 	}

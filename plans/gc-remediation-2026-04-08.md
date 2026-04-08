@@ -18,7 +18,7 @@ Workflow: `WORKFLOW.md`. Tracker gap: no Linear issue or epic identifier was pro
 - [x] (2026-04-08 02:45Z) Resolved GC finding 1 by checking `ctx.Err()` in `rpc.Client.Call` before request registration and before send, and by changing the canceled-call test to assert no write occurs.
 - [x] (2026-04-08 02:47Z) Resolved GC finding 2 by teaching codegen to alias fallback titles to generated `Sanitized*JSON` structs when available; `protocol/fallback_gen.go` now has 65 aliases and 55 remaining true `interface{}` fallbacks.
 - [x] (2026-04-08 02:48Z) Resolved GC finding 3 by adding a client lifecycle context, canceling it during `finish`, and dispatching server request handling outside the JSON-RPC reader goroutine with a regression test for blocked handlers.
-- [ ] Resolve GC finding 4: add high-level validation for invalid zero-value turn/resume requests.
+- [x] (2026-04-08 02:49Z) Resolved GC finding 4 by validating input variants in `buildTurnParams` and rejecting empty `ThreadResumeOptions.ThreadID`.
 - [ ] Resolve GC finding 5: make stdio shutdown graceful first and return cleanup errors.
 - [ ] Run final repository validation and record outcomes.
 
