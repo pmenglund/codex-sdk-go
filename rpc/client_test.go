@@ -161,6 +161,60 @@ func TestServerRequestDispatch(t *testing.T) {
 	}
 }
 
+func TestServerRequestHandlerDoesNotBlockReaderAndReceivesCloseContext(t *testing.T) {
+	transport := newChannelTransport()
+	handler := &blockingServerRequestHandler{
+		entered: make(chan struct{}),
+		done:    make(chan error, 1),
+	}
+	client := NewClient(transport, ClientOptions{RequestHandler: handler})
+
+	callDone := make(chan error, 1)
+	go func() {
+		var result map[string]any
+		callDone <- client.Call(context.Background(), "ping", map[string]any{}, &result)
+	}()
+	transport.waitForWrites(t, 1)
+
+	transport.pushReadLine(mustJSON(JSONRPCRequest{
+		ID:     NewIntRequestID(9),
+		Method: "applyPatchApproval",
+		Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
+	}))
+
+	select {
+	case <-handler.entered:
+	case <-time.After(time.Second):
+		t.Fatalf("handler was not called")
+	}
+
+	transport.pushReadLine(mustJSON(JSONRPCResponse{
+		ID:     NewIntRequestID(1),
+		Result: mustRaw(map[string]any{"ok": true}),
+	}))
+
+	select {
+	case err := <-callDone:
+		if err != nil {
+			t.Fatalf("call failed while handler was blocked: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("reader was blocked by server request handler")
+	}
+
+	if err := client.Close(); err != nil {
+		t.Fatalf("close failed: %v", err)
+	}
+	select {
+	case err := <-handler.done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected canceled handler context, got %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("handler did not observe close context")
+	}
+}
+
 func TestRecordTransport(t *testing.T) {
 	base := &stubTransport{reads: []string{"hello"}}
 	recorder := NewRecordTransport(base)
@@ -317,6 +371,23 @@ type testHandler struct {
 	applyPatch func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error)
 }
 
+type blockingServerRequestHandler struct {
+	testHandler
+	entered chan struct{}
+	done    chan error
+	once    sync.Once
+}
+
+func (h *blockingServerRequestHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	h.once.Do(func() {
+		close(h.entered)
+	})
+	<-ctx.Done()
+	err := ctx.Err()
+	h.done <- err
+	return nil, err
+}
+
 func (h *testHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	if h.called == nil {
 		h.called = make(chan struct{}, 1)
@@ -392,6 +463,28 @@ func (t *channelTransport) waitForReads(testingT *testing.T, count int) {
 		case <-t.observed:
 		case <-time.After(time.Second):
 			testingT.Fatalf("timed out waiting for read %d", i+1)
+		}
+	}
+}
+
+func (t *channelTransport) waitForWrites(testingT *testing.T, count int) []string {
+	testingT.Helper()
+	deadline := time.After(time.Second)
+	ticker := time.NewTicker(time.Millisecond)
+	defer ticker.Stop()
+	for {
+		t.mu.Lock()
+		if len(t.writes) >= count {
+			writes := append([]string(nil), t.writes...)
+			t.mu.Unlock()
+			return writes
+		}
+		t.mu.Unlock()
+
+		select {
+		case <-deadline:
+			testingT.Fatalf("timed out waiting for %d writes", count)
+		case <-ticker.C:
 		}
 	}
 }

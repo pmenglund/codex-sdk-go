@@ -34,9 +34,11 @@ type Client struct {
 	handlerMu sync.RWMutex
 	handler   ServerRequestHandler
 
-	done     chan struct{}
-	doneOnce sync.Once
-	err      error
+	lifecycle context.Context
+	cancel    context.CancelFunc
+	done      chan struct{}
+	doneOnce  sync.Once
+	err       error
 }
 
 // NewClient creates a JSON-RPC client over a Transport.
@@ -46,12 +48,16 @@ func NewClient(transport Transport, options ClientOptions) *Client {
 		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
 	}
 
+	lifecycle, cancel := context.WithCancel(context.Background())
+
 	client := &Client{
 		transport: transport,
 		logger:    logger,
 		pending:   make(map[string]chan response),
 		subs:      make(map[int]*notificationSubscription),
 		handler:   options.RequestHandler,
+		lifecycle: lifecycle,
+		cancel:    cancel,
 		done:      make(chan struct{}),
 	}
 
@@ -201,7 +207,7 @@ func (c *Client) readLoop() {
 		case messageError:
 			c.handleError(msg.error)
 		case messageRequest:
-			c.handleServerRequest(msg.request)
+			go c.handleServerRequest(msg.request)
 		case messageNotification:
 			c.handleNotification(msg.notification)
 		}
@@ -259,7 +265,7 @@ func (c *Client) handleServerRequest(req JSONRPCRequest) {
 		return
 	}
 
-	result, err := dispatchServerRequest(context.Background(), handler, req)
+	result, err := dispatchServerRequest(c.requestContext(), handler, req)
 	if err != nil {
 		_ = c.replyError(req.ID, -32602, err.Error(), nil)
 		return
@@ -314,6 +320,13 @@ func (c *Client) currentHandler() ServerRequestHandler {
 	return c.handler
 }
 
+func (c *Client) requestContext() context.Context {
+	if c.lifecycle != nil {
+		return c.lifecycle
+	}
+	return context.Background()
+}
+
 func (c *Client) ensureOpen() error {
 	select {
 	case <-c.done:
@@ -333,6 +346,9 @@ func (c *Client) errOrClosed() error {
 func (c *Client) finish(err error) {
 	c.doneOnce.Do(func() {
 		c.err = err
+		if c.cancel != nil {
+			c.cancel()
+		}
 		close(c.done)
 		c.pendingMu.Lock()
 		for _, ch := range c.pending {
