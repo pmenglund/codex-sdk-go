@@ -20,7 +20,7 @@ Workflow: `WORKFLOW.md`. Tracker gap: no Linear issue or epic identifier was pro
 - [x] (2026-04-08 02:48Z) Resolved GC finding 3 by adding a client lifecycle context, canceling it during `finish`, and dispatching server request handling outside the JSON-RPC reader goroutine with a regression test for blocked handlers.
 - [x] (2026-04-08 02:49Z) Resolved GC finding 4 by validating input variants in `buildTurnParams` and rejecting empty `ThreadResumeOptions.ThreadID`.
 - [x] (2026-04-08 02:50Z) Resolved GC finding 5 by making `StdioTransport.Close` close stdin, wait before killing, and return joined cleanup errors.
-- [ ] Run final repository validation and record outcomes.
+- [x] (2026-04-08 02:51Z) Ran final `go test ./...` and `go vet ./...`; both passed, and outcomes were recorded.
 
 ## Surprises & Discoveries
 
@@ -40,9 +40,28 @@ Workflow: `WORKFLOW.md`. Tracker gap: no Linear issue or epic identifier was pro
   Rationale: `GC.md` was an existing untracked artifact from the review step, and keeping setup separate lets each later commit map cleanly to one resolved finding.
   Date/Author: 2026-04-08 / Codex
 
+- Decision: Alias fallback protocol names to generated `Sanitized*JSON` structs only when that exact generated target exists.
+  Rationale: This strengthens 65 public protocol names without inventing schema shapes for the remaining unresolved union-heavy schemas.
+  Date/Author: 2026-04-08 / Codex
+
+- Decision: Run server request handlers in separate goroutines using a client lifecycle context canceled from `finish`.
+  Rationale: This keeps the JSON-RPC reader available for responses and notifications while still giving handlers a shutdown signal tied to `Client.Close`.
+  Date/Author: 2026-04-08 / Codex
+
 ## Outcomes & Retrospective
 
-Not yet completed. This section will be updated after the five findings have been addressed and final validation has passed.
+All five findings from `GC.md` have been addressed in separate finding-specific commits after the setup commit. The RPC call path now checks canceled contexts before registering or sending requests. Codegen now emits aliases from fallback protocol titles to generated sanitized structs when those structs exist, which reduced public `interface{}` fallbacks from 120 to 55. Server request handling no longer runs inline on the reader goroutine and receives a client lifecycle context. High-level turn and resume builders reject invalid input variants and empty resume thread IDs before RPC I/O. `StdioTransport.Close` now attempts stdin-close plus wait before killing and returns joined cleanup errors.
+
+Final validation passed:
+
+    go test ./...
+    ok  	github.com/pmenglund/codex-sdk-go	1.744s
+    ok  	github.com/pmenglund/codex-sdk-go/rpc	(cached)
+
+    go vet ./...
+    <no output>
+
+The main remaining limitation is that 55 protocol fallback names still resolve to `interface{}` because no useful generated sanitized target exists for them. That remaining work needs deeper schema/codegen support rather than blind type invention.
 
 ## Context and Orientation
 
@@ -113,3 +132,4 @@ No new external dependencies are expected. The work should use Go standard libra
 Change log:
 
 - 2026-04-08: Created this ExecPlan to track the five finding remediation task requested from `GC.md`.
+- 2026-04-08: Closed the ExecPlan after all five findings passed final `go test ./...` and `go vet ./...` validation.
