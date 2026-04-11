@@ -364,6 +364,81 @@ func TestCodexRepoRootFromEnv(t *testing.T) {
 	}
 }
 
+func TestCodexSourceForGenerationDefault(t *testing.T) {
+	t.Setenv(codexRepoRefEnv, "")
+	codexRoot := filepath.Join(t.TempDir(), "codex")
+
+	got, cleanup, err := codexSourceForGeneration(codexRoot, t.TempDir())
+	if err != nil {
+		t.Fatalf("codexSourceForGeneration error: %v", err)
+	}
+	if got != codexRoot {
+		t.Fatalf("unexpected source root: got %q want %q", got, codexRoot)
+	}
+	cleanup()
+}
+
+func TestCodexSourceForGenerationPinnedRef(t *testing.T) {
+	base := t.TempDir()
+	codexRoot := filepath.Join(base, "codex")
+	tempDir := filepath.Join(base, "temp")
+	ref := "v1.2.3"
+	worktreeDir := filepath.Join(tempDir, "codex-source")
+	var calls [][]string
+
+	withGitCombinedOutput(t, func(args ...string) ([]byte, error) {
+		calls = append(calls, append([]string(nil), args...))
+		switch len(calls) {
+		case 1:
+			want := []string{"-C", codexRoot, "worktree", "add", "--detach", worktreeDir, ref}
+			if strings.Join(args, "\x00") != strings.Join(want, "\x00") {
+				t.Fatalf("unexpected add args: %#v", args)
+			}
+			if err := os.MkdirAll(filepath.Join(worktreeDir, "codex-rs"), 0o755); err != nil {
+				t.Fatalf("mkdir worktree: %v", err)
+			}
+			return nil, nil
+		case 2:
+			want := []string{"-C", codexRoot, "worktree", "remove", "--force", worktreeDir}
+			if strings.Join(args, "\x00") != strings.Join(want, "\x00") {
+				t.Fatalf("unexpected remove args: %#v", args)
+			}
+			return nil, nil
+		default:
+			t.Fatalf("unexpected git call: %#v", args)
+			return nil, nil
+		}
+	})
+
+	t.Setenv(codexRepoRefEnv, ref)
+	got, cleanup, err := codexSourceForGeneration(codexRoot, tempDir)
+	if err != nil {
+		t.Fatalf("codexSourceForGeneration error: %v", err)
+	}
+	if got != worktreeDir {
+		t.Fatalf("unexpected source root: got %q want %q", got, worktreeDir)
+	}
+	cleanup()
+	if len(calls) != 2 {
+		t.Fatalf("expected add and remove calls, got %d", len(calls))
+	}
+}
+
+func TestCodexSourceForGenerationPinnedRefError(t *testing.T) {
+	withGitCombinedOutput(t, func(args ...string) ([]byte, error) {
+		return []byte("unknown revision"), os.ErrNotExist
+	})
+
+	t.Setenv(codexRepoRefEnv, "missing-tag")
+	_, _, err := codexSourceForGeneration(filepath.Join(t.TempDir(), "codex"), t.TempDir())
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if !strings.Contains(err.Error(), "create codex worktree: unknown revision") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestCodexCommitHashError(t *testing.T) {
 	_, err := codexCommitHash(t.TempDir())
 	if err == nil {
@@ -517,4 +592,13 @@ func writeJSON(t *testing.T, path string, payload any) {
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
+}
+
+func withGitCombinedOutput(t *testing.T, fn func(args ...string) ([]byte, error)) {
+	t.Helper()
+	original := gitCombinedOutput
+	gitCombinedOutput = fn
+	t.Cleanup(func() {
+		gitCombinedOutput = original
+	})
 }

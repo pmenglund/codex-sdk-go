@@ -43,7 +43,7 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 - Run example locally: `go run ./examples/quickstart` (requires `codex` on `PATH`).
 - Run tests locally: `go test ./...`
 - Lint/format checks: `gofmt -w ./...` (changed files) and `go vet ./...`
-- Regenerate protocol and RPC code: `go generate ./...`
+- Regenerate protocol and RPC code: `go generate ./...` (`CODEX_REPO_REF=<tag>` pins the Codex source ref).
 
 ## Operational Constraints
 
