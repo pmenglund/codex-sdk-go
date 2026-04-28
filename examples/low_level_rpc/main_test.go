@@ -65,3 +65,9 @@ func TestExampleOptionsDefault(t *testing.T) {
 		t.Fatalf("expected structured formatting")
 	}
 }
+
+func TestMustRawNil(t *testing.T) {
+	if raw := mustRaw(nil); raw != nil {
+		t.Fatalf("expected nil raw message, got %s", raw)
+	}
+}

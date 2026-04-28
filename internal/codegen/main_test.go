@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -164,6 +165,35 @@ func TestStripAndSanitize(t *testing.T) {
 	}
 }
 
+func TestStripSubschemasHandlesArrays(t *testing.T) {
+	input := []any{
+		map[string]any{"oneOf": []any{map[string]any{"type": "string"}}},
+		map[string]any{"nested": []any{map[string]any{"anyOf": []any{map[string]any{"type": "number"}}}}},
+	}
+	stripSubschemas(input)
+	if _, ok := input[0].(map[string]any)["oneOf"]; ok {
+		t.Fatalf("expected oneOf removed from array child")
+	}
+	nested := input[1].(map[string]any)["nested"].([]any)[0].(map[string]any)
+	if _, ok := nested["anyOf"]; ok {
+		t.Fatalf("expected anyOf removed from nested array child")
+	}
+}
+
+func TestSanitizeSchemaFileErrors(t *testing.T) {
+	if _, _, err := sanitizeSchemaFile(filepath.Join(t.TempDir(), "missing.json")); err == nil {
+		t.Fatalf("expected missing file error")
+	}
+
+	path := filepath.Join(t.TempDir(), "bad.json")
+	if err := os.WriteFile(path, []byte("{bad"), 0o644); err != nil {
+		t.Fatalf("write bad schema: %v", err)
+	}
+	if _, _, err := sanitizeSchemaFile(path); err == nil {
+		t.Fatalf("expected invalid json error")
+	}
+}
+
 func TestCollectGeneratedTypes(t *testing.T) {
 	sources := map[string][]byte{
 		"a.go": []byte("package protocol\n\ntype Foo struct{}\n"),
@@ -271,6 +301,30 @@ func TestSchemaTitleAndDefinitions(t *testing.T) {
 	}
 }
 
+func TestSchemaTitleErrors(t *testing.T) {
+	if _, err := schemaTitle(filepath.Join(t.TempDir(), "missing.json")); err == nil {
+		t.Fatalf("expected missing file error")
+	}
+
+	path := filepath.Join(t.TempDir(), "bad.json")
+	if err := os.WriteFile(path, []byte("{bad"), 0o644); err != nil {
+		t.Fatalf("write bad schema: %v", err)
+	}
+	if _, err := schemaTitle(path); err == nil {
+		t.Fatalf("expected invalid json error")
+	}
+}
+
+func TestParseDefinitionNamesInvalidJSON(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "bad.json"), []byte("{bad"), 0o644); err != nil {
+		t.Fatalf("write bad schema: %v", err)
+	}
+	if _, err := parseDefinitionNames(dir); err == nil {
+		t.Fatalf("expected invalid json error")
+	}
+}
+
 func TestFindSchemaFiles(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "a.json"), []byte("{}"), 0o644); err != nil {
@@ -285,6 +339,12 @@ func TestFindSchemaFiles(t *testing.T) {
 	}
 	if len(files) != 1 || !strings.HasSuffix(files[0], "a.json") {
 		t.Fatalf("unexpected files: %#v", files)
+	}
+}
+
+func TestFindSchemaFilesMissingDir(t *testing.T) {
+	if _, err := findSchemaFiles(filepath.Join(t.TempDir(), "missing")); err == nil {
+		t.Fatalf("expected missing directory error")
 	}
 }
 
@@ -364,6 +424,19 @@ func TestCodexRepoRootFromEnv(t *testing.T) {
 	}
 }
 
+func TestCodexRepoRootErrors(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv(codexRepoRootEnv, "missing")
+	if _, err := codexRepoRoot(base); err == nil || !strings.Contains(err.Error(), codexRepoRootEnv) {
+		t.Fatalf("expected env root error, got %v", err)
+	}
+
+	t.Setenv(codexRepoRootEnv, "")
+	if _, err := codexRepoRoot(base); err == nil || !strings.Contains(err.Error(), "could not find codex checkout") {
+		t.Fatalf("expected default root error, got %v", err)
+	}
+}
+
 func TestCodexSourceForGenerationDefault(t *testing.T) {
 	t.Setenv(codexRepoRefEnv, "")
 	codexRoot := filepath.Join(t.TempDir(), "codex")
@@ -439,10 +512,61 @@ func TestCodexSourceForGenerationPinnedRefError(t *testing.T) {
 	}
 }
 
+func TestCodexSourceForGenerationPinnedRefMissingCodexRS(t *testing.T) {
+	var removed bool
+	withGitCombinedOutput(t, func(args ...string) ([]byte, error) {
+		if len(args) >= 4 && args[2] == "worktree" && args[3] == "remove" {
+			removed = true
+		}
+		return nil, nil
+	})
+
+	t.Setenv(codexRepoRefEnv, "ref-without-codex-rs")
+	_, _, err := codexSourceForGeneration(filepath.Join(t.TempDir(), "codex"), t.TempDir())
+	if err == nil || !strings.Contains(err.Error(), codexRepoRefEnv) {
+		t.Fatalf("expected missing codex-rs error, got %v", err)
+	}
+	if !removed {
+		t.Fatalf("expected cleanup to remove worktree")
+	}
+}
+
 func TestCodexCommitHashError(t *testing.T) {
 	_, err := codexCommitHash(t.TempDir())
 	if err == nil {
 		t.Fatalf("expected codexCommitHash error")
+	}
+}
+
+func TestCodexCommitHashSuccessAndEmpty(t *testing.T) {
+	withGitCombinedOutput(t, func(args ...string) ([]byte, error) {
+		return []byte("abc123\n"), nil
+	})
+	hash, err := codexCommitHash(t.TempDir())
+	if err != nil {
+		t.Fatalf("codexCommitHash error: %v", err)
+	}
+	if hash != "abc123" {
+		t.Fatalf("unexpected hash: %q", hash)
+	}
+
+	withGitCombinedOutput(t, func(args ...string) ([]byte, error) {
+		return []byte(" \n"), nil
+	})
+	if _, err := codexCommitHash(t.TempDir()); err == nil || !strings.Contains(err.Error(), "empty hash") {
+		t.Fatalf("expected empty hash error, got %v", err)
+	}
+}
+
+func TestGitCommandError(t *testing.T) {
+	err := gitCommandError("do thing", nil, errors.New("boom"))
+	if err == nil || !strings.Contains(err.Error(), "boom") {
+		t.Fatalf("expected wrapped error, got %v", err)
+	}
+
+	err = gitCommandError("do thing", []byte("details\n"), errors.New("boom"))
+	if err == nil || err.Error() != "do thing: details" {
+		t.Fatalf("unexpected command output error: %v", err)
 	}
 }
 
@@ -516,6 +640,38 @@ func TestGenerateProtocolTypes(t *testing.T) {
 	}
 }
 
+func TestGenerateProtocolTypesSkipsProtocolSchemas(t *testing.T) {
+	root := t.TempDir()
+	schemaDir := filepath.Join(root, "schemas")
+	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	for _, name := range []string{schemaBundleFile, "JSONRPCRequest.json"} {
+		if err := os.WriteFile(filepath.Join(schemaDir, name), []byte("{bad"), 0o644); err != nil {
+			t.Fatalf("write skipped schema: %v", err)
+		}
+	}
+
+	if err := generateProtocolTypes(schemaDir, root, testCodexCommit); err != nil {
+		t.Fatalf("generateProtocolTypes error: %v", err)
+	}
+}
+
+func TestGenerateProtocolTypesInvalidSchema(t *testing.T) {
+	root := t.TempDir()
+	schemaDir := filepath.Join(root, "schemas")
+	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(schemaDir, "Bad.json"), []byte("{bad"), 0o644); err != nil {
+		t.Fatalf("write bad schema: %v", err)
+	}
+
+	if err := generateProtocolTypes(schemaDir, root, testCodexCommit); err == nil {
+		t.Fatalf("expected invalid schema error")
+	}
+}
+
 func TestGenerateRPCStubs(t *testing.T) {
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
@@ -573,6 +729,31 @@ func TestGenerateRPCStubs(t *testing.T) {
 	}
 	if !strings.Contains(string(rpcData), "Source codex commit: "+testCodexCommit) {
 		t.Fatalf("expected codex commit header in rpc output")
+	}
+}
+
+func TestGenerateRPCStubsErrors(t *testing.T) {
+	root := t.TempDir()
+	if err := generateRPCStubs(filepath.Join(root, "missing"), root, testCodexCommit); err == nil {
+		t.Fatalf("expected missing schema dir error")
+	}
+
+	schemaDir := filepath.Join(root, "schemas")
+	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	writeJSON(t, filepath.Join(schemaDir, "ClientRequest.json"), map[string]any{
+		"oneOf": []map[string]any{
+			{"properties": map[string]any{
+				"method": map[string]any{"enum": []string{"missing/response"}},
+				"params": map[string]any{"type": "null"},
+			}},
+		},
+	})
+	writeJSON(t, filepath.Join(schemaDir, "ServerRequest.json"), map[string]any{"oneOf": []map[string]any{}})
+	writeJSON(t, filepath.Join(schemaDir, "ServerNotification.json"), map[string]any{"oneOf": []map[string]any{}})
+	if err := generateRPCStubs(schemaDir, root, testCodexCommit); err == nil || !strings.Contains(err.Error(), "unable to resolve response type") {
+		t.Fatalf("expected unresolved response type error, got %v", err)
 	}
 }
 

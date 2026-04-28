@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/rpc"
@@ -65,6 +66,64 @@ func TestThreadRunFailsOnTurnFailedNotification(t *testing.T) {
 	_, err = thread.Run(ctx, "hello", nil)
 	if err == nil || err.Error() != "boom" {
 		t.Fatalf("expected boom error, got %v", err)
+	}
+}
+
+func TestThreadRunFailsOnCompletedFailedStatus(t *testing.T) {
+	ctx := context.Background()
+	info := protocol.ClientInfo{
+		Name:    "codex-go-test",
+		Title:   stringPtr("Codex Go SDK Test"),
+		Version: "test",
+	}
+
+	client, err := New(ctx, Options{
+		Transport:  rpc.NewReplayTransport(runCompletedFailedTranscript(info, "hello", "completed boom")),
+		ClientInfo: info,
+	})
+	if err != nil {
+		t.Fatalf("new client error: %v", err)
+	}
+	defer client.Close()
+
+	thread, err := client.StartThread(ctx, ThreadStartOptions{})
+	if err != nil {
+		t.Fatalf("start thread error: %v", err)
+	}
+
+	_, err = thread.Run(ctx, "hello", nil)
+	if err == nil || err.Error() != "completed boom" {
+		t.Fatalf("expected completed boom error, got %v", err)
+	}
+}
+
+func TestThreadRunReturnsStreamNextError(t *testing.T) {
+	ctx := context.Background()
+	info := protocol.ClientInfo{
+		Name:    "codex-go-test",
+		Title:   stringPtr("Codex Go SDK Test"),
+		Version: "test",
+	}
+
+	client, err := New(ctx, Options{
+		Transport:  rpc.NewReplayTransport(runWithoutCompletionTranscript(info, "hello")),
+		ClientInfo: info,
+	})
+	if err != nil {
+		t.Fatalf("new client error: %v", err)
+	}
+	defer client.Close()
+
+	thread, err := client.StartThread(ctx, ThreadStartOptions{})
+	if err != nil {
+		t.Fatalf("start thread error: %v", err)
+	}
+
+	runCtx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+	defer cancel()
+	_, err = thread.Run(runCtx, "hello", nil)
+	if err == nil || err != context.DeadlineExceeded {
+		t.Fatalf("expected context deadline exceeded error, got %v", err)
 	}
 }
 
@@ -190,6 +249,55 @@ func runFailedTranscript(info protocol.ClientInfo, prompt, failureMessage string
 					"error":  map[string]any{"message": failureMessage},
 				},
 			}),
+		}),
+	}
+}
+
+func runCompletedFailedTranscript(info protocol.ClientInfo, prompt, failureMessage string) []rpc.TranscriptEntry {
+	entries := runTranscript(info, prompt, "partial")
+	entries[len(entries)-1] = readLine(rpc.JSONRPCNotification{
+		Method: "turn/completed",
+		Params: mustRaw(map[string]any{
+			"threadId": "thr_123",
+			"turn": map[string]any{
+				"id":     "turn_1",
+				"status": "failed",
+				"error":  map[string]any{"message": failureMessage},
+			},
+		}),
+	})
+	return entries
+}
+
+func runWithoutCompletionTranscript(info protocol.ClientInfo, prompt string) []rpc.TranscriptEntry {
+	return []rpc.TranscriptEntry{
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(1),
+			Method: "initialize",
+			Params: mustRaw(protocol.InitializeParams{ClientInfo: info}),
+		}),
+		readLine(rpc.JSONRPCResponse{
+			ID:     rpc.NewIntRequestID(1),
+			Result: mustRaw(map[string]any{}),
+		}),
+		writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(2),
+			Method: "thread/start",
+			Params: mustRaw(map[string]any{}),
+		}),
+		readLine(rpc.JSONRPCResponse{
+			ID:     rpc.NewIntRequestID(2),
+			Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123"}}),
+		}),
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(3),
+			Method: "turn/start",
+			Params: mustRaw(turnStartParams(prompt)),
+		}),
+		readLine(rpc.JSONRPCResponse{
+			ID:     rpc.NewIntRequestID(3),
+			Result: mustRaw(map[string]any{"turn": turnPayload("turn_1", "inProgress")}),
 		}),
 	}
 }

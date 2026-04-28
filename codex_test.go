@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -265,6 +266,117 @@ func TestNotificationError(t *testing.T) {
 	if err := notificationError(note); err == nil || err.Error() != "failed hard" {
 		t.Fatalf("expected error failed hard, got %v", err)
 	}
+
+	note = rpc.Notification{Method: "error", Raw: json.RawMessage("{bad")}
+	if err := notificationError(note); err == nil || err.Error() != "turn error" {
+		t.Fatalf("expected generic turn error for malformed payload, got %v", err)
+	}
+
+	note = rpc.Notification{Method: "turn/completed", Raw: MustJSON(map[string]any{"turn": map[string]any{"status": "failed"}})}
+	if err := notificationError(note); err == nil || err.Error() != "turn failed" {
+		t.Fatalf("expected generic completed failure, got %v", err)
+	}
+
+	note = rpc.Notification{Method: "turn/failed", Raw: MustJSON(map[string]any{"error": map[string]any{"message": "payload boom"}})}
+	if err := notificationError(note); err == nil || err.Error() != "payload boom" {
+		t.Fatalf("expected payload error message, got %v", err)
+	}
+
+	note = rpc.Notification{Method: "turn/failed", Raw: json.RawMessage("{bad")}
+	if err := notificationError(note); err == nil || err.Error() != "turn failed" {
+		t.Fatalf("expected generic turn failed for malformed payload, got %v", err)
+	}
+}
+
+func TestParseTurnNotificationTypedParams(t *testing.T) {
+	willRetry := true
+	tests := []struct {
+		name string
+		note rpc.Notification
+		want turnNotificationPayload
+	}{
+		{
+			name: "turn value",
+			note: rpc.Notification{Params: protocol.TurnNotification{
+				ThreadID: "thr_1",
+				Turn:     &protocol.TurnNotificationTurn{ID: "turn_1"},
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_1", Turn: &protocol.TurnNotificationTurn{ID: "turn_1"}},
+		},
+		{
+			name: "turn pointer",
+			note: rpc.Notification{Params: &protocol.TurnNotification{
+				ThreadID: "thr_2",
+				Turn:     &protocol.TurnNotificationTurn{ID: "turn_2"},
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_2", Turn: &protocol.TurnNotificationTurn{ID: "turn_2"}},
+		},
+		{
+			name: "item value",
+			note: rpc.Notification{Params: protocol.ItemCompletedNotification{
+				ThreadID: "thr_3",
+				Item:     MustJSON(map[string]any{"text": "done"}),
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_3", Item: MustJSON(map[string]any{"text": "done"})},
+		},
+		{
+			name: "item pointer",
+			note: rpc.Notification{Params: &protocol.ItemCompletedNotification{
+				ThreadID: "thr_4",
+				Item:     MustJSON(map[string]any{"text": "done"}),
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_4", Item: MustJSON(map[string]any{"text": "done"})},
+		},
+		{
+			name: "error value",
+			note: rpc.Notification{Params: protocol.ErrorNotification{
+				ThreadID:  "thr_5",
+				WillRetry: &willRetry,
+				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+			}},
+			want: turnNotificationPayload{
+				ThreadID:  "thr_5",
+				WillRetry: &willRetry,
+				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+			},
+		},
+		{
+			name: "error pointer",
+			note: rpc.Notification{Params: &protocol.ErrorNotification{
+				ThreadID:  "thr_6",
+				WillRetry: &willRetry,
+				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+			}},
+			want: turnNotificationPayload{
+				ThreadID:  "thr_6",
+				WillRetry: &willRetry,
+				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseTurnNotification(tt.note)
+			if err != nil {
+				t.Fatalf("parseTurnNotification error: %v", err)
+			}
+			assertEqual(t, "payload", got, tt.want)
+		})
+	}
+}
+
+func TestTurnStreamNilAndClose(t *testing.T) {
+	var stream *TurnStream
+	if _, err := stream.Next(context.Background()); err == nil {
+		t.Fatalf("expected nil stream error")
+	}
+	stream.Close()
+
+	stream = &TurnStream{}
+	if _, err := stream.Next(context.Background()); err == nil {
+		t.Fatalf("expected uninitialized stream error")
+	}
+	stream.Close()
 }
 
 func TestResolveLogger(t *testing.T) {
@@ -286,6 +398,32 @@ func TestAttachApprovalLogger(t *testing.T) {
 	if typed.Logger == nil {
 		t.Fatalf("expected logger to be attached")
 	}
+
+	ptr := &AutoApproveHandler{}
+	attached = attachApprovalLogger(ptr, logger)
+	if attached != ptr {
+		t.Fatalf("expected pointer handler to be returned")
+	}
+	if ptr.Logger == nil {
+		t.Fatalf("expected pointer logger to be attached")
+	}
+
+	customLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ptr = &AutoApproveHandler{Logger: customLogger}
+	attached = attachApprovalLogger(ptr, logger)
+	if attached != ptr || ptr.Logger != customLogger {
+		t.Fatalf("expected existing pointer logger to remain")
+	}
+
+	gotNil := attachApprovalLogger((*AutoApproveHandler)(nil), logger)
+	if got, ok := gotNil.(*AutoApproveHandler); !ok || got != nil {
+		t.Fatalf("expected nil pointer handler to remain nil, got %#v", gotNil)
+	}
+
+	other := &testServerRequestHandler{}
+	if got := attachApprovalLogger(other, logger); got != other {
+		t.Fatalf("expected non-auto-approve handler to pass through")
+	}
 }
 
 func TestAutoApproveResponses(t *testing.T) {
@@ -297,6 +435,18 @@ func TestAutoApproveResponses(t *testing.T) {
 	if resp == nil {
 		t.Fatalf("expected response")
 	}
+
+	permissions := map[string]any{"sandbox": "workspace-write"}
+	permResp, err := handler.ItemPermissionsRequestApproval(context.Background(), protocol.PermissionsRequestApprovalParams{
+		ItemID:      "item",
+		ThreadID:    "thr",
+		TurnID:      "turn",
+		Permissions: permissions,
+	})
+	if err != nil {
+		t.Fatalf("unexpected permissions error: %v", err)
+	}
+	assertEqual(t, "permissions", permResp.Permissions, permissions)
 }
 
 func TestAutoApproveLegacyResponses(t *testing.T) {
@@ -312,6 +462,15 @@ func TestAutoApproveLegacyResponses(t *testing.T) {
 	}
 	if _, err := handler.ItemToolRequestUserInput(context.Background(), protocol.ToolRequestUserInputParams{ItemID: "item", ThreadID: "thr", TurnID: "turn"}); err == nil {
 		t.Fatalf("expected error for tool user input")
+	}
+	if _, err := handler.ItemToolCall(context.Background(), protocol.DynamicToolCallParams{}); err == nil {
+		t.Fatalf("expected error for dynamic tool call")
+	}
+	if _, err := handler.McpServerElicitationRequest(context.Background(), protocol.McpServerElicitationRequestParams(nil)); err == nil {
+		t.Fatalf("expected error for mcp elicitation")
+	}
+	if _, err := handler.AccountChatgptAuthTokensRefresh(context.Background(), protocol.ChatgptAuthTokensRefreshParams{}); err == nil {
+		t.Fatalf("expected error for auth token refresh")
 	}
 }
 
@@ -395,6 +554,29 @@ func TestNilThreadRun(t *testing.T) {
 	}
 }
 
+func TestRunStreamedStartCallError(t *testing.T) {
+	client := rpc.NewClient(rpc.NewReplayTransport([]rpc.TranscriptEntry{
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(1),
+			Method: "turn/start",
+			Params: mustRaw(turnStartParams("hello")),
+		}),
+		readLine(rpc.JSONRPCError{
+			ID: rpc.NewIntRequestID(1),
+			Error: rpc.JSONRPCErrorError{
+				Code:    -1,
+				Message: "start failed",
+			},
+		}),
+	}), rpc.ClientOptions{})
+	defer client.Close()
+
+	thread := &Thread{client: client, id: "thr_123", logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	if _, err := thread.RunStreamed(context.Background(), []Input{TextInput("hello")}, nil); err == nil || !strings.Contains(err.Error(), "start failed") {
+		t.Fatalf("expected start failed error, got %v", err)
+	}
+}
+
 func initializeTranscript() []rpc.TranscriptEntry {
 	info := defaultClientInfo()
 	return []rpc.TranscriptEntry{
@@ -470,6 +652,44 @@ func TestMatchThreadID(t *testing.T) {
 	if !matchesThreadID(empty, "thr_1") {
 		t.Fatalf("expected match when thread id missing")
 	}
+}
+
+type testServerRequestHandler struct{}
+
+func (h *testServerRequestHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
+	return nil, nil
+}
+
+func (h *testServerRequestHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+	return nil, nil
 }
 
 func assertEqual(t *testing.T, name string, got, want any) {

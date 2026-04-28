@@ -77,6 +77,59 @@ func TestParseMessageVariants(t *testing.T) {
 	if _, err := parseMessage([]byte(`{"jsonrpc":"2.0"}`)); err == nil {
 		t.Fatalf("expected unrecognized message error")
 	}
+	if _, err := parseMessage([]byte(`{"id":{},"method":"ping"}`)); err == nil {
+		t.Fatalf("expected invalid request id error")
+	}
+	if _, err := parseMessage([]byte(`{"id":{},"result":{}}`)); err == nil {
+		t.Fatalf("expected invalid response id error")
+	}
+	if _, err := parseMessage([]byte(`{"id":{},"error":{"code":-1,"message":"bad"}}`)); err == nil {
+		t.Fatalf("expected invalid error id error")
+	}
+}
+
+func TestNotificationUnmarshalParams(t *testing.T) {
+	var payload map[string]bool
+	note := Notification{Raw: json.RawMessage(`{"ok":true}`)}
+	if err := note.UnmarshalParams(&payload); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !payload["ok"] {
+		t.Fatalf("unexpected payload: %#v", payload)
+	}
+
+	payload = map[string]bool{"kept": true}
+	note = Notification{}
+	if err := note.UnmarshalParams(&payload); err != nil {
+		t.Fatalf("empty raw params: %v", err)
+	}
+	if !payload["kept"] {
+		t.Fatalf("expected empty raw params to leave target alone")
+	}
+
+	note = Notification{Raw: json.RawMessage("{bad")}
+	if err := note.UnmarshalParams(&payload); err == nil {
+		t.Fatalf("expected invalid raw params error")
+	}
+}
+
+func TestReplayJSONLineHelpers(t *testing.T) {
+	if !equalJSONLine(`{"a":1,"b":2}`, `{"b":2,"a":1}`) {
+		t.Fatalf("expected equal json lines")
+	}
+	if equalJSONLine(``, `{}`) {
+		t.Fatalf("expected empty expected line to fail normalization")
+	}
+	if equalJSONLine(`{bad}`, `{}`) {
+		t.Fatalf("expected invalid expected json to fail normalization")
+	}
+	if equalJSONLine(`{}`, `{bad}`) {
+		t.Fatalf("expected invalid actual json to fail normalization")
+	}
+
+	if got, ok := normalizeJSONLine(" \n "); ok || got != "" {
+		t.Fatalf("expected blank line normalization to fail")
+	}
 }
 
 func TestNotificationIteratorNext(t *testing.T) {

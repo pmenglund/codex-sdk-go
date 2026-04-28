@@ -1,7 +1,10 @@
 package rpc
 
 import (
+	"bufio"
 	"context"
+	"errors"
+	"io"
 	"net"
 	"runtime"
 	"strings"
@@ -38,6 +41,45 @@ func TestConnTransportReadWrite(t *testing.T) {
 	<-writeDone
 }
 
+func TestConnTransportReadLineReturnsPartialLineAtEOF(t *testing.T) {
+	transport := NewConnTransport(&readWriteCloser{
+		reader: strings.NewReader("partial"),
+	})
+
+	line, err := transport.ReadLine()
+	if err != nil {
+		t.Fatalf("ReadLine error: %v", err)
+	}
+	if line != "partial" {
+		t.Fatalf("unexpected partial line: %q", line)
+	}
+}
+
+func TestConnTransportReadLineReturnsEOFWithoutPartialLine(t *testing.T) {
+	transport := NewConnTransport(&readWriteCloser{
+		reader: strings.NewReader(""),
+	})
+
+	line, err := transport.ReadLine()
+	if !errors.Is(err, io.EOF) {
+		t.Fatalf("expected EOF, got line=%q err=%v", line, err)
+	}
+}
+
+func TestConnTransportWriteAndCloseErrors(t *testing.T) {
+	transport := NewConnTransport(&readWriteCloser{
+		reader:   strings.NewReader(""),
+		writeErr: errors.New("write failed"),
+		closeErr: errors.New("close failed"),
+	})
+	if err := transport.WriteLine("hello"); err == nil || err.Error() != "write failed" {
+		t.Fatalf("expected write failed, got %v", err)
+	}
+	if err := transport.Close(); err == nil || err.Error() != "close failed" {
+		t.Fatalf("expected close failed, got %v", err)
+	}
+}
+
 func TestSpawnStdioEmptyBinary(t *testing.T) {
 	if _, err := SpawnStdio(context.Background(), "", nil, nil); err == nil {
 		t.Fatalf("expected error for empty binary")
@@ -72,6 +114,44 @@ func TestStdioTransportEcho(t *testing.T) {
 	}
 }
 
+func TestStdioTransportReadLineReturnsPartialLineAtEOF(t *testing.T) {
+	transport := &StdioTransport{
+		stdout: bufio.NewReader(strings.NewReader("partial")),
+	}
+	line, err := transport.ReadLine()
+	if err != nil {
+		t.Fatalf("ReadLine error: %v", err)
+	}
+	if line != "partial" {
+		t.Fatalf("unexpected partial line: %q", line)
+	}
+}
+
+func TestStdioTransportReadLineReturnsEOFWithoutPartialLine(t *testing.T) {
+	transport := &StdioTransport{
+		stdout: bufio.NewReader(strings.NewReader("")),
+	}
+	line, err := transport.ReadLine()
+	if !errors.Is(err, io.EOF) {
+		t.Fatalf("expected EOF, got line=%q err=%v", line, err)
+	}
+}
+
+func TestStdioTransportWriteAndCloseErrorsWithoutProcess(t *testing.T) {
+	transport := &StdioTransport{
+		stdin: &writeCloser{
+			writeErr: errors.New("write failed"),
+			closeErr: errors.New("close failed"),
+		},
+	}
+	if err := transport.WriteLine("hello"); err == nil || err.Error() != "write failed" {
+		t.Fatalf("expected write failed, got %v", err)
+	}
+	if err := transport.Close(); err == nil || !strings.Contains(err.Error(), "close stdin") {
+		t.Fatalf("expected close stdin error, got %v", err)
+	}
+}
+
 func TestStdioTransportCloseReportsWaitError(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell exit test is unix-only")
@@ -89,4 +169,44 @@ func TestStdioTransportCloseReportsWaitError(t *testing.T) {
 	if !strings.Contains(err.Error(), "wait for process") {
 		t.Fatalf("expected wait error, got %v", err)
 	}
+}
+
+type readWriteCloser struct {
+	reader   *strings.Reader
+	writeErr error
+	closeErr error
+}
+
+func (r *readWriteCloser) Read(p []byte) (int, error) {
+	if r.reader == nil {
+		return 0, io.EOF
+	}
+	return r.reader.Read(p)
+}
+
+func (r *readWriteCloser) Write(p []byte) (int, error) {
+	if r.writeErr != nil {
+		return 0, r.writeErr
+	}
+	return len(p), nil
+}
+
+func (r *readWriteCloser) Close() error {
+	return r.closeErr
+}
+
+type writeCloser struct {
+	writeErr error
+	closeErr error
+}
+
+func (w *writeCloser) Write(p []byte) (int, error) {
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+	return len(p), nil
+}
+
+func (w *writeCloser) Close() error {
+	return w.closeErr
 }

@@ -338,6 +338,52 @@ func TestCallContextCancel(t *testing.T) {
 	}
 }
 
+func TestCallContextCancelAfterSend(t *testing.T) {
+	transport := newChannelTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		var result map[string]any
+		done <- client.Call(ctx, "ping", map[string]any{}, &result)
+	}()
+	transport.waitForWrites(t, 1)
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected context canceled, got %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("call did not return after context cancellation")
+	}
+}
+
+func TestCallInvalidResultJSON(t *testing.T) {
+	transcript := []TranscriptEntry{
+		writeLine(JSONRPCRequest{
+			ID:     NewIntRequestID(1),
+			Method: "ping",
+			Params: mustRaw(map[string]any{}),
+		}),
+		readLine(JSONRPCResponse{
+			ID:     NewIntRequestID(1),
+			Result: mustRaw("not a map"),
+		}),
+	}
+
+	client := NewClient(NewReplayTransport(transcript), ClientOptions{})
+	defer client.Close()
+
+	var result map[string]any
+	if err := client.Call(context.Background(), "ping", map[string]any{}, &result); err == nil {
+		t.Fatalf("expected invalid result error")
+	}
+}
+
 func TestCallAfterClose(t *testing.T) {
 	client := NewClient(NewReplayTransport(nil), ClientOptions{})
 	_ = client.Close()
@@ -358,11 +404,41 @@ func TestNotifyContextCancel(t *testing.T) {
 	}
 }
 
+func TestNotifyInvalidParams(t *testing.T) {
+	client := NewClient(newChannelTransport(), ClientOptions{})
+	defer client.Close()
+
+	if err := client.Notify(context.Background(), "notice", map[string]any{"bad": func() {}}); err == nil {
+		t.Fatalf("expected marshal error")
+	}
+}
+
+func TestNotifyAfterClose(t *testing.T) {
+	client := NewClient(NewReplayTransport(nil), ClientOptions{})
+	_ = client.Close()
+
+	if err := client.Notify(context.Background(), "notice", nil); err == nil {
+		t.Fatalf("expected error after close")
+	}
+}
+
 func TestDispatchServerRequestUnknown(t *testing.T) {
 	handler := &recordingHandler{}
 	req := JSONRPCRequest{ID: NewIntRequestID(1), Method: "unknown"}
 	if _, err := dispatchServerRequest(context.Background(), handler, req); err == nil {
 		t.Fatalf("expected error for unknown method")
+	}
+}
+
+func TestDispatchServerRequestInvalidParams(t *testing.T) {
+	handler := &recordingHandler{}
+	req := JSONRPCRequest{
+		ID:     NewIntRequestID(1),
+		Method: "applyPatchApproval",
+		Params: json.RawMessage("{bad"),
+	}
+	if _, err := dispatchServerRequest(context.Background(), handler, req); err == nil {
+		t.Fatalf("expected invalid params error")
 	}
 }
 

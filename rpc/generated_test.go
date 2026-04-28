@@ -67,6 +67,24 @@ func TestGeneratedNotifications(t *testing.T) {
 	}
 }
 
+func TestGeneratedNotificationFallbackAndDecodeError(t *testing.T) {
+	note, err := parseServerNotification("custom/unknown", json.RawMessage(`{"ok":true}`))
+	if err != nil {
+		t.Fatalf("unknown notification returned error: %v", err)
+	}
+	if note.Method != "custom/unknown" || string(note.Raw) != `{"ok":true}` {
+		t.Fatalf("unexpected unknown notification: %#v", note)
+	}
+
+	note, err = parseServerNotification("turn/started", json.RawMessage("{bad"))
+	if err == nil {
+		t.Fatalf("expected decode error")
+	}
+	if note.Method != "turn/started" || string(note.Raw) != "{bad" {
+		t.Fatalf("unexpected failed notification: %#v", note)
+	}
+}
+
 func TestDispatchServerRequests(t *testing.T) {
 	methods := extractCaseMethods(t, "server_requests_gen.go")
 	if len(methods) == 0 {
@@ -75,10 +93,7 @@ func TestDispatchServerRequests(t *testing.T) {
 
 	handler := &recordingHandler{}
 	for i, method := range methods {
-		req := JSONRPCRequest{ID: NewIntRequestID(int64(i + 1)), Method: method}
-		if i == 0 {
-			req.Params = json.RawMessage(`{}`)
-		}
+		req := JSONRPCRequest{ID: NewIntRequestID(int64(i + 1)), Method: method, Params: json.RawMessage(`{}`)}
 		if _, err := dispatchServerRequest(context.Background(), handler, req); err != nil {
 			t.Fatalf("dispatch %s: %v", method, err)
 		}
