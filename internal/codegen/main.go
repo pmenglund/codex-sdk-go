@@ -728,6 +728,8 @@ func manualProtocolTypes() map[string]struct{} {
 		"PermissionsRequestApprovalParams":        {},
 		"PermissionsRequestApprovalResponse":      {},
 		"ThreadResumeResponse":                    {},
+		"ThreadGoal":                              {},
+		"ThreadGoalUpdatedNotification":           {},
 		"ThreadStartResponse":                     {},
 		"ToolRequestUserInputParams":              {},
 		"ToolRequestUserInputResponse":            {},

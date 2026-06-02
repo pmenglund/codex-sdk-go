@@ -208,6 +208,18 @@ func parseTurnNotification(note rpc.Notification) (turnNotificationPayload, erro
 			if value != nil {
 				return turnNotificationPayload{ThreadID: value.ThreadID, WillRetry: value.WillRetry, Error: value.Error}, nil
 			}
+		case protocol.ThreadGoalClearedNotification:
+			return turnNotificationPayload{ThreadID: value.ThreadID}, nil
+		case *protocol.ThreadGoalClearedNotification:
+			if value != nil {
+				return turnNotificationPayload{ThreadID: value.ThreadID}, nil
+			}
+		case protocol.ThreadGoalUpdatedNotification:
+			return turnNotificationPayload{ThreadID: value.ThreadID}, nil
+		case *protocol.ThreadGoalUpdatedNotification:
+			if value != nil {
+				return turnNotificationPayload{ThreadID: value.ThreadID}, nil
+			}
 		}
 	}
 

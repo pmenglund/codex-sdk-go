@@ -56,6 +56,25 @@ type ErrorNotification struct {
 	Error     *TurnNotificationError `json:"error,omitempty"`
 }
 
+// ThreadGoal describes persisted long-running goal metadata for a thread.
+type ThreadGoal struct {
+	ThreadID        string           `json:"threadId"`
+	Objective       string           `json:"objective"`
+	Status          ThreadGoalStatus `json:"status"`
+	TokenBudget     *int64           `json:"tokenBudget"`
+	TokensUsed      int64            `json:"tokensUsed"`
+	TimeUsedSeconds int64            `json:"timeUsedSeconds"`
+	CreatedAt       int64            `json:"createdAt"`
+	UpdatedAt       int64            `json:"updatedAt"`
+}
+
+// ThreadGoalUpdatedNotification is the payload for thread/goal/updated.
+type ThreadGoalUpdatedNotification struct {
+	ThreadID string     `json:"threadId"`
+	TurnID   *string    `json:"turnId"`
+	Goal     ThreadGoal `json:"goal"`
+}
+
 // ApplyPatchApprovalParams uses the sanitized schema variant because the raw
 // schema currently exceeds the generator's capabilities.
 type ApplyPatchApprovalParams = SanitizedApplyPatchApprovalParams

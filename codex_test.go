@@ -353,6 +353,44 @@ func TestParseTurnNotificationTypedParams(t *testing.T) {
 				Error:     &protocol.TurnNotificationError{Message: "retrying"},
 			},
 		},
+		{
+			name: "thread goal cleared value",
+			note: rpc.Notification{Params: protocol.ThreadGoalClearedNotification{
+				ThreadID: "thr_7",
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_7"},
+		},
+		{
+			name: "thread goal cleared pointer",
+			note: rpc.Notification{Params: &protocol.ThreadGoalClearedNotification{
+				ThreadID: "thr_8",
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_8"},
+		},
+		{
+			name: "thread goal updated value",
+			note: rpc.Notification{Params: protocol.ThreadGoalUpdatedNotification{
+				ThreadID: "thr_9",
+				Goal: protocol.ThreadGoal{
+					ThreadID:  "thr_9",
+					Objective: "ship",
+					Status:    protocol.ThreadGoalStatusActive,
+				},
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_9"},
+		},
+		{
+			name: "thread goal updated pointer",
+			note: rpc.Notification{Params: &protocol.ThreadGoalUpdatedNotification{
+				ThreadID: "thr_10",
+				Goal: protocol.ThreadGoal{
+					ThreadID:  "thr_10",
+					Objective: "ship",
+					Status:    protocol.ThreadGoalStatusActive,
+				},
+			}},
+			want: turnNotificationPayload{ThreadID: "thr_10"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -646,6 +684,14 @@ func TestMatchThreadID(t *testing.T) {
 	}
 	if matchesThreadID(note, "thr_2") {
 		t.Fatalf("expected non-matching thread id")
+	}
+
+	typed := rpc.Notification{Params: protocol.ThreadGoalUpdatedNotification{ThreadID: "thr_3"}}
+	if !matchesThreadID(typed, "thr_3") {
+		t.Fatalf("expected typed goal notification to match thread id")
+	}
+	if matchesThreadID(typed, "thr_4") {
+		t.Fatalf("expected typed goal notification not to match another thread id")
 	}
 
 	empty := rpc.Notification{Raw: MustJSON(map[string]any{})}
