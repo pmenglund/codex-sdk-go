@@ -207,37 +207,3 @@ Use the RPC client directly for full control.
 rpcClient := client.Client()
 models, err := rpcClient.ModelList(ctx, protocol.ModelListParams{})
 ```
-
-## Code generation
-
-Regenerate protocol types and RPC stubs:
-
-```bash
-go generate ./...
-```
-
-Generate from a specific Codex tag, branch, or commit without changing the
-checkout at `$CODEX_REPO_ROOT`:
-
-```bash
-CODEX_REPO_ROOT=../codex CODEX_REPO_REF=<tag> go generate ./...
-```
-
-This runs:
-
-- `cargo run -p codex-app-server-protocol --bin export`
-- `go-jsonschema` (via `internal/codegen`)
-
-The generator needs a checkout of `openai/codex` to export schemas.
-It resolves that checkout in this order:
-
-- `$CODEX_REPO_ROOT` (if set)
-- `../codex` (default)
-
-If `$CODEX_REPO_REF` is set, generation runs from a temporary detached git
-worktree at that ref. Fetch the desired tag or ref in the Codex checkout before
-running generation.
-
-Generated files include a header line with the exact codex commit hash used.
-
-Generated files are checked in under `protocol` and `rpc`.
