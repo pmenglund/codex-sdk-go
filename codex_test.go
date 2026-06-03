@@ -675,6 +675,19 @@ func TestInputHelpers(t *testing.T) {
 	if input := SkillInput("skill", "/tmp/skill"); input.Type != InputTypeSkill || input.Name != "skill" || input.Path != "/tmp/skill" {
 		t.Fatalf("unexpected skill input: %#v", input)
 	}
+	mention := MentionInput("thread")
+	if mention.Text != "@thread" || len(mention.TextElements) != 1 {
+		t.Fatalf("unexpected mention input: %#v", mention)
+	}
+	if err := mention.validate(); err != nil {
+		t.Fatalf("mention should validate: %v", err)
+	}
+	invalid := Input{Type: InputTypeText, Text: "x", TextElements: []protocol.TextElement{{
+		ByteRange: protocol.TextElementByteRange{Start: 2, End: 3},
+	}}}
+	if err := invalid.validate(); err == nil {
+		t.Fatalf("expected invalid text element range")
+	}
 }
 
 func TestMatchThreadID(t *testing.T) {

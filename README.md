@@ -84,6 +84,57 @@ for {
 
 `RunStreamed` returns thread-scoped events plus notifications that omit `threadId` (for example account/session updates) so global events are not silently dropped.
 
+## Turn handles
+
+Use `StartTurn` when you need to steer or interrupt a running turn.
+
+```go
+handle, err := thread.StartTurn(ctx, []codex.Input{codex.TextInput("Inspect the repo")}, nil)
+if err != nil {
+    panic(err)
+}
+
+if _, err := handle.Steer(ctx, []codex.Input{codex.TextInput("Focus on tests")}); err != nil {
+    panic(err)
+}
+
+result, err := handle.Run(ctx)
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(result.FinalResponse)
+```
+
+`TurnHandle` owns its notification subscription. Call `Close` if you stop before `Run` returns.
+
+## Account, models, and threads
+
+High-level helpers wrap common app-server operations without requiring direct JSON-RPC calls.
+
+```go
+account, err := client.Account(ctx, codex.AccountOptions{})
+models, err := client.ListModels(ctx, codex.ListModelsOptions{})
+threads, err := client.ListThreads(ctx, codex.ThreadListOptions{})
+```
+
+Thread values also expose lifecycle helpers:
+
+```go
+if _, err := thread.SetName(ctx, "Investigation"); err != nil {
+    panic(err)
+}
+
+forked, _, err := thread.Fork(ctx, codex.ThreadForkOptions{})
+if err != nil {
+    panic(err)
+}
+
+_ = forked
+```
+
+For lower-level or less stable protocol features, use `client.Client()` and the generated `rpc` package.
+
 ## Approvals
 
 Configure approval handling by supplying a handler when constructing the client.
@@ -128,6 +179,25 @@ For common values, prefer typed constants from this package:
 - `codex.ApprovalPolicyNever`, `codex.ApprovalPolicyOnFailure`, `codex.ApprovalPolicyOnRequest`, `codex.ApprovalPolicyUntrusted`
 - `codex.SandboxModeReadOnly`, `codex.SandboxModeWorkspaceWrite`, `codex.SandboxModeDangerFullAccess`
 - `codex.ReasoningEffortNone`, `codex.ReasoningEffortMinimal`, `codex.ReasoningEffortLow`, `codex.ReasoningEffortMedium`, `codex.ReasoningEffortHigh`, `codex.ReasoningEffortXHigh`
+
+## Inputs and retryable errors
+
+Use helpers to build structured inputs:
+
+```go
+inputs := []codex.Input{
+    codex.TextInput("Inspect this file"),
+    codex.MentionInput("AGENTS.md"),
+}
+```
+
+Retry classification uses ordinary Go errors:
+
+```go
+if codex.IsRetryable(err) {
+    // Retry according to your caller policy.
+}
+```
 
 ## Low-level RPC
 

@@ -80,23 +80,11 @@ func (t *Thread) RunStreamed(ctx context.Context, inputs []Input, opts *TurnOpti
 		return nil, err
 	}
 
-	logger := resolveLogger(t.logger)
-	iter := t.client.SubscribeNotifications(0)
-
-	params, err := buildTurnParams(t.id, inputs, opts)
+	handle, err := t.StartTurn(ctx, inputs, opts)
 	if err != nil {
-		logger.Error("codex turn start failed", "thread_id", t.id, "error", err)
-		iter.Close()
 		return nil, err
 	}
-	logger.Info("codex starting turn", "thread_id", t.id, "input_count", len(inputs))
-	if err := t.client.Call(ctx, "turn/start", params, nil); err != nil {
-		logger.Error("codex turn start failed", "thread_id", t.id, "error", err)
-		iter.Close()
-		return nil, err
-	}
-
-	return &TurnStream{iter: iter, threadID: t.id}, nil
+	return handle.Stream()
 }
 
 func (t *Thread) ensureReady() error {

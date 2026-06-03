@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/rpc"
@@ -36,10 +37,15 @@ type TurnOptions struct {
 // TurnResult aggregates notifications for a completed turn.
 type TurnResult struct {
 	TurnID        string
+	Status        string
+	ErrorMessage  string
 	Notifications []rpc.Notification
 	// Items holds the raw JSON payloads for completed items.
 	Items         []json.RawMessage
 	FinalResponse string
+	TokenUsage    *protocol.ThreadTokenUsage
+	CreatedAt     *time.Time
+	CompletedAt   *time.Time
 }
 
 // TurnStream iterates notifications for a running turn.
@@ -80,7 +86,7 @@ func (s *TurnStream) Close() {
 }
 
 func updateTurnResult(result *TurnResult, note rpc.Notification) {
-	if note.Method != "item/completed" && note.Method != "turn/started" && note.Method != "turn/completed" && note.Method != "turn/failed" {
+	if note.Method != "item/completed" && note.Method != "turn/started" && note.Method != "turn/completed" && note.Method != "turn/failed" && note.Method != "thread/tokenUsage/updated" {
 		return
 	}
 
@@ -102,6 +108,22 @@ func updateTurnResult(result *TurnResult, note rpc.Notification) {
 		if payload.Turn != nil && payload.Turn.ID != "" {
 			result.TurnID = payload.Turn.ID
 		}
+		if payload.Turn != nil && payload.Turn.Status != "" {
+			result.Status = payload.Turn.Status
+		}
+		if message := payloadErrorMessage(payload); message != "" {
+			result.ErrorMessage = message
+		}
+		if payload.CreatedAt != nil {
+			result.CreatedAt = payload.CreatedAt
+		}
+		if payload.CompletedAt != nil {
+			result.CompletedAt = payload.CompletedAt
+		}
+	}
+
+	if note.Method == "thread/tokenUsage/updated" && payload.TokenUsage != nil {
+		result.TokenUsage = payload.TokenUsage
 	}
 }
 
@@ -180,11 +202,15 @@ func extractTextFromItemRaw(raw json.RawMessage) (string, bool) {
 }
 
 type turnNotificationPayload struct {
-	ThreadID  string                          `json:"threadId,omitempty"`
-	Turn      *protocol.TurnNotificationTurn  `json:"turn,omitempty"`
-	Item      json.RawMessage                 `json:"item,omitempty"`
-	WillRetry *bool                           `json:"willRetry,omitempty"`
-	Error     *protocol.TurnNotificationError `json:"error,omitempty"`
+	ThreadID    string                          `json:"threadId,omitempty"`
+	TurnID      string                          `json:"turnId,omitempty"`
+	Turn        *protocol.TurnNotificationTurn  `json:"turn,omitempty"`
+	Item        json.RawMessage                 `json:"item,omitempty"`
+	WillRetry   *bool                           `json:"willRetry,omitempty"`
+	Error       *protocol.TurnNotificationError `json:"error,omitempty"`
+	TokenUsage  *protocol.ThreadTokenUsage      `json:"tokenUsage,omitempty"`
+	CreatedAt   *time.Time                      `json:"createdAt,omitempty"`
+	CompletedAt *time.Time                      `json:"completedAt,omitempty"`
 }
 
 func parseTurnNotification(note rpc.Notification) (turnNotificationPayload, error) {
@@ -219,6 +245,12 @@ func parseTurnNotification(note rpc.Notification) (turnNotificationPayload, erro
 		case *protocol.ThreadGoalUpdatedNotification:
 			if value != nil {
 				return turnNotificationPayload{ThreadID: value.ThreadID}, nil
+			}
+		case protocol.ThreadTokenUsageUpdatedNotification:
+			return turnNotificationPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, TokenUsage: &value.TokenUsage}, nil
+		case *protocol.ThreadTokenUsageUpdatedNotification:
+			if value != nil {
+				return turnNotificationPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, TokenUsage: &value.TokenUsage}, nil
 			}
 		}
 	}

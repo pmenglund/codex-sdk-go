@@ -3,6 +3,7 @@ package codex
 import (
 	"errors"
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
@@ -49,11 +50,35 @@ func SkillInput(name, path string) Input {
 	return Input{Type: InputTypeSkill, Name: name, Path: path}
 }
 
+// MentionInput creates a text input containing a single mention placeholder.
+func MentionInput(name string) Input {
+	text := "@" + name
+	return Input{
+		Type: InputTypeText,
+		Text: text,
+		TextElements: []protocol.TextElement{{
+			ByteRange:   protocol.TextElementByteRange{Start: 0, End: len(text)},
+			Placeholder: stringPtr(name),
+		}},
+	}
+}
+
 func (i Input) validate() error {
 	switch i.Type {
 	case InputTypeText:
 		if i.Text == "" && len(i.TextElements) == 0 {
 			return errors.New("text input is empty")
+		}
+		for _, elem := range i.TextElements {
+			if elem.ByteRange.Start < 0 || elem.ByteRange.End < elem.ByteRange.Start || elem.ByteRange.End > len(i.Text) {
+				return errors.New("text element byte range is invalid")
+			}
+			if elem.Placeholder != nil && *elem.Placeholder == "" {
+				return errors.New("text element placeholder is empty")
+			}
+		}
+		if !utf8.ValidString(i.Text) {
+			return errors.New("text input is not valid utf-8")
 		}
 	case InputTypeImage:
 		if i.URL == "" {

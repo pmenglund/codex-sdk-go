@@ -1,8 +1,9 @@
 // Package codex provides an idiomatic Go SDK for the Codex app-server.
 //
 // The SDK spawns the `codex app-server` process (or uses a custom transport)
-// and exposes a high-level facade for threads and turns. For lower-level access,
-// you can reach the JSON-RPC client via (*Codex).Client().
+// and exposes a high-level facade for accounts, models, threads, turns, and
+// streaming turn control. For lower-level access, you can reach the JSON-RPC
+// client via (*Codex).Client().
 //
 // Typical usage:
 //
@@ -29,6 +30,31 @@
 //	}
 //	fmt.Println(result.FinalResponse)
 //
+// For a running turn that needs steering or interruption, start a turn handle:
+//
+//	handle, err := thread.StartTurn(ctx, []codex.Input{codex.TextInput("Inspect the repo")}, nil)
+//	if err != nil {
+//		panic(err)
+//	}
+//	defer handle.Close()
+//	_, err = handle.Steer(ctx, []codex.Input{codex.TextInput("Focus on tests")})
+//	if err != nil {
+//		panic(err)
+//	}
+//	result, err = handle.Run(ctx)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+// Account, model, and thread lifecycle helpers cover common app-server calls:
+//
+//	account, err := client.Account(ctx, codex.AccountOptions{})
+//	models, err := client.ListModels(ctx, codex.ListModelsOptions{})
+//	threads, err := client.ListThreads(ctx, codex.ThreadListOptions{})
+//	_ = account
+//	_ = models
+//	_ = threads
+//
 // JSON-typed options (approval policies, sandbox policies, output schemas, etc.)
 // accept any JSON-marshalable value. If you already have raw JSON, pass
 // json.RawMessage or codex.MustJSON(...) to avoid double encoding.
@@ -37,4 +63,7 @@
 //   - codex.ApprovalPolicyNever / codex.ApprovalPolicyOnRequest / ...
 //   - codex.SandboxModeReadOnly / codex.SandboxModeWorkspaceWrite / ...
 //   - codex.ReasoningEffortLow / codex.ReasoningEffortMedium / ...
+//
+// Retryable overload errors can be detected with codex.IsRetryable or
+// codex.IsOverloaded. Both helpers work with wrapped errors.
 package codex
