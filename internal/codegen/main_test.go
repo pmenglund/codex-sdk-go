@@ -52,8 +52,9 @@ func TestRefName(t *testing.T) {
 
 func TestResolveResponseType(t *testing.T) {
 	defs := map[string]struct{}{
-		"FooResponse": {},
-		"BarResponse": {},
+		"FooResponse":                  {},
+		"BarResponse":                  {},
+		"GetAccountTokenUsageResponse": {},
 	}
 	method := rpcMethod{Method: "foo", ParamsType: "FooParams"}
 	resp, err := resolveResponseType(method, defs, nil)
@@ -71,6 +72,14 @@ func TestResolveResponseType(t *testing.T) {
 	}
 	if resp != "OverrideResponse" {
 		t.Fatalf("unexpected override response type: %s", resp)
+	}
+
+	resp, err = resolveResponseType(rpcMethod{Method: "account/usage/read"}, defs, clientResponseOverrides())
+	if err != nil {
+		t.Fatalf("unexpected account usage error: %v", err)
+	}
+	if resp != "GetAccountTokenUsageResponse" {
+		t.Fatalf("unexpected account usage response type: %s", resp)
 	}
 
 	_, err = resolveResponseType(rpcMethod{Method: "missing"}, defs, nil)

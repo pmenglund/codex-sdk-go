@@ -147,6 +147,10 @@ func stringPtr(value string) *string {
 	return &value
 }
 
+func boolPtr(value bool) *bool {
+	return &value
+}
+
 func threadIDFromResponse(threadID string, thread *protocol.Thread) (string, error) {
 	if threadID != "" {
 		return threadID, nil

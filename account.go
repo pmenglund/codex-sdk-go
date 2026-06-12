@@ -18,7 +18,11 @@ func (c *Codex) Account(ctx context.Context, opts AccountOptions) (*protocol.Get
 	if err := c.ensureReady(); err != nil {
 		return nil, err
 	}
-	return c.client.AccountRead(ctx, protocol.GetAccountParams{RefreshToken: opts.RefreshToken})
+	params := protocol.GetAccountParams{}
+	if opts.RefreshToken {
+		params.RefreshToken = boolPtr(opts.RefreshToken)
+	}
+	return c.client.AccountRead(ctx, params)
 }
 
 // StartLogin starts an app-server account login flow using protocol login params.

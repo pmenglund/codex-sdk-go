@@ -231,6 +231,11 @@ func (h *recordingHandler) ApplyPatchApproval(ctx context.Context, params protoc
 	return &resp, nil
 }
 
+func (h *recordingHandler) AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	h.lastMethod = "attestation/generate"
+	return nil, nil
+}
+
 func (h *recordingHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
 	h.lastMethod = "account/chatgptAuthTokens/refresh"
 	return nil, nil

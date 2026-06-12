@@ -480,6 +480,10 @@ func (h *testHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, param
 	return nil, errors.New("not implemented")
 }
 
+func (h *testHandler) AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (h *testHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	return nil, errors.New("not implemented")
 }

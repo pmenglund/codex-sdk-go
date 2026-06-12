@@ -723,6 +723,10 @@ func (h *testServerRequestHandler) ApplyPatchApproval(ctx context.Context, param
 	return nil, nil
 }
 
+func (h *testServerRequestHandler) AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	return nil, nil
+}
+
 func (h *testServerRequestHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	return nil, nil
 }

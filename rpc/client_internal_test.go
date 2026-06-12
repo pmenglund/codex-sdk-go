@@ -95,6 +95,10 @@ func (h *errorHandler) ApplyPatchApproval(ctx context.Context, params protocol.A
 	return nil, errors.New("nope")
 }
 
+func (h *errorHandler) AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	return nil, errors.New("nope")
+}
+
 func (h *errorHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	return nil, errors.New("nope")
 }

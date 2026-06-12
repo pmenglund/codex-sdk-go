@@ -579,6 +579,7 @@ func clientResponseOverrides() map[string]string {
 	return map[string]string{
 		"account/logout":             "LogoutAccountResponse",
 		"account/rateLimits/read":    "GetAccountRateLimitsResponse",
+		"account/usage/read":         "GetAccountTokenUsageResponse",
 		"addConversationListener":    "AddConversationSubscriptionResponse",
 		"config/value/write":         "ConfigWriteResponse",
 		"config/batchWrite":          "ConfigWriteResponse",

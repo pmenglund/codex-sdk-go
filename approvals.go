@@ -90,6 +90,13 @@ func (h AutoApproveHandler) AccountChatgptAuthTokensRefresh(ctx context.Context,
 	return nil, errors.New("chatgpt auth token refresh requires a custom handler")
 }
 
+// AttestationGenerate returns an error for attestation generation requests.
+func (h AutoApproveHandler) AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	logger := resolveLogger(h.Logger)
+	logger.Info("codex auto-approve handler cannot generate attestations")
+	return nil, errors.New("attestation generation requires a custom handler")
+}
+
 // ApplyPatchApproval approves legacy patch requests.
 func (h AutoApproveHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	logger := resolveLogger(h.Logger)

@@ -25,10 +25,10 @@ const (
 type ReasoningEffort = protocol.ReasoningEffort
 
 const (
-	ReasoningEffortNone    ReasoningEffort = protocol.ReasoningEffortNone
-	ReasoningEffortMinimal ReasoningEffort = protocol.ReasoningEffortMinimal
-	ReasoningEffortLow     ReasoningEffort = protocol.ReasoningEffortLow
-	ReasoningEffortMedium  ReasoningEffort = protocol.ReasoningEffortMedium
-	ReasoningEffortHigh    ReasoningEffort = protocol.ReasoningEffortHigh
-	ReasoningEffortXHigh   ReasoningEffort = protocol.ReasoningEffortXhigh
+	ReasoningEffortNone    ReasoningEffort = "none"
+	ReasoningEffortMinimal ReasoningEffort = "minimal"
+	ReasoningEffortLow     ReasoningEffort = "low"
+	ReasoningEffortMedium  ReasoningEffort = "medium"
+	ReasoningEffortHigh    ReasoningEffort = "high"
+	ReasoningEffortXHigh   ReasoningEffort = "xhigh"
 )

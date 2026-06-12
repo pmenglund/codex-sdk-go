@@ -57,14 +57,14 @@ func exampleTranscript(info protocol.ClientInfo) []rpc.TranscriptEntry {
 	result := protocol.ModelListResponse{
 		Data: []protocol.Model{
 			{
-				DefaultReasoningEffort: protocol.ReasoningEffortMedium,
+				DefaultReasoningEffort: codex.ReasoningEffortMedium,
 				Description:            "Test Model",
 				DisplayName:            "Test Model",
 				ID:                     "model-1",
 				IsDefault:              true,
 				Model:                  "model-1",
 				SupportedReasoningEfforts: []protocol.ReasoningEffortOption{
-					{ReasoningEffort: protocol.ReasoningEffortMedium, Description: "Medium"},
+					{ReasoningEffort: codex.ReasoningEffortMedium, Description: "Medium"},
 				},
 			},
 		},

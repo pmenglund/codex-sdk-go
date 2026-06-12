@@ -68,7 +68,11 @@ func (c *Codex) ReadThread(ctx context.Context, threadID string, opts ThreadRead
 	if threadID == "" {
 		return nil, errors.New("thread id is required")
 	}
-	return c.client.ThreadRead(ctx, protocol.ThreadReadParams{ThreadID: threadID, IncludeTurns: opts.IncludeTurns})
+	params := protocol.ThreadReadParams{ThreadID: threadID}
+	if opts.IncludeTurns {
+		params.IncludeTurns = boolPtr(opts.IncludeTurns)
+	}
+	return c.client.ThreadRead(ctx, params)
 }
 
 // Read reads this thread from the app-server.
@@ -76,7 +80,11 @@ func (t *Thread) Read(ctx context.Context, opts ThreadReadOptions) (*protocol.Th
 	if err := t.ensureReady(); err != nil {
 		return nil, err
 	}
-	return t.client.ThreadRead(ctx, protocol.ThreadReadParams{ThreadID: t.id, IncludeTurns: opts.IncludeTurns})
+	params := protocol.ThreadReadParams{ThreadID: t.id}
+	if opts.IncludeTurns {
+		params.IncludeTurns = boolPtr(opts.IncludeTurns)
+	}
+	return t.client.ThreadRead(ctx, params)
 }
 
 // SetThreadName sets the display name for a thread by id.
@@ -180,9 +188,11 @@ type ThreadForkOptions struct {
 
 func (o ThreadForkOptions) toParams(threadID string) (protocol.ThreadForkParams, error) {
 	params := protocol.ThreadForkParams{
-		ThreadID:     threadID,
-		Ephemeral:    o.Ephemeral,
-		ExcludeTurns: o.ExcludeTurns,
+		ThreadID:  threadID,
+		Ephemeral: o.Ephemeral,
+	}
+	if o.ExcludeTurns != nil {
+		return params, errors.New("thread fork exclude turns is no longer supported by the current app-server protocol")
 	}
 	if o.Model != "" {
 		params.Model = stringPtr(o.Model)
