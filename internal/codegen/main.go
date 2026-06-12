@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -53,10 +54,15 @@ func main() {
 		fatal(err)
 	}
 
+	codexVersion, err := codexPackageVersion(codexSourceRoot)
+	if err != nil {
+		fatal(err)
+	}
+
 	if err := exportSchemas(codexSourceRoot, schemaDir); err != nil {
 		fatal(err)
 	}
-	if err := generateProtocolTypes(schemaDir, sdkRoot, codexCommit); err != nil {
+	if err := generateProtocolTypes(schemaDir, sdkRoot, codexCommit, codexVersion); err != nil {
 		fatal(err)
 	}
 
@@ -73,7 +79,7 @@ func exportSchemas(codexRoot, outDir string) error {
 	return cmd.Run()
 }
 
-func generateProtocolTypes(schemaDir, repoRoot, codexCommit string) error {
+func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string) error {
 	cfg := generator.Config{
 		DefaultPackageName: "protocol",
 		DefaultOutputName:  "types_gen.go",
@@ -155,6 +161,10 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit string) error {
 	}
 
 	if err := writeProtocolAliases(outDir, generated, fallbacks, codexCommit); err != nil {
+		return err
+	}
+
+	if err := writeProtocolMetadata(outDir, codexCommit, codexVersion); err != nil {
 		return err
 	}
 
@@ -771,6 +781,17 @@ func generatedHeader(codexCommit string) string {
 	return generatedHeaderBase + "// Source codex commit: " + codexCommit + "\n\n"
 }
 
+func writeProtocolMetadata(outDir, codexCommit, codexVersion string) error {
+	var b strings.Builder
+	b.WriteString(generatedHeader(codexCommit))
+	b.WriteString("package protocol\n\n")
+	b.WriteString("// GeneratedCodexCommit is the Codex source commit used to generate this protocol package.\n")
+	b.WriteString(fmt.Sprintf("const GeneratedCodexCommit = %q\n\n", codexCommit))
+	b.WriteString("// GeneratedCodexVersion is the Codex package version used to generate this protocol package.\n")
+	b.WriteString(fmt.Sprintf("const GeneratedCodexVersion = %q\n", codexVersion))
+	return writeFile(outDir, "metadata_gen.go", []byte(b.String()))
+}
+
 func writeFile(dir, name string, contents []byte) error {
 	path := filepath.Join(dir, name)
 	return os.WriteFile(path, contents, 0o644)
@@ -945,6 +966,41 @@ func codexCommitHash(codexRoot string) (string, error) {
 		return "", fmt.Errorf("resolve codex commit hash: empty hash")
 	}
 	return hash, nil
+}
+
+func codexPackageVersion(codexRoot string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(codexRoot, "codex-rs", "Cargo.toml"))
+	if err != nil {
+		return "", fmt.Errorf("read codex Cargo.toml: %w", err)
+	}
+	version := parseWorkspacePackageVersion(string(data))
+	if version == "" {
+		return "", errors.New("resolve codex package version: [workspace.package] version not found")
+	}
+	return version, nil
+}
+
+func parseWorkspacePackageVersion(contents string) string {
+	inWorkspacePackage := false
+	for _, line := range strings.Split(contents, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if strings.HasPrefix(line, "[") {
+			inWorkspacePackage = line == "[workspace.package]"
+			continue
+		}
+		if !inWorkspacePackage || !strings.HasPrefix(line, "version") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 || strings.TrimSpace(parts[0]) != "version" {
+			continue
+		}
+		return strings.Trim(strings.TrimSpace(parts[1]), `"'`)
+	}
+	return ""
 }
 
 func gitCommandError(action string, out []byte, err error) error {

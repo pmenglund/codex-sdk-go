@@ -1,6 +1,7 @@
 package codex
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -615,6 +616,60 @@ func TestRunStreamedStartCallError(t *testing.T) {
 	}
 }
 
+func TestNewLogsCodexVersionMismatch(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("spawn script test is unix-only")
+	}
+
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	client, err := New(context.Background(), Options{
+		Spawn:  SpawnOptions{CodexPath: writeFakeCodexBinary(t)},
+		Logger: logger,
+	})
+	if err != nil {
+		t.Fatalf("new client error: %v", err)
+	}
+	defer client.Close()
+
+	logOutput := logs.String()
+	if !strings.Contains(logOutput, "codex binary version differs from generated protocol version") {
+		t.Fatalf("expected version mismatch warning, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "generated_version="+protocol.GeneratedCodexVersion) {
+		t.Fatalf("expected generated version in warning, got %s", logOutput)
+	}
+}
+
+func TestWarnIfCodexVersionCannotBeVerified(t *testing.T) {
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	warnIfCodexVersionMismatch(context.Background(), logger, filepath.Join(t.TempDir(), "missing-codex"))
+
+	logOutput := logs.String()
+	if !strings.Contains(logOutput, "level=WARN") {
+		t.Fatalf("expected warning level, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "codex binary version could not be verified") {
+		t.Fatalf("expected verification warning, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "generated_version="+protocol.GeneratedCodexVersion) {
+		t.Fatalf("expected generated version in warning, got %s", logOutput)
+	}
+}
+
+func TestParseCodexVersionOutput(t *testing.T) {
+	if got := parseCodexVersionOutput("codex-cli 0.137.0\n"); got != "0.137.0" {
+		t.Fatalf("unexpected version: %q", got)
+	}
+	if got := parseCodexVersionOutput("warning\ncodex-cli v1.2.3\n"); got != "1.2.3" {
+		t.Fatalf("unexpected version with prefix: %q", got)
+	}
+	if got := parseCodexVersionOutput("codex-cli dev\n"); got != "" {
+		t.Fatalf("expected empty version, got %q", got)
+	}
+}
+
 func initializeTranscript() []rpc.TranscriptEntry {
 	info := defaultClientInfo()
 	return []rpc.TranscriptEntry{
@@ -636,6 +691,11 @@ func writeFakeCodexBinary(t *testing.T) string {
 
 	path := filepath.Join(t.TempDir(), "fake-codex")
 	script := `#!/bin/sh
+if [ "$1" = "--version" ]; then
+	printf 'codex-cli 999.999.999\n'
+	exit 0
+fi
+
 extract_id() {
 	printf '%s\n' "$1" | sed -n 's/.*"id":\([0-9][0-9]*\).*/\1/p'
 }

@@ -12,6 +12,7 @@ import (
 )
 
 const testCodexCommit = "0123456789abcdef0123456789abcdef01234567"
+const testCodexVersion = "1.2.3"
 
 func TestMethodBaseName(t *testing.T) {
 	if got := methodBaseName("account/login/start"); got != "AccountLoginStart" {
@@ -634,11 +635,14 @@ func TestGenerateProtocolTypes(t *testing.T) {
 		},
 	})
 
-	if err := generateProtocolTypes(schemaDir, root, testCodexCommit); err != nil {
+	if err := generateProtocolTypes(schemaDir, root, testCodexCommit, testCodexVersion); err != nil {
 		t.Fatalf("generateProtocolTypes error: %v", err)
 	}
 	if !exists(filepath.Join(root, "protocol", "types_gen.go")) {
 		t.Fatalf("expected types_gen.go output")
+	}
+	if !exists(filepath.Join(root, "protocol", "metadata_gen.go")) {
+		t.Fatalf("expected metadata_gen.go output")
 	}
 	typesData, err := os.ReadFile(filepath.Join(root, "protocol", "types_gen.go"))
 	if err != nil {
@@ -646,6 +650,13 @@ func TestGenerateProtocolTypes(t *testing.T) {
 	}
 	if !strings.Contains(string(typesData), "Source codex commit: "+testCodexCommit) {
 		t.Fatalf("expected codex commit header in protocol output")
+	}
+	metadataData, err := os.ReadFile(filepath.Join(root, "protocol", "metadata_gen.go"))
+	if err != nil {
+		t.Fatalf("read generated metadata file: %v", err)
+	}
+	if !strings.Contains(string(metadataData), `GeneratedCodexVersion = "`+testCodexVersion+`"`) {
+		t.Fatalf("expected codex version metadata, got %s", metadataData)
 	}
 }
 
@@ -661,7 +672,7 @@ func TestGenerateProtocolTypesSkipsProtocolSchemas(t *testing.T) {
 		}
 	}
 
-	if err := generateProtocolTypes(schemaDir, root, testCodexCommit); err != nil {
+	if err := generateProtocolTypes(schemaDir, root, testCodexCommit, testCodexVersion); err != nil {
 		t.Fatalf("generateProtocolTypes error: %v", err)
 	}
 }
@@ -676,7 +687,7 @@ func TestGenerateProtocolTypesInvalidSchema(t *testing.T) {
 		t.Fatalf("write bad schema: %v", err)
 	}
 
-	if err := generateProtocolTypes(schemaDir, root, testCodexCommit); err == nil {
+	if err := generateProtocolTypes(schemaDir, root, testCodexCommit, testCodexVersion); err == nil {
 		t.Fatalf("expected invalid schema error")
 	}
 }
@@ -738,6 +749,20 @@ func TestGenerateRPCStubs(t *testing.T) {
 	}
 	if !strings.Contains(string(rpcData), "Source codex commit: "+testCodexCommit) {
 		t.Fatalf("expected codex commit header in rpc output")
+	}
+}
+
+func TestParseWorkspacePackageVersion(t *testing.T) {
+	contents := `
+[package]
+version = "0.1.0"
+
+[workspace.package]
+name = "codex"
+version = "0.139.0"
+`
+	if got := parseWorkspacePackageVersion(contents); got != "0.139.0" {
+		t.Fatalf("unexpected version: %q", got)
 	}
 }
 

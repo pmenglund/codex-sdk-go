@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"os/exec"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/rpc"
 )
+
+const codexVersionProbeTimeout = 2 * time.Second
 
 // Codex is the main entrypoint for the Go SDK.
 type Codex struct {
@@ -34,6 +38,7 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		args = append(args, spawn.ExtraArgs...)
 
 		logger.Info("codex starting app-server", "path", spawn.CodexPath, "args", strings.Join(args, " "))
+		warnIfCodexVersionMismatch(ctx, logger, spawn.CodexPath)
 
 		var err error
 		if spawn.Stderr == nil {
@@ -149,6 +154,83 @@ func stringPtr(value string) *string {
 
 func boolPtr(value bool) *bool {
 	return &value
+}
+
+func warnIfCodexVersionMismatch(ctx context.Context, logger *slog.Logger, codexPath string) {
+	generatedVersion := protocol.GeneratedCodexVersion
+	if generatedVersion == "" {
+		return
+	}
+	runtimeVersion, err := probeCodexVersion(ctx, codexPath)
+	if err != nil {
+		logger.Warn(
+			"codex binary version could not be verified",
+			"path", codexPath,
+			"generated_version", generatedVersion,
+			"generated_commit", protocol.GeneratedCodexCommit,
+			"error", err,
+		)
+		return
+	}
+	if runtimeVersion == "" {
+		logger.Warn(
+			"codex binary version could not be verified",
+			"path", codexPath,
+			"generated_version", generatedVersion,
+			"generated_commit", protocol.GeneratedCodexCommit,
+			"error", "version unavailable",
+		)
+		return
+	}
+	if runtimeVersion == generatedVersion {
+		return
+	}
+	logger.Warn(
+		"codex binary version differs from generated protocol version",
+		"path", codexPath,
+		"runtime_version", runtimeVersion,
+		"generated_version", generatedVersion,
+		"generated_commit", protocol.GeneratedCodexCommit,
+	)
+}
+
+func probeCodexVersion(parent context.Context, codexPath string) (string, error) {
+	ctx, cancel := context.WithTimeout(parent, codexVersionProbeTimeout)
+	defer cancel()
+
+	out, err := exec.CommandContext(ctx, codexPath, "--version").Output()
+	if err != nil {
+		return "", err
+	}
+	return parseCodexVersionOutput(string(out)), nil
+}
+
+func parseCodexVersionOutput(output string) string {
+	for _, field := range strings.Fields(output) {
+		field = strings.TrimPrefix(field, "v")
+		if isDottedVersion(field) {
+			return field
+		}
+	}
+	return ""
+}
+
+func isDottedVersion(value string) bool {
+	parts := strings.Split(value, ".")
+	if len(parts) < 2 {
+		return false
+	}
+	for _, part := range parts {
+		if part == "" {
+			return false
+		}
+		for _, r := range part {
+			if r < '0' || r > '9' {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func threadIDFromResponse(threadID string, thread *protocol.Thread) (string, error) {
