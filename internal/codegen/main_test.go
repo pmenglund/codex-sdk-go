@@ -53,9 +53,11 @@ func TestRefName(t *testing.T) {
 
 func TestResolveResponseType(t *testing.T) {
 	defs := map[string]struct{}{
-		"FooResponse":                  {},
-		"BarResponse":                  {},
-		"GetAccountTokenUsageResponse": {},
+		"FooResponse": {},
+		"BarResponse": {},
+		"ExternalAgentConfigImportHistoriesReadResponse": {},
+		"GetAccountTokenUsageResponse":                   {},
+		"GetWorkspaceMessagesResponse":                   {},
 	}
 	method := rpcMethod{Method: "foo", ParamsType: "FooParams"}
 	resp, err := resolveResponseType(method, defs, nil)
@@ -81,6 +83,22 @@ func TestResolveResponseType(t *testing.T) {
 	}
 	if resp != "GetAccountTokenUsageResponse" {
 		t.Fatalf("unexpected account usage response type: %s", resp)
+	}
+
+	resp, err = resolveResponseType(rpcMethod{Method: "account/workspaceMessages/read"}, defs, clientResponseOverrides())
+	if err != nil {
+		t.Fatalf("unexpected workspace messages error: %v", err)
+	}
+	if resp != "GetWorkspaceMessagesResponse" {
+		t.Fatalf("unexpected workspace messages response type: %s", resp)
+	}
+
+	resp, err = resolveResponseType(rpcMethod{Method: "externalAgentConfig/import/readHistories"}, defs, clientResponseOverrides())
+	if err != nil {
+		t.Fatalf("unexpected external agent config import histories error: %v", err)
+	}
+	if resp != "ExternalAgentConfigImportHistoriesReadResponse" {
+		t.Fatalf("unexpected external agent config import histories response type: %s", resp)
 	}
 
 	_, err = resolveResponseType(rpcMethod{Method: "missing"}, defs, nil)
@@ -657,6 +675,62 @@ func TestGenerateProtocolTypes(t *testing.T) {
 	}
 	if !strings.Contains(string(metadataData), `GeneratedCodexVersion = "`+testCodexVersion+`"`) {
 		t.Fatalf("expected codex version metadata, got %s", metadataData)
+	}
+}
+
+func TestGenerateProtocolTypesSkipsManualTypes(t *testing.T) {
+	root := t.TempDir()
+	schemaDir := filepath.Join(root, "schemas")
+	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	writeJSON(t, filepath.Join(schemaDir, "ThreadGoal.json"), map[string]any{
+		"title": "ThreadGoal",
+		"type":  "object",
+		"properties": map[string]any{
+			"threadId": map[string]any{"type": "string"},
+		},
+	})
+	writeJSON(t, filepath.Join(schemaDir, "Foo.json"), map[string]any{
+		"title": "Foo",
+		"type":  "object",
+		"properties": map[string]any{
+			"name": map[string]any{"type": "string"},
+		},
+	})
+
+	if err := generateProtocolTypes(schemaDir, root, testCodexCommit, testCodexVersion); err != nil {
+		t.Fatalf("generateProtocolTypes error: %v", err)
+	}
+	typesData, err := os.ReadFile(filepath.Join(root, "protocol", "types_gen.go"))
+	if err != nil {
+		t.Fatalf("read generated protocol file: %v", err)
+	}
+	if strings.Contains(string(typesData), "type ThreadGoal ") {
+		t.Fatalf("expected manual ThreadGoal to be skipped, got %s", typesData)
+	}
+	if !strings.Contains(string(typesData), "type SanitizedFooJSON ") {
+		t.Fatalf("expected non-manual Foo to be generated, got %s", typesData)
+	}
+}
+
+func TestFilterManualTypeDeclarations(t *testing.T) {
+	src := []byte(`package protocol
+
+type ThreadGoal struct {
+	ThreadID string ` + "`json:\"threadId\"`" + `
+}
+
+type Foo struct {
+	Name string ` + "`json:\"name\"`" + `
+}
+`)
+	got := string(filterManualTypeDeclarations(src, map[string]struct{}{"ThreadGoal": {}}))
+	if strings.Contains(got, "type ThreadGoal ") {
+		t.Fatalf("expected ThreadGoal declaration to be removed, got %s", got)
+	}
+	if !strings.Contains(got, "type Foo ") {
+		t.Fatalf("expected Foo declaration to remain, got %s", got)
 	}
 }
 

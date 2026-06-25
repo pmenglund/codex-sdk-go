@@ -127,13 +127,18 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 		return err
 	}
 
+	manualTypes := manualProtocolTypes()
+	for name, src := range sources {
+		sources[name] = filterManualTypeDeclarations(src, manualTypes)
+	}
+
 	outDir := filepath.Join(repoRoot, "protocol")
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return err
 	}
 
 	generated := collectGeneratedTypes(sources)
-	for name := range manualProtocolTypes() {
+	for name := range manualTypes {
 		generated[name] = struct{}{}
 	}
 	for _, title := range titles {
@@ -169,6 +174,32 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 	}
 
 	return nil
+}
+
+func filterManualTypeDeclarations(src []byte, manualTypes map[string]struct{}) []byte {
+	lines := strings.SplitAfter(string(src), "\n")
+	out := make([]string, 0, len(lines))
+	for i := 0; i < len(lines); {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "type ") {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 2 {
+				if _, ok := manualTypes[fields[1]]; ok {
+					i++
+					balance := strings.Count(line, "{") - strings.Count(line, "}")
+					for i < len(lines) && balance > 0 {
+						balance += strings.Count(lines[i], "{") - strings.Count(lines[i], "}")
+						i++
+					}
+					continue
+				}
+			}
+		}
+		out = append(out, line)
+		i++
+	}
+	return []byte(strings.Join(out, ""))
 }
 
 type schemaDoc struct {
@@ -587,14 +618,16 @@ func methodBaseName(method string) string {
 
 func clientResponseOverrides() map[string]string {
 	return map[string]string{
-		"account/logout":             "LogoutAccountResponse",
-		"account/rateLimits/read":    "GetAccountRateLimitsResponse",
-		"account/usage/read":         "GetAccountTokenUsageResponse",
-		"addConversationListener":    "AddConversationSubscriptionResponse",
-		"config/value/write":         "ConfigWriteResponse",
-		"config/batchWrite":          "ConfigWriteResponse",
-		"config/mcpServer/reload":    "McpServerRefreshResponse",
-		"removeConversationListener": "RemoveConversationSubscriptionResponse",
+		"account/logout":                           "LogoutAccountResponse",
+		"account/rateLimits/read":                  "GetAccountRateLimitsResponse",
+		"account/usage/read":                       "GetAccountTokenUsageResponse",
+		"account/workspaceMessages/read":           "GetWorkspaceMessagesResponse",
+		"addConversationListener":                  "AddConversationSubscriptionResponse",
+		"config/value/write":                       "ConfigWriteResponse",
+		"config/batchWrite":                        "ConfigWriteResponse",
+		"config/mcpServer/reload":                  "McpServerRefreshResponse",
+		"externalAgentConfig/import/readHistories": "ExternalAgentConfigImportHistoriesReadResponse",
+		"removeConversationListener":               "RemoveConversationSubscriptionResponse",
 	}
 }
 
@@ -741,9 +774,15 @@ func manualProtocolTypes() map[string]struct{} {
 		"ThreadResumeResponse":                    {},
 		"ThreadGoal":                              {},
 		"ThreadGoalUpdatedNotification":           {},
+		"ThreadForkParams":                        {},
+		"ThreadResumeParams":                      {},
+		"ThreadStartParams":                       {},
 		"ThreadStartResponse":                     {},
 		"ToolRequestUserInputParams":              {},
 		"ToolRequestUserInputResponse":            {},
+		"TurnStartParams":                         {},
+		"TurnStartParamsInputElem":                {},
+		"TurnSteerParamsInputElem":                {},
 		"TurnCompletedNotification":               {},
 		"TurnStartedNotification":                 {},
 	}

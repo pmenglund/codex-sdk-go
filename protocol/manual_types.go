@@ -19,6 +19,68 @@ type ThreadStartResponse = ThreadResponse
 // ThreadResumeResponse is the response payload for thread/resume.
 type ThreadResumeResponse = ThreadResponse
 
+// ThreadStartParams is maintained manually because the raw schema currently
+// exceeds the generator's capabilities.
+type ThreadStartParams struct {
+	Model                 *string         `json:"model,omitempty"`
+	Cwd                   *string         `json:"cwd,omitempty"`
+	ApprovalPolicy        json.RawMessage `json:"approvalPolicy,omitempty"`
+	Sandbox               json.RawMessage `json:"sandbox,omitempty"`
+	Config                *map[string]any `json:"config,omitempty"`
+	BaseInstructions      *string         `json:"baseInstructions,omitempty"`
+	DeveloperInstructions *string         `json:"developerInstructions,omitempty"`
+}
+
+// ThreadResumeParams is maintained manually because the raw schema currently
+// exceeds the generator's capabilities.
+type ThreadResumeParams struct {
+	ThreadID              string          `json:"threadId"`
+	Model                 *string         `json:"model,omitempty"`
+	ModelProvider         *string         `json:"modelProvider,omitempty"`
+	Cwd                   *string         `json:"cwd,omitempty"`
+	ApprovalPolicy        json.RawMessage `json:"approvalPolicy,omitempty"`
+	Sandbox               json.RawMessage `json:"sandbox,omitempty"`
+	Config                *map[string]any `json:"config,omitempty"`
+	BaseInstructions      *string         `json:"baseInstructions,omitempty"`
+	DeveloperInstructions *string         `json:"developerInstructions,omitempty"`
+}
+
+// ThreadForkParams is maintained manually because the raw schema currently
+// exceeds the generator's capabilities.
+type ThreadForkParams struct {
+	ThreadID              string          `json:"threadId"`
+	Ephemeral             *bool           `json:"ephemeral,omitempty"`
+	Model                 *string         `json:"model,omitempty"`
+	ModelProvider         *string         `json:"modelProvider,omitempty"`
+	Cwd                   *string         `json:"cwd,omitempty"`
+	ApprovalPolicy        json.RawMessage `json:"approvalPolicy,omitempty"`
+	Sandbox               json.RawMessage `json:"sandbox,omitempty"`
+	Config                *map[string]any `json:"config,omitempty"`
+	BaseInstructions      *string         `json:"baseInstructions,omitempty"`
+	DeveloperInstructions *string         `json:"developerInstructions,omitempty"`
+}
+
+// TurnStartParamsInputElem is maintained manually because turn input entries are
+// represented by the high-level codex.Input type before marshaling.
+type TurnStartParamsInputElem interface{}
+
+// TurnStartParams is maintained manually because the raw schema currently
+// exceeds the generator's capabilities.
+type TurnStartParams struct {
+	ThreadID       string                     `json:"threadId"`
+	Input          []TurnStartParamsInputElem `json:"input"`
+	Cwd            *string                    `json:"cwd,omitempty"`
+	ApprovalPolicy json.RawMessage            `json:"approvalPolicy,omitempty"`
+	SandboxPolicy  json.RawMessage            `json:"sandboxPolicy,omitempty"`
+	Model          *string                    `json:"model,omitempty"`
+	Effort         json.RawMessage            `json:"effort,omitempty"`
+	Summary        json.RawMessage            `json:"summary,omitempty"`
+	OutputSchema   json.RawMessage            `json:"outputSchema,omitempty"`
+}
+
+// TurnSteerParamsInputElem aliases the sanitized generated input element type.
+type TurnSteerParamsInputElem = SanitizedTurnSteerParamsJSONInputElem
+
 // TurnNotification describes turn/started and turn/completed notifications.
 type TurnNotification struct {
 	ThreadID string                `json:"threadId,omitempty"`

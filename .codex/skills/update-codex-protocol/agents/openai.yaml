@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Codex Protocol"
+  short_description: "Regenerate protocol files from upstream Codex."
+  default_prompt: "Use $update-codex-protocol to regenerate codex-sdk-go protocol files from the latest stable upstream Codex Rust release and commit after tests pass."
