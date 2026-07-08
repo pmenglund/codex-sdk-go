@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: update_codex_protocol.sh [--allow-dirty] [--no-commit]
+Usage: update_codex_protocol.sh [--allow-dirty] [--no-commit] [--tag-release] [--push-release]
 
 Fetch upstream openai/codex tags, choose the highest stable rust-vMAJOR.MINOR.PATCH tag,
 run go generate ./..., run go test ./..., and commit the resulting changes.
@@ -11,12 +11,16 @@ run go generate ./..., run go test ./..., and commit the resulting changes.
 Options:
   --allow-dirty  Run even when the SDK worktree already has changes.
   --no-commit    Leave validated changes uncommitted.
+  --tag-release  Create or verify an annotated SDK release tag vMAJOR.MINOR.PATCH.
+  --push-release Push the current branch and SDK release tag to origin atomically.
   -h, --help     Show this help.
 USAGE
 }
 
 allow_dirty=0
 no_commit=0
+tag_release=0
+push_release=0
 
 while (($#)); do
   case "$1" in
@@ -25,6 +29,13 @@ while (($#)); do
       ;;
     --no-commit)
       no_commit=1
+      ;;
+    --tag-release)
+      tag_release=1
+      ;;
+    --push-release)
+      tag_release=1
+      push_release=1
       ;;
     -h|--help)
       usage
@@ -38,6 +49,11 @@ while (($#)); do
   esac
   shift
 done
+
+if [[ "$no_commit" -eq 1 && "$tag_release" -eq 1 ]]; then
+  echo "error: --no-commit cannot be combined with --tag-release or --push-release" >&2
+  exit 2
+fi
 
 sdk_root="$(git rev-parse --show-toplevel)"
 cd "$sdk_root"
@@ -73,6 +89,27 @@ expand_home() {
     value="$HOME/${value#~/}"
   fi
   printf '%s\n' "$value"
+}
+
+create_or_verify_release_tag() {
+  local sdk_tag="$1"
+  local latest_tag="$2"
+
+  if git show-ref --verify --quiet "refs/tags/$sdk_tag"; then
+    local tag_target
+    local head_commit
+    tag_target="$(git rev-list -n 1 "$sdk_tag")"
+    head_commit="$(git rev-parse HEAD)"
+    if [[ "$tag_target" != "$head_commit" ]]; then
+      echo "error: tag $sdk_tag already exists on $tag_target, not HEAD $head_commit" >&2
+      exit 1
+    fi
+    echo "Tag $sdk_tag already exists on HEAD."
+    return
+  fi
+
+  git tag -a "$sdk_tag" -m "Release $sdk_tag from $latest_tag"
+  echo "Created release tag $sdk_tag."
 }
 
 codex_root="${CODEX_REPO_ROOT:-}"
@@ -127,6 +164,7 @@ if [[ -z "$latest_tag" ]]; then
 fi
 
 echo "Selected upstream Codex tag: $latest_tag"
+sdk_tag="v${latest_tag#rust-v}"
 
 echo "Running go generate ./..."
 CODEX_REPO_ROOT="$codex_root" CODEX_REPO_REF="$latest_tag" go generate ./...
@@ -136,14 +174,22 @@ go test ./...
 
 if git diff --quiet && git diff --cached --quiet; then
   echo "No changes to commit."
-  exit 0
+else
+  if [[ "$no_commit" -eq 1 ]]; then
+    echo "Validation passed; leaving changes uncommitted because --no-commit was set."
+    git status --short
+    exit 0
+  fi
+
+  git add .
+  git commit -m "Update Codex protocol from $latest_tag"
 fi
 
-if [[ "$no_commit" -eq 1 ]]; then
-  echo "Validation passed; leaving changes uncommitted because --no-commit was set."
-  git status --short
-  exit 0
+if [[ "$tag_release" -eq 1 ]]; then
+  create_or_verify_release_tag "$sdk_tag" "$latest_tag"
 fi
 
-git add .
-git commit -m "Update Codex protocol from $latest_tag"
+if [[ "$push_release" -eq 1 ]]; then
+  branch="$(git symbolic-ref --short HEAD)"
+  git push --atomic origin "HEAD:refs/heads/$branch" "refs/tags/$sdk_tag"
+fi
