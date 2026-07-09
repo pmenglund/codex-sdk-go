@@ -13,7 +13,8 @@ import (
 
 // TurnOptions configures a turn/start request.
 type TurnOptions struct {
-	Cwd string
+	ClientUserMessageID string
+	Cwd                 string
 	// ApprovalPolicy is marshaled as JSON and sent as "approvalPolicy".
 	// Prefer ApprovalPolicy* constants for simple policies.
 	ApprovalPolicy any
@@ -21,6 +22,7 @@ type TurnOptions struct {
 	// Prefer SandboxMode* constants for simple policies.
 	SandboxPolicy any
 	Model         string
+	ServiceTier   string
 	// Effort is marshaled as JSON and sent as "effort".
 	// Prefer ReasoningEffort* constants for standard values.
 	Effort any
@@ -294,6 +296,9 @@ func buildTurnParams(threadID string, inputs []Input, opts *TurnOptions) (protoc
 	if opts.Cwd != "" {
 		params.Cwd = stringPtr(opts.Cwd)
 	}
+	if opts.ClientUserMessageID != "" {
+		params.ClientUserMessageID = stringPtr(opts.ClientUserMessageID)
+	}
 	if raw, err := normalizeJSONValue("approvalPolicy", opts.ApprovalPolicy); err != nil {
 		return params, err
 	} else if raw != nil {
@@ -306,6 +311,9 @@ func buildTurnParams(threadID string, inputs []Input, opts *TurnOptions) (protoc
 	}
 	if opts.Model != "" {
 		params.Model = stringPtr(opts.Model)
+	}
+	if opts.ServiceTier != "" {
+		params.ServiceTier = stringPtr(opts.ServiceTier)
 	}
 	if raw, err := normalizeJSONValue("effort", opts.Effort); err != nil {
 		return params, err

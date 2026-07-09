@@ -71,6 +71,18 @@ func TestTurnHandleRunSteerInterruptWithReplay(t *testing.T) {
 	}
 }
 
+func TestTurnSteerParamsInputElemCompatibility(t *testing.T) {
+	var input protocol.TurnSteerParamsInputElem = TextInput("compatible")
+	params := protocol.TurnSteerParams{
+		ThreadID:       "thr_123",
+		ExpectedTurnID: "turn_123",
+		Input:          []protocol.UserInput{input},
+	}
+	if len(params.Input) != 1 {
+		t.Fatalf("expected compatibility input")
+	}
+}
+
 func TestTurnHandleRejectsUnknownTurnIDAndInvalidInputs(t *testing.T) {
 	handle := &TurnHandle{
 		client:   rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{}),

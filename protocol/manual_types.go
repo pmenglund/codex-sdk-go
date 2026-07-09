@@ -23,12 +23,16 @@ type ThreadResumeResponse = ThreadResponse
 // exceeds the generator's capabilities.
 type ThreadStartParams struct {
 	Model                 *string         `json:"model,omitempty"`
+	ModelProvider         *string         `json:"modelProvider,omitempty"`
+	ServiceTier           *string         `json:"serviceTier,omitempty"`
 	Cwd                   *string         `json:"cwd,omitempty"`
 	ApprovalPolicy        json.RawMessage `json:"approvalPolicy,omitempty"`
 	Sandbox               json.RawMessage `json:"sandbox,omitempty"`
 	Config                *map[string]any `json:"config,omitempty"`
+	ServiceName           *string         `json:"serviceName,omitempty"`
 	BaseInstructions      *string         `json:"baseInstructions,omitempty"`
 	DeveloperInstructions *string         `json:"developerInstructions,omitempty"`
+	Ephemeral             *bool           `json:"ephemeral,omitempty"`
 }
 
 // ThreadResumeParams is maintained manually because the raw schema currently
@@ -37,6 +41,7 @@ type ThreadResumeParams struct {
 	ThreadID              string          `json:"threadId"`
 	Model                 *string         `json:"model,omitempty"`
 	ModelProvider         *string         `json:"modelProvider,omitempty"`
+	ServiceTier           *string         `json:"serviceTier,omitempty"`
 	Cwd                   *string         `json:"cwd,omitempty"`
 	ApprovalPolicy        json.RawMessage `json:"approvalPolicy,omitempty"`
 	Sandbox               json.RawMessage `json:"sandbox,omitempty"`
@@ -52,6 +57,8 @@ type ThreadForkParams struct {
 	Ephemeral             *bool           `json:"ephemeral,omitempty"`
 	Model                 *string         `json:"model,omitempty"`
 	ModelProvider         *string         `json:"modelProvider,omitempty"`
+	ServiceTier           *string         `json:"serviceTier,omitempty"`
+	LastTurnID            *string         `json:"lastTurnId,omitempty"`
 	Cwd                   *string         `json:"cwd,omitempty"`
 	ApprovalPolicy        json.RawMessage `json:"approvalPolicy,omitempty"`
 	Sandbox               json.RawMessage `json:"sandbox,omitempty"`
@@ -67,19 +74,21 @@ type TurnStartParamsInputElem interface{}
 // TurnStartParams is maintained manually because the raw schema currently
 // exceeds the generator's capabilities.
 type TurnStartParams struct {
-	ThreadID       string                     `json:"threadId"`
-	Input          []TurnStartParamsInputElem `json:"input"`
-	Cwd            *string                    `json:"cwd,omitempty"`
-	ApprovalPolicy json.RawMessage            `json:"approvalPolicy,omitempty"`
-	SandboxPolicy  json.RawMessage            `json:"sandboxPolicy,omitempty"`
-	Model          *string                    `json:"model,omitempty"`
-	Effort         json.RawMessage            `json:"effort,omitempty"`
-	Summary        json.RawMessage            `json:"summary,omitempty"`
-	OutputSchema   json.RawMessage            `json:"outputSchema,omitempty"`
+	ThreadID            string                     `json:"threadId"`
+	Input               []TurnStartParamsInputElem `json:"input"`
+	ClientUserMessageID *string                    `json:"clientUserMessageId,omitempty"`
+	Cwd                 *string                    `json:"cwd,omitempty"`
+	ApprovalPolicy      json.RawMessage            `json:"approvalPolicy,omitempty"`
+	SandboxPolicy       json.RawMessage            `json:"sandboxPolicy,omitempty"`
+	Model               *string                    `json:"model,omitempty"`
+	ServiceTier         *string                    `json:"serviceTier,omitempty"`
+	Effort              json.RawMessage            `json:"effort,omitempty"`
+	Summary             json.RawMessage            `json:"summary,omitempty"`
+	OutputSchema        json.RawMessage            `json:"outputSchema,omitempty"`
 }
 
-// TurnSteerParamsInputElem aliases the sanitized generated input element type.
-type TurnSteerParamsInputElem = SanitizedTurnSteerParamsJSONInputElem
+// TurnSteerParamsInputElem is retained for source compatibility.
+type TurnSteerParamsInputElem = UserInput
 
 // TurnNotification describes turn/started and turn/completed notifications.
 type TurnNotification struct {
@@ -137,9 +146,27 @@ type ThreadGoalUpdatedNotification struct {
 	Goal     ThreadGoal `json:"goal"`
 }
 
-// ApplyPatchApprovalParams uses the sanitized schema variant because the raw
-// schema currently exceeds the generator's capabilities.
-type ApplyPatchApprovalParams = SanitizedApplyPatchApprovalParams
+// ThreadGoalGetResponse is maintained manually because the raw schema currently
+// exceeds the generator's capabilities.
+type ThreadGoalGetResponse struct {
+	Goal *ThreadGoal `json:"goal"`
+}
+
+// ThreadGoalSetResponse is maintained manually because the raw schema currently
+// exceeds the generator's capabilities.
+type ThreadGoalSetResponse struct {
+	Goal ThreadGoal `json:"goal"`
+}
+
+// ApplyPatchApprovalParams is maintained manually to keep FileChanges source
+// compatible with older untyped callers.
+type ApplyPatchApprovalParams struct {
+	CallID         string         `json:"callId"`
+	ConversationID string         `json:"conversationId"`
+	FileChanges    map[string]any `json:"fileChanges"`
+	GrantRoot      *string        `json:"grantRoot,omitempty"`
+	Reason         *string        `json:"reason,omitempty"`
+}
 
 // ApplyPatchApprovalResponse uses the sanitized schema variant because the raw
 // schema currently exceeds the generator's capabilities.

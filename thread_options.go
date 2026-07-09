@@ -9,8 +9,10 @@ import (
 
 // ThreadStartOptions configures a thread/start request.
 type ThreadStartOptions struct {
-	Model string
-	Cwd   string
+	Model         string
+	ModelProvider string
+	ServiceTier   string
+	Cwd           string
 	// ApprovalPolicy is marshaled as JSON and sent as "approvalPolicy".
 	// Prefer ApprovalPolicy* constants for simple policies.
 	ApprovalPolicy any
@@ -18,8 +20,10 @@ type ThreadStartOptions struct {
 	// Prefer SandboxMode* constants for simple policies.
 	SandboxPolicy         any
 	Config                map[string]any
+	ServiceName           string
 	BaseInstructions      string
 	DeveloperInstructions string
+	Ephemeral             *bool
 	// ExperimentalRawEvents is retained for source compatibility, but the current
 	// app-server protocol no longer supports this option. Setting it returns an
 	// error from toParams.
@@ -30,6 +34,12 @@ func (o ThreadStartOptions) toParams() (protocol.ThreadStartParams, error) {
 	params := protocol.ThreadStartParams{}
 	if o.Model != "" {
 		params.Model = stringPtr(o.Model)
+	}
+	if o.ModelProvider != "" {
+		params.ModelProvider = stringPtr(o.ModelProvider)
+	}
+	if o.ServiceTier != "" {
+		params.ServiceTier = stringPtr(o.ServiceTier)
 	}
 	if o.Cwd != "" {
 		params.Cwd = stringPtr(o.Cwd)
@@ -48,12 +58,16 @@ func (o ThreadStartOptions) toParams() (protocol.ThreadStartParams, error) {
 		config := o.Config
 		params.Config = &config
 	}
+	if o.ServiceName != "" {
+		params.ServiceName = stringPtr(o.ServiceName)
+	}
 	if o.BaseInstructions != "" {
 		params.BaseInstructions = stringPtr(o.BaseInstructions)
 	}
 	if o.DeveloperInstructions != "" {
 		params.DeveloperInstructions = stringPtr(o.DeveloperInstructions)
 	}
+	params.Ephemeral = o.Ephemeral
 	if o.ExperimentalRawEvents {
 		return params, errors.New("experimental raw events are no longer supported by the current app-server protocol")
 	}
@@ -79,6 +93,7 @@ type ThreadResumeOptions struct {
 	Path          string
 	Model         string
 	ModelProvider string
+	ServiceTier   string
 	Cwd           string
 	// ApprovalPolicy is marshaled as JSON and sent as "approvalPolicy".
 	// Prefer ApprovalPolicy* constants for simple policies.
@@ -108,6 +123,9 @@ func (o ThreadResumeOptions) toParams() (protocol.ThreadResumeParams, error) {
 	}
 	if o.ModelProvider != "" {
 		params.ModelProvider = stringPtr(o.ModelProvider)
+	}
+	if o.ServiceTier != "" {
+		params.ServiceTier = stringPtr(o.ServiceTier)
 	}
 	if o.Cwd != "" {
 		params.Cwd = stringPtr(o.Cwd)

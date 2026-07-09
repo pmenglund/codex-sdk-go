@@ -19,14 +19,19 @@ import (
 )
 
 func TestThreadStartOptionsToParams(t *testing.T) {
+	ephemeral := true
 	opts := ThreadStartOptions{
 		Model:                 "gpt-test",
+		ModelProvider:         "openai",
+		ServiceTier:           "priority",
 		Cwd:                   "/tmp/project",
 		ApprovalPolicy:        "never",
 		SandboxPolicy:         map[string]any{"type": "readOnly"},
 		Config:                map[string]any{"foo": "bar"},
+		ServiceName:           "codex-sdk-go",
 		BaseInstructions:      "base",
 		DeveloperInstructions: "dev",
+		Ephemeral:             &ephemeral,
 	}
 
 	params, err := opts.toParams()
@@ -35,6 +40,8 @@ func TestThreadStartOptionsToParams(t *testing.T) {
 	}
 
 	assertEqual(t, "model", params.Model, stringPtr("gpt-test"))
+	assertEqual(t, "modelProvider", params.ModelProvider, stringPtr("openai"))
+	assertEqual(t, "serviceTier", params.ServiceTier, stringPtr("priority"))
 	assertEqual(t, "cwd", params.Cwd, stringPtr("/tmp/project"))
 	assertRawEqual(t, "approvalPolicy", params.ApprovalPolicy, MustJSON("never"))
 	assertRawEqual(t, "sandbox", params.Sandbox, MustJSON(map[string]any{"type": "readOnly"}))
@@ -42,8 +49,10 @@ func TestThreadStartOptionsToParams(t *testing.T) {
 		t.Fatalf("expected config")
 	}
 	assertEqual(t, "config", *params.Config, map[string]any{"foo": "bar"})
+	assertEqual(t, "serviceName", params.ServiceName, stringPtr("codex-sdk-go"))
 	assertEqual(t, "baseInstructions", params.BaseInstructions, stringPtr("base"))
 	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
+	assertEqual(t, "ephemeral", params.Ephemeral, &ephemeral)
 }
 
 func TestThreadStartOptionsRejectExperimentalRawEvents(t *testing.T) {
@@ -58,6 +67,7 @@ func TestThreadResumeOptionsToParams(t *testing.T) {
 		ThreadID:              "thr_123",
 		Model:                 "gpt-test",
 		ModelProvider:         "openai",
+		ServiceTier:           "priority",
 		Cwd:                   "/tmp/project",
 		ApprovalPolicy:        "never",
 		Sandbox:               map[string]any{"type": "readOnly"},
@@ -74,6 +84,7 @@ func TestThreadResumeOptionsToParams(t *testing.T) {
 	assertEqual(t, "threadId", params.ThreadID, "thr_123")
 	assertEqual(t, "model", params.Model, stringPtr("gpt-test"))
 	assertEqual(t, "modelProvider", params.ModelProvider, stringPtr("openai"))
+	assertEqual(t, "serviceTier", params.ServiceTier, stringPtr("priority"))
 	assertEqual(t, "cwd", params.Cwd, stringPtr("/tmp/project"))
 	assertRawEqual(t, "approvalPolicy", params.ApprovalPolicy, MustJSON("never"))
 	assertRawEqual(t, "sandbox", params.Sandbox, MustJSON(map[string]any{"type": "readOnly"}))
@@ -114,13 +125,15 @@ func TestThreadResumeOptionsRejectPath(t *testing.T) {
 
 func TestBuildTurnParams(t *testing.T) {
 	opts := &TurnOptions{
-		Cwd:            "/tmp",
-		ApprovalPolicy: "never",
-		SandboxPolicy:  map[string]any{"type": "readOnly"},
-		Model:          "gpt-test",
-		Effort:         "medium",
-		Summary:        "short",
-		OutputSchema:   map[string]any{"type": "object"},
+		ClientUserMessageID: "msg_123",
+		Cwd:                 "/tmp",
+		ApprovalPolicy:      "never",
+		SandboxPolicy:       map[string]any{"type": "readOnly"},
+		Model:               "gpt-test",
+		ServiceTier:         "priority",
+		Effort:              "medium",
+		Summary:             "short",
+		OutputSchema:        map[string]any{"type": "object"},
 	}
 
 	params, err := buildTurnParams("thr_123", []Input{TextInput("hello")}, opts)
@@ -130,10 +143,12 @@ func TestBuildTurnParams(t *testing.T) {
 
 	assertEqual(t, "threadId", params.ThreadID, "thr_123")
 	assertEqual(t, "input", params.Input, []protocol.TurnStartParamsInputElem{TextInput("hello")})
+	assertEqual(t, "clientUserMessageId", params.ClientUserMessageID, stringPtr("msg_123"))
 	assertEqual(t, "cwd", params.Cwd, stringPtr("/tmp"))
 	assertRawEqual(t, "approvalPolicy", params.ApprovalPolicy, MustJSON("never"))
 	assertRawEqual(t, "sandboxPolicy", params.SandboxPolicy, MustJSON(map[string]any{"type": "readOnly"}))
 	assertEqual(t, "model", params.Model, stringPtr("gpt-test"))
+	assertEqual(t, "serviceTier", params.ServiceTier, stringPtr("priority"))
 	assertRawEqual(t, "effort", params.Effort, MustJSON("medium"))
 	assertRawEqual(t, "summary", params.Summary, MustJSON("short"))
 	assertRawEqual(t, "outputSchema", params.OutputSchema, MustJSON(map[string]any{"type": "object"}))

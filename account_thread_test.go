@@ -175,6 +175,113 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 	}
 }
 
+func TestThreadListOptionsToParamsPreservesExplicitEmptyFilters(t *testing.T) {
+	params, err := (ThreadListOptions{}).toParams()
+	if err != nil {
+		t.Fatalf("to params: %v", err)
+	}
+	if params.ModelProviders != nil {
+		t.Fatalf("expected omitted model providers for zero-value options")
+	}
+	if params.SourceKinds != nil {
+		t.Fatalf("expected omitted source kinds for zero-value options")
+	}
+
+	params, err = (ThreadListOptions{
+		ModelProviders: []string{},
+		SourceKinds:    []protocol.ThreadSourceKind{},
+	}).toParams()
+	if err != nil {
+		t.Fatalf("to params with explicit filters: %v", err)
+	}
+	if params.ModelProviders == nil {
+		t.Fatalf("expected explicit model providers filter")
+	}
+	if len(*params.ModelProviders) != 0 {
+		t.Fatalf("expected empty model providers filter, got %#v", *params.ModelProviders)
+	}
+	if params.SourceKinds == nil {
+		t.Fatalf("expected explicit source kinds filter")
+	}
+	if len(*params.SourceKinds) != 0 {
+		t.Fatalf("expected empty source kinds filter, got %#v", *params.SourceKinds)
+	}
+}
+
+func TestThreadForkOptionsToParams(t *testing.T) {
+	ephemeral := true
+	opts := ThreadForkOptions{
+		Model:                 "gpt-test",
+		ModelProvider:         "openai",
+		ServiceTier:           "priority",
+		LastTurnID:            "turn_123",
+		Cwd:                   "/tmp/project",
+		ApprovalPolicy:        "never",
+		Sandbox:               map[string]any{"type": "readOnly"},
+		Config:                map[string]any{"foo": "bar"},
+		BaseInstructions:      "base",
+		DeveloperInstructions: "dev",
+		Ephemeral:             &ephemeral,
+	}
+
+	params, err := opts.toParams("thr_123")
+	if err != nil {
+		t.Fatalf("to params: %v", err)
+	}
+	assertEqual(t, "threadId", params.ThreadID, "thr_123")
+	assertEqual(t, "model", params.Model, stringPtr("gpt-test"))
+	assertEqual(t, "modelProvider", params.ModelProvider, stringPtr("openai"))
+	assertEqual(t, "serviceTier", params.ServiceTier, stringPtr("priority"))
+	assertEqual(t, "lastTurnId", params.LastTurnID, stringPtr("turn_123"))
+	assertEqual(t, "cwd", params.Cwd, stringPtr("/tmp/project"))
+	assertRawEqual(t, "approvalPolicy", params.ApprovalPolicy, MustJSON("never"))
+	assertRawEqual(t, "sandbox", params.Sandbox, MustJSON(map[string]any{"type": "readOnly"}))
+	if params.Config == nil {
+		t.Fatalf("expected config")
+	}
+	assertEqual(t, "config", *params.Config, map[string]any{"foo": "bar"})
+	assertEqual(t, "baseInstructions", params.BaseInstructions, stringPtr("base"))
+	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
+	assertEqual(t, "ephemeral", params.Ephemeral, &ephemeral)
+}
+
+func TestThreadGoalResponsesWithReplay(t *testing.T) {
+	ctx := context.Background()
+	tokenBudget := int64(100)
+	goal := protocol.ThreadGoal{
+		ThreadID:        "thr_123",
+		Objective:       "ship",
+		Status:          protocol.ThreadGoalStatusActive,
+		TokenBudget:     &tokenBudget,
+		TokensUsed:      10,
+		TimeUsedSeconds: 20,
+		CreatedAt:       30,
+		UpdatedAt:       40,
+	}
+	client := rpc.NewClient(rpc.NewReplayTransport([]rpc.TranscriptEntry{
+		writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(1), Method: "thread/goal/set", Params: mustRaw(protocol.ThreadGoalSetParams{ThreadID: "thr_123"})}),
+		readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{"goal": goal})}),
+		writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "thread/goal/get", Params: mustRaw(protocol.ThreadGoalGetParams{ThreadID: "thr_123"})}),
+		readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"goal": goal})}),
+	}), rpc.ClientOptions{})
+	defer client.Close()
+
+	setResp, err := client.ThreadGoalSet(ctx, protocol.ThreadGoalSetParams{ThreadID: "thr_123"})
+	if err != nil {
+		t.Fatalf("set goal: %v", err)
+	}
+	assertEqual(t, "set goal", setResp.Goal, goal)
+
+	getResp, err := client.ThreadGoalGet(ctx, protocol.ThreadGoalGetParams{ThreadID: "thr_123"})
+	if err != nil {
+		t.Fatalf("get goal: %v", err)
+	}
+	if getResp.Goal == nil {
+		t.Fatalf("expected goal")
+	}
+	assertEqual(t, "get goal", *getResp.Goal, goal)
+}
+
 func TestThreadLifecycleRejectsInvalidInputs(t *testing.T) {
 	ctx := context.Background()
 	c := &Codex{logger: slog.New(slog.NewTextHandler(&strings.Builder{}, nil))}

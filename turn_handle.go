@@ -223,7 +223,7 @@ func buildTurnSteerParams(threadID, turnID string, inputs []Input) (protocol.Tur
 	params := protocol.TurnSteerParams{
 		ThreadID:       threadID,
 		ExpectedTurnID: turnID,
-		Input:          make([]protocol.TurnSteerParamsInputElem, 0, len(inputs)),
+		Input:          make([]protocol.UserInput, 0, len(inputs)),
 	}
 	if threadID == "" {
 		return params, errors.New("thread id is required")

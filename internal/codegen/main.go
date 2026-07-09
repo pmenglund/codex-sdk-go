@@ -773,6 +773,8 @@ func manualProtocolTypes() map[string]struct{} {
 		"PermissionsRequestApprovalResponse":      {},
 		"ThreadResumeResponse":                    {},
 		"ThreadGoal":                              {},
+		"ThreadGoalGetResponse":                   {},
+		"ThreadGoalSetResponse":                   {},
 		"ThreadGoalUpdatedNotification":           {},
 		"ThreadForkParams":                        {},
 		"ThreadResumeParams":                      {},
@@ -782,7 +784,6 @@ func manualProtocolTypes() map[string]struct{} {
 		"ToolRequestUserInputResponse":            {},
 		"TurnStartParams":                         {},
 		"TurnStartParamsInputElem":                {},
-		"TurnSteerParamsInputElem":                {},
 		"TurnCompletedNotification":               {},
 		"TurnStartedNotification":                 {},
 	}

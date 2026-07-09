@@ -28,17 +28,23 @@ func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
 		Archived:       o.Archived,
 		Cwd:            o.Cwd,
 		Limit:          o.Limit,
-		ModelProviders: o.ModelProviders,
 		SortDirection:  o.SortDirection,
 		SortKey:        o.SortKey,
-		SourceKinds:    o.SourceKinds,
 		UseStateDbOnly: o.UseStateDBOnly,
+	}
+	if o.ModelProviders != nil {
+		modelProviders := protocol.ThreadListParamsModelProviders(o.ModelProviders)
+		params.ModelProviders = &modelProviders
 	}
 	if o.Cursor != "" {
 		params.Cursor = stringPtr(o.Cursor)
 	}
 	if o.SearchTerm != "" {
 		params.SearchTerm = stringPtr(o.SearchTerm)
+	}
+	if o.SourceKinds != nil {
+		sourceKinds := protocol.ThreadListParamsSourceKinds(o.SourceKinds)
+		params.SourceKinds = &sourceKinds
 	}
 	return params, nil
 }
@@ -176,6 +182,8 @@ func (t *Thread) Compact(ctx context.Context, opts ThreadCompactOptions) (*proto
 type ThreadForkOptions struct {
 	Model                 string
 	ModelProvider         string
+	ServiceTier           string
+	LastTurnID            string
 	Cwd                   string
 	ApprovalPolicy        any
 	Sandbox               any
@@ -199,6 +207,12 @@ func (o ThreadForkOptions) toParams(threadID string) (protocol.ThreadForkParams,
 	}
 	if o.ModelProvider != "" {
 		params.ModelProvider = stringPtr(o.ModelProvider)
+	}
+	if o.ServiceTier != "" {
+		params.ServiceTier = stringPtr(o.ServiceTier)
+	}
+	if o.LastTurnID != "" {
+		params.LastTurnID = stringPtr(o.LastTurnID)
 	}
 	if o.Cwd != "" {
 		params.Cwd = stringPtr(o.Cwd)
