@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
   workflow_call:
+    secrets:
+      OPENAI_API_KEY:
+        required: true
 
 permissions:
   contents: read

@@ -38,6 +38,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/e2e.yml
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   publish-tag:
     needs: [quality, e2e]
