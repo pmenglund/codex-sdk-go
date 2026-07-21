@@ -31,7 +31,8 @@ jobs:
       - name: Check formatting
         shell: bash
         run: |
-          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          mapfile -d '' go_files < <(git ls-files -z '*.go')
+          unformatted="$(gofmt -l "${go_files[@]}")"
           if [[ -n "$unformatted" ]]; then
             echo "$unformatted"
             exit 1
