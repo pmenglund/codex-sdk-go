@@ -25,15 +25,24 @@ func (c *Codex) Account(ctx context.Context, opts AccountOptions) (*protocol.Get
 	return c.client.AccountRead(ctx, params)
 }
 
-// StartLogin starts an app-server account login flow using protocol login params.
-func (c *Codex) StartLogin(ctx context.Context, params protocol.LoginAccountParams) (*protocol.LoginAccountResponse, error) {
+// StartLogin starts an app-server account login flow using JSON-marshalable
+// protocol login params.
+func (c *Codex) StartLogin(ctx context.Context, params any) (*protocol.LoginAccountResponse, error) {
 	if err := c.ensureReady(); err != nil {
 		return nil, err
 	}
 	if params == nil {
 		return nil, errors.New("login params are required")
 	}
-	return c.client.AccountLoginStart(ctx, params)
+	wrapped, ok := params.(protocol.LoginAccountParams)
+	if !ok {
+		var err error
+		wrapped, err = protocol.NewLoginAccountParams(params)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.client.AccountLoginStart(ctx, wrapped)
 }
 
 // CancelLogin cancels an in-progress account login flow.

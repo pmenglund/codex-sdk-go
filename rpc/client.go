@@ -159,26 +159,40 @@ func (c *Client) Notify(ctx context.Context, method string, params any) error {
 }
 
 // SubscribeNotifications creates an iterator over server notifications.
+// Buffer is a hard pending-notification capacity. A non-positive value uses
+// the default capacity of 64. If a consumer falls behind, only that iterator
+// is closed and Next returns a NotificationOverflowError.
 func (c *Client) SubscribeNotifications(buffer int) *NotificationIterator {
 	sub := newNotificationSubscription(buffer)
 
 	c.subsMu.Lock()
-	id := c.nextSub
-	c.nextSub++
-	c.subs[id] = sub
+	id := -1
+	select {
+	case <-c.done:
+		sub.close(c.errOrClosed())
+	default:
+		id = c.nextSub
+		c.nextSub++
+		c.subs[id] = sub
+	}
 	c.subsMu.Unlock()
 
 	return &NotificationIterator{
-		ch:   sub.out,
-		done: c.done,
-		err:  c.errOrClosed,
+		ch:         sub.out,
+		subDone:    sub.done,
+		clientDone: c.done,
+		subErr:     sub.terminalError,
+		clientErr:  c.errOrClosed,
 		cancel: func() {
+			if id < 0 {
+				return
+			}
 			c.subsMu.Lock()
 			sub := c.subs[id]
 			delete(c.subs, id)
 			c.subsMu.Unlock()
 			if sub != nil {
-				sub.close()
+				sub.close(ErrNotificationSubscriptionClosed)
 			}
 		},
 	}
@@ -246,15 +260,34 @@ func (c *Client) handleNotification(note JSONRPCNotification) {
 		c.logger.Warn("failed to decode notification", slog.String("method", note.Method), slog.Any("error", err))
 	}
 
+	type subscriptionEntry struct {
+		id  int
+		sub *notificationSubscription
+	}
 	c.subsMu.Lock()
-	subs := make([]*notificationSubscription, 0, len(c.subs))
-	for _, sub := range c.subs {
-		subs = append(subs, sub)
+	subs := make([]subscriptionEntry, 0, len(c.subs))
+	for id, sub := range c.subs {
+		subs = append(subs, subscriptionEntry{id: id, sub: sub})
 	}
 	c.subsMu.Unlock()
 
-	for _, sub := range subs {
-		sub.publish(notification)
+	for _, entry := range subs {
+		if entry.sub.publish(notification) {
+			continue
+		}
+		c.subsMu.Lock()
+		if c.subs[entry.id] == entry.sub {
+			delete(c.subs, entry.id)
+		}
+		c.subsMu.Unlock()
+		var overflow *NotificationOverflowError
+		if errors.As(entry.sub.terminalError(), &overflow) {
+			c.logger.Warn("notification subscription overflow",
+				slog.Int("subscription_id", entry.id),
+				slog.Int("capacity", overflow.Capacity),
+				slog.String("method", note.Method),
+			)
+		}
 	}
 }
 
@@ -366,7 +399,7 @@ func (c *Client) finish(err error) {
 		c.subsMu.Unlock()
 
 		for _, sub := range subs {
-			sub.close()
+			sub.close(err)
 		}
 	})
 }
@@ -376,80 +409,116 @@ type response struct {
 	err    error
 }
 
+// ErrNotificationOverflow identifies a notification subscription that was
+// closed because its configured capacity was exhausted.
+var ErrNotificationOverflow = errors.New("notification subscription overflow")
+
+// ErrNotificationSubscriptionClosed identifies an iterator closed by its caller.
+var ErrNotificationSubscriptionClosed = errors.New("notification subscription closed")
+
+// NotificationOverflowError reports the hard capacity of an overflowing
+// notification subscription.
+type NotificationOverflowError struct {
+	Capacity int
+}
+
+func (e *NotificationOverflowError) Error() string {
+	return fmt.Sprintf("%s (capacity %d)", ErrNotificationOverflow, e.Capacity)
+}
+
+// Is allows errors.Is(err, ErrNotificationOverflow).
+func (e *NotificationOverflowError) Is(target error) bool {
+	return target == ErrNotificationOverflow
+}
+
 type notificationSubscription struct {
+	mu       sync.Mutex
 	out      chan Notification
-	inbox    chan Notification
 	done     chan struct{}
-	doneOnce sync.Once
+	closed   bool
+	err      error
+	capacity int
 }
 
 func newNotificationSubscription(buffer int) *notificationSubscription {
 	if buffer <= 0 {
 		buffer = 64
 	}
-	sub := &notificationSubscription{
-		out:   make(chan Notification, buffer),
-		inbox: make(chan Notification),
-		done:  make(chan struct{}),
+	return &notificationSubscription{
+		out:      make(chan Notification, buffer),
+		done:     make(chan struct{}),
+		capacity: buffer,
 	}
-	go sub.run()
-	return sub
 }
 
-func (s *notificationSubscription) publish(note Notification) {
+func (s *notificationSubscription) publish(note Notification) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return false
+	}
 	select {
-	case <-s.done:
-	case s.inbox <- note:
+	case s.out <- note:
+		return true
+	default:
+		s.closeLocked(&NotificationOverflowError{Capacity: s.capacity})
+		return false
 	}
 }
 
-func (s *notificationSubscription) close() {
-	s.doneOnce.Do(func() {
-		close(s.done)
-	})
+func (s *notificationSubscription) close(err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.closeLocked(err)
 }
 
-func (s *notificationSubscription) run() {
-	defer close(s.out)
-
-	queue := make([]Notification, 0, 8)
-	for {
-		var out chan Notification
-		var next Notification
-		if len(queue) > 0 {
-			out = s.out
-			next = queue[0]
-		}
-
-		select {
-		case <-s.done:
-			return
-		case note := <-s.inbox:
-			queue = append(queue, note)
-		case out <- next:
-			queue = queue[1:]
-		}
+func (s *notificationSubscription) closeLocked(err error) {
+	if s.closed {
+		return
 	}
+	s.closed = true
+	s.err = err
+	close(s.done)
+}
+
+func (s *notificationSubscription) terminalError() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.err != nil {
+		return s.err
+	}
+	return ErrNotificationSubscriptionClosed
 }
 
 // NotificationIterator iterates notifications from the server.
 type NotificationIterator struct {
-	ch     <-chan Notification
-	done   <-chan struct{}
-	err    func() error
-	cancel func()
+	ch         <-chan Notification
+	subDone    <-chan struct{}
+	clientDone <-chan struct{}
+	subErr     func() error
+	clientErr  func() error
+	cancel     func()
 }
 
 // Next returns the next notification or an error.
 func (it *NotificationIterator) Next(ctx context.Context) (Notification, error) {
 	select {
+	case <-it.subDone:
+		return Notification{}, it.subErr()
+	default:
+	}
+	select {
 	case <-ctx.Done():
 		return Notification{}, ctx.Err()
-	case <-it.done:
-		return Notification{}, it.err()
-	case note, ok := <-it.ch:
-		if !ok {
-			return Notification{}, it.err()
+	case <-it.subDone:
+		return Notification{}, it.subErr()
+	case <-it.clientDone:
+		return Notification{}, it.clientErr()
+	case note := <-it.ch:
+		select {
+		case <-it.subDone:
+			return Notification{}, it.subErr()
+		default:
 		}
 		return note, nil
 	}

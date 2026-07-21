@@ -15,7 +15,9 @@ import (
 
 const stdioCloseTimeout = 2 * time.Second
 
-// Transport reads and writes JSON-RPC lines.
+// Transport reads and writes JSON-RPC lines. Implementations should not block
+// WriteLine indefinitely, and Close must unblock in-flight reads and writes so
+// bounded SDK cleanup cannot leave transport goroutines running.
 type Transport interface {
 	ReadLine() (string, error)
 	WriteLine(line string) error

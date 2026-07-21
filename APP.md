@@ -9,7 +9,7 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 
 ## System Boundaries
 
-- Primary runtime(s): Go 1.25+ and the `codex` CLI process (spawned and managed by the SDK).
+- Primary runtime(s): Go 1.25.12+ and the `codex` CLI process (spawned and managed by the SDK).
 - External services: Local `codex app-server` over JSON-RPC (stdio transport); local `openai/codex` checkout for schema export during codegen.
 - Data stores: No persistent datastore in this repo; generated artifacts are checked into source control.
 
@@ -41,8 +41,10 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 
 - Install dependencies: `go mod tidy`
 - Run example locally: `go run ./examples/quickstart` (requires `codex` on `PATH`).
-- Run tests locally: `go test ./...`
-- Lint/format checks: `gofmt -w ./...` (changed files) and `go vet ./...`
+- Run the local quality gate: formatting, installer fixtures, `go vet ./...`,
+  `go test ./...`, `go test -race ./...`, `staticcheck ./...`,
+  `govulncheck ./...`, and `git diff --check`.
+- Use Staticcheck v0.7.0 and govulncheck v1.3.0, matching CI.
 
 ### Code Generation
 
@@ -76,12 +78,16 @@ It resolves that checkout in this order:
 
 Generated files include a header line with the exact codex commit hash used.
 Generated files are checked in under `protocol` and `rpc`.
+Every generated Go file is formatted before it is written. The repository-owned
+update skill runs generation twice and rejects a second diff. Discriminated
+unions are rendered as raw-preserving wrapper types; any remaining
+`interface{}` output must be present in a reviewed generator allowlist.
 
 ## Operational Constraints
 
 - Security and privacy requirements: Approval handling must remain explicit and safe; sample auto-approve behavior should stay minimal and conservative.
 - Performance expectations: Streaming APIs should remain responsive and avoid unnecessary buffering/copying for turn notifications.
-- Compatibility constraints: Support Go 1.25+ and maintain protocol compatibility with generated schema versions.
+- Compatibility constraints: Support Go 1.25.12 or newer and maintain protocol compatibility with generated schema versions.
 
 ## Change Checklist for Contributors
 

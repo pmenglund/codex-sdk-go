@@ -8,8 +8,10 @@ import (
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
 
-// AutoApproveHandler accepts every approval request it can.
-// Logger controls approval logging. When nil, logs are discarded.
+// AutoApproveHandler accepts every approval request it can. Use it only in a
+// trusted environment. Logger controls redacted approval logging. Command
+// bodies, paths, working directories, and permission payloads are never logged.
+// When Logger is nil, logs are discarded.
 type AutoApproveHandler struct {
 	Logger *slog.Logger
 }
@@ -22,8 +24,6 @@ func (h AutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Cont
 		"thread_id", params.ThreadID,
 		"turn_id", params.TurnID,
 		"item_id", params.ItemID,
-		"command", params.Command,
-		"cwd", params.Cwd,
 	)
 	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: "accept"}
 	return &resp, nil
@@ -37,7 +37,6 @@ func (h AutoApproveHandler) ItemFileChangeRequestApproval(ctx context.Context, p
 		"thread_id", params.ThreadID,
 		"turn_id", params.TurnID,
 		"item_id", params.ItemID,
-		"grant_root", params.GrantRoot,
 	)
 	resp := protocol.FileChangeRequestApprovalResponse{Decision: "accept"}
 	return &resp, nil
@@ -117,9 +116,100 @@ func (h AutoApproveHandler) ExecCommandApproval(ctx context.Context, params prot
 		"codex auto-approving command",
 		"conversation_id", params.ConversationID,
 		"call_id", params.CallID,
-		"command", params.Command,
-		"cwd", params.Cwd,
 	)
 	resp := protocol.ExecCommandApprovalResponse{Decision: "approved"}
 	return &resp, nil
+}
+
+// RejectingApprovalHandler rejects approval requests and returns errors for
+// interactive requests that require an application-specific policy. Its zero
+// value is ready for use.
+type RejectingApprovalHandler struct{}
+
+func (RejectingApprovalHandler) ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
+	return &protocol.CommandExecutionRequestApprovalResponse{Decision: "decline"}, nil
+}
+
+func (RejectingApprovalHandler) ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
+	return &protocol.FileChangeRequestApprovalResponse{Decision: "decline"}, nil
+}
+
+func (RejectingApprovalHandler) ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	return &protocol.PermissionsRequestApprovalResponse{Permissions: map[string]any{}}, nil
+}
+
+func (RejectingApprovalHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	return &protocol.ApplyPatchApprovalResponse{Decision: "denied"}, nil
+}
+
+func (RejectingApprovalHandler) ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
+	return &protocol.ExecCommandApprovalResponse{Decision: "denied"}, nil
+}
+
+func (RejectingApprovalHandler) ItemToolCall(context.Context, protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	return nil, errors.New("tool calls require a custom handler")
+}
+
+func (RejectingApprovalHandler) ItemToolRequestUserInput(context.Context, protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
+	return nil, errors.New("tool user input requires a custom handler")
+}
+
+func (RejectingApprovalHandler) McpServerElicitationRequest(context.Context, protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+	return nil, errors.New("mcp elicitation requires a custom handler")
+}
+
+func (RejectingApprovalHandler) AccountChatgptAuthTokensRefresh(context.Context, protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	return nil, errors.New("chatgpt auth token refresh requires a custom handler")
+}
+
+func (RejectingApprovalHandler) AttestationGenerate(context.Context, protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	return nil, errors.New("attestation generation requires a custom handler")
+}
+
+// UnsafeLoggingAutoApproveHandler opts into logging sensitive approval payloads.
+// Use only when logs have access controls appropriate for command text and paths.
+type UnsafeLoggingAutoApproveHandler struct {
+	AutoApproveHandler
+}
+
+// NewUnsafeLoggingAutoApproveHandler returns an auto-approver that logs
+// sensitive command and path details.
+func NewUnsafeLoggingAutoApproveHandler(logger *slog.Logger) UnsafeLoggingAutoApproveHandler {
+	return UnsafeLoggingAutoApproveHandler{AutoApproveHandler: AutoApproveHandler{Logger: logger}}
+}
+
+func (h UnsafeLoggingAutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
+	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "command_execution", "command", optionalString(params.Command), "cwd", optionalString(params.Cwd))
+	return h.AutoApproveHandler.ItemCommandExecutionRequestApproval(ctx, params)
+}
+
+func (h UnsafeLoggingAutoApproveHandler) ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
+	var grantRoot any
+	if params.GrantRoot != nil {
+		grantRoot = *params.GrantRoot
+	}
+	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "file_change", "grant_root", grantRoot)
+	return h.AutoApproveHandler.ItemFileChangeRequestApproval(ctx, params)
+}
+
+func (h UnsafeLoggingAutoApproveHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "permissions", "permissions", params.Permissions)
+	return h.AutoApproveHandler.ItemPermissionsRequestApproval(ctx, params)
+}
+
+func (h UnsafeLoggingAutoApproveHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "legacy_patch", "file_changes", params.FileChanges, "grant_root", params.GrantRoot)
+	return h.AutoApproveHandler.ApplyPatchApproval(ctx, params)
+}
+
+func (h UnsafeLoggingAutoApproveHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
+	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "legacy_command", "command", params.Command, "cwd", params.Cwd)
+	return h.AutoApproveHandler.ExecCommandApproval(ctx, params)
+}
+
+func optionalString(value *string) any {
+	if value == nil {
+		return nil
+	}
+	return *value
 }

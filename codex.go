@@ -3,6 +3,7 @@ package codex
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os/exec"
 	"runtime/debug"
@@ -37,8 +38,10 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		}
 		args = append(args, spawn.ExtraArgs...)
 
-		logger.Info("codex starting app-server", "path", spawn.CodexPath, "args", strings.Join(args, " "))
-		warnIfCodexVersionMismatch(ctx, logger, spawn.CodexPath)
+		logger.Info("codex checking CLI compatibility", "path", spawn.CodexPath)
+		if err := checkCodexCompatibility(ctx, logger, spawn.CodexPath, opts.CompatibilityPolicy); err != nil {
+			return nil, err
+		}
 
 		var err error
 		if spawn.Stderr == nil {
@@ -47,6 +50,7 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
+		logger.Info("codex starting app-server", "path", spawn.CodexPath, "argument_count", len(args))
 		// The constructor context is only for initialization; process lifetime is managed by Close.
 		transport, err = rpc.SpawnStdio(context.WithoutCancel(ctx), spawn.CodexPath, args, spawn.Stderr)
 		if err != nil {
@@ -156,42 +160,71 @@ func boolPtr(value bool) *bool {
 	return &value
 }
 
-func warnIfCodexVersionMismatch(ctx context.Context, logger *slog.Logger, codexPath string) {
+func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath string, policy CompatibilityPolicy) error {
+	if policy == Ignore {
+		return nil
+	}
+	if policy != RequireMajorMinor && policy != Warn {
+		return fmt.Errorf("invalid compatibility policy %d", policy)
+	}
+
 	generatedVersion := protocol.GeneratedCodexVersion
 	if generatedVersion == "" {
-		return
+		return nil
 	}
 	runtimeVersion, err := probeCodexVersion(ctx, codexPath)
 	if err != nil {
-		logger.Warn(
-			"codex binary version could not be verified",
-			"path", codexPath,
-			"generated_version", generatedVersion,
-			"generated_commit", protocol.GeneratedCodexCommit,
-			"error", err,
-		)
-		return
+		return handleCompatibilityFailure(logger, policy, newCompatibilityError(codexPath, "", "version probe failed", err))
 	}
 	if runtimeVersion == "" {
-		logger.Warn(
-			"codex binary version could not be verified",
-			"path", codexPath,
-			"generated_version", generatedVersion,
-			"generated_commit", protocol.GeneratedCodexCommit,
-			"error", "version unavailable",
-		)
-		return
+		return handleCompatibilityFailure(logger, policy, newCompatibilityError(codexPath, "", "version output was not parseable", nil))
 	}
-	if runtimeVersion == generatedVersion {
-		return
+	if sameMajorMinor(runtimeVersion, generatedVersion) {
+		return nil
 	}
-	logger.Warn(
-		"codex binary version differs from generated protocol version",
-		"path", codexPath,
-		"runtime_version", runtimeVersion,
-		"generated_version", generatedVersion,
-		"generated_commit", protocol.GeneratedCodexCommit,
+	return handleCompatibilityFailure(logger, policy, newCompatibilityError(codexPath, runtimeVersion, "major/minor version mismatch", nil))
+}
+
+func newCompatibilityError(path, runtimeVersion, reason string, cause error) *CodexCompatibilityError {
+	return &CodexCompatibilityError{
+		Path:             path,
+		RuntimeVersion:   runtimeVersion,
+		GeneratedVersion: protocol.GeneratedCodexVersion,
+		GeneratedCommit:  protocol.GeneratedCodexCommit,
+		Reason:           reason,
+		Hint:             "install a matching Codex CLI or explicitly set CompatibilityPolicy to Warn or Ignore after validating protocol compatibility",
+		Cause:            cause,
+	}
+}
+
+func handleCompatibilityFailure(logger *slog.Logger, policy CompatibilityPolicy, compatibilityErr *CodexCompatibilityError) error {
+	if policy == RequireMajorMinor {
+		return compatibilityErr
+	}
+	resolveLogger(logger).Warn(
+		"codex binary compatibility could not be guaranteed",
+		"path", compatibilityErr.Path,
+		"runtime_version", compatibilityErr.RuntimeVersion,
+		"generated_version", compatibilityErr.GeneratedVersion,
+		"generated_commit", compatibilityErr.GeneratedCommit,
+		"reason", compatibilityErr.Reason,
+		"error", compatibilityErr.Cause,
 	)
+	return nil
+}
+
+func sameMajorMinor(runtimeVersion, generatedVersion string) bool {
+	runtimeMajor, runtimeMinor, runtimeOK := majorMinor(runtimeVersion)
+	generatedMajor, generatedMinor, generatedOK := majorMinor(generatedVersion)
+	return runtimeOK && generatedOK && runtimeMajor == generatedMajor && runtimeMinor == generatedMinor
+}
+
+func majorMinor(version string) (string, string, bool) {
+	parts := strings.Split(version, ".")
+	if len(parts) < 2 || !isDottedVersion(version) {
+		return "", "", false
+	}
+	return strings.TrimLeft(parts[0], "0"), strings.TrimLeft(parts[1], "0"), true
 }
 
 func probeCodexVersion(parent context.Context, codexPath string) (string, error) {

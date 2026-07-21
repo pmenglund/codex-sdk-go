@@ -6,7 +6,7 @@ This SDK speaks JSON-RPC to the `codex app-server` process. By default it spawns
 
 ## Requirements
 
-- Go 1.25+
+- Go 1.25.12 or newer
 - `codex` available on your `PATH`
 
 ## Install
@@ -108,6 +108,26 @@ fmt.Println(result.FinalResponse)
 
 `TurnHandle` owns its notification subscription. Call `Close` if you stop before `Run` returns.
 
+Canceling or expiring the context passed to `Run`, `RunInputs`, or
+`TurnHandle.Run` best-effort interrupts the remote turn before returning the
+original context error. Cleanup is bounded to two seconds. To detach without
+interrupting remote work, use `RunStreamed` (or `StartTurn` plus manual `Next`)
+and close only the local stream or handle.
+
+Low-level `rpc.Client.SubscribeNotifications` buffers at most the requested number
+of pending notifications (64 by default). If a consumer falls behind, only that
+iterator closes and `Next` returns an `rpc.NotificationOverflowError`; JSON-RPC
+responses and other subscribers continue normally.
+
+```go
+note, err := iterator.Next(ctx)
+var overflow *rpc.NotificationOverflowError
+if errors.As(err, &overflow) {
+    // Events were lost. Increase the capacity, drain faster, and subscribe
+    // again; overflow.Capacity reports the exhausted hard limit.
+}
+```
+
 ## Account, models, and threads
 
 High-level helpers wrap common app-server operations without requiring direct JSON-RPC calls.
@@ -135,6 +155,48 @@ _ = forked
 
 For lower-level or less stable protocol features, use `client.Client()` and the generated `rpc` package.
 
+### Low-level union migration
+
+Discriminated protocol unions are concrete generated wrapper types rather than
+`interface{}`. Construct values with functions such as
+`protocol.NewUserInput`, inspect the typed `Kind`, and use `RawJSON` when a
+variant-specific payload is needed:
+
+```go
+input, err := protocol.NewUserInput(map[string]any{
+    "type": "text",
+    "text": "Inspect the repository",
+})
+if err != nil {
+    return err
+}
+if input.Kind() == protocol.UserInputKindText {
+    var payload struct {
+        Text string `json:"text"`
+    }
+    if err := json.Unmarshal(input.RawJSON(), &payload); err != nil {
+        return err
+    }
+}
+```
+
+Constructors validate JSON encoding, the required non-empty discriminator, and
+required-field presence for known variants. Field value types and other schema
+constraints remain server-validated. Known variants have generated kind
+constants; a well-formed future discriminator remains round-trippable and
+reports `IsKnown() == false`. Existing opaque schemas remain `interface{}` only
+through reviewed generator allowlists, and generation fails when a new weak
+fallback appears. The 31 affected wrappers—including `UserInput`,
+`ResponseItem`, `SandboxPolicy`, `ThreadStatus`, and `LoginAccountParams`—are
+listed in `protocol/unions_gen.go`.
+
+This low-level source change requires SDK version `v0.145.0`
+or newer; `protocol.GeneratedCodexVersion` continues to describe the upstream
+wire schema, not the SDK release number. The same release adds
+`Options.CompatibilityPolicy` and changes `StartLogin` to accept JSON-marshalable
+login parameters; code using unkeyed `Options` literals, interface method sets,
+or assigned `StartLogin` method values must be updated.
+
 ## Approvals
 
 Configure approval handling by supplying a handler when constructing the client.
@@ -143,11 +205,25 @@ Configure approval handling by supplying a handler when constructing the client.
 logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 client, err := codex.New(ctx, codex.Options{
     Logger:          logger,
-    ApprovalHandler: codex.AutoApproveHandler{Logger: logger},
+    ApprovalHandler: codex.RejectingApprovalHandler{},
 })
 ```
 
 For custom approval logic, implement `rpc.ServerRequestHandler` (from `rpc`).
+
+`AutoApproveHandler` accepts command, file-change, and permission requests and
+must only be used in a trusted environment. Its default logs are redacted. If
+sensitive command and path logging is explicitly required, construct
+`NewUnsafeLoggingAutoApproveHandler(logger)` and protect those logs accordingly.
+
+## Codex CLI compatibility
+
+When the SDK spawns `codex`, it requires the CLI major/minor version to match
+the generated protocol version; patch differences are accepted. A mismatch,
+missing binary, or unparseable version returns `*codex.CodexCompatibilityError`
+before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
+validating compatibility (and provide a logger to see the warning), or
+`codex.Ignore` to skip the probe. Custom transports are never probed.
 
 ## Structured Output
 

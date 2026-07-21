@@ -54,6 +54,37 @@ If Linear MCP is unavailable, proceed using the best available context and note 
 
 ## Quality Gates (Validation & Success Criteria)
 
+The required `Quality` workflow is secretless and runs on pushes and pull
+requests with Go 1.25.12 and patched Go 1.26.5. It checks formatting,
+the checksum-verifying Codex installer fixtures, vet, unit tests, race tests,
+Staticcheck v0.7.0, and govulncheck v1.3.0. It must be safe for fork pull
+requests: it receives no API credential and does not download or execute Codex.
+
+The `Trusted E2E` workflow runs only on protected `main` pushes, manual
+dispatch, or as a reusable release gate. Its `e2e` GitHub Environment must
+require an approver and hold `OPENAI_API_KEY`. The workflow installs the exact
+Codex release recorded in `.github/codex/version`, verifies the archive against
+`.github/codex/checksums.txt`, then scopes the API key to the single step that
+constructs `CODEX_E2E_LOGIN_PARAMS_JSON` and runs
+`go test -tags=e2e ./test/e2e`.
+
+The manual `Release` workflow must run from `main`, pass both reusable quality
+and trusted e2e workflows, and receive approval from the protected `release`
+environment. Its publish job has only `contents: write`, refuses existing or
+non-increasing tags, requires at least v0.145.0 for the typed-union migration,
+and pushes only the new annotated tag. Local update scripts must never stage,
+commit, tag, or push.
+
+Repository settings must require the `Quality` checks on `main`, prevent force
+pushes and tag deletion, and configure required reviewers for both `e2e` and
+`release` environments. Until those settings are confirmed in GitHub, release
+publication is blocked; a local direct push is not a fallback.
+
+If a bad Go module version is published, never move its tag. Tell consumers to
+pin the prior good version, add a `retract` directive in the next corrective
+release when appropriate, publish a higher immutable tag, and communicate the
+replacement version in release notes.
+
 - **Code Review:** Open a Pull Request (PR) for the changes. The PR should ideally be tied to the project/initiative or parent issue. In the PR description:
     - Summarize what the change accomplishes and **how to test it** (if not obvious).
     - If an ExecPlan was used, mention it (e.g., “Implemented according to plan in `plans/LIN-1234.md`”) and ensure all plan items are completed.

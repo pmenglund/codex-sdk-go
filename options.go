@@ -24,7 +24,26 @@ type Options struct {
 
 	// ApprovalHandler handles server approval requests.
 	ApprovalHandler rpc.ServerRequestHandler
+
+	// CompatibilityPolicy controls validation of a spawned Codex CLI. The zero
+	// value, RequireMajorMinor, rejects binaries whose major/minor version cannot
+	// be verified against the generated protocol. Custom transports are not probed.
+	CompatibilityPolicy CompatibilityPolicy
 }
+
+// CompatibilityPolicy controls spawned Codex CLI version validation.
+type CompatibilityPolicy uint8
+
+const (
+	// RequireMajorMinor requires the runtime and generated protocol to have the
+	// same major and minor version. Patch differences are allowed.
+	RequireMajorMinor CompatibilityPolicy = iota
+	// Warn logs compatibility failures and continues. Supply Options.Logger to
+	// observe the warning.
+	Warn
+	// Ignore disables the Codex CLI version probe.
+	Ignore
+)
 
 // SpawnOptions configures the spawned codex app-server process.
 type SpawnOptions struct {

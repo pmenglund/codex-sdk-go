@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/pmenglund/codex-sdk-go/rpc"
@@ -11,6 +12,39 @@ import (
 
 // ErrOverloaded identifies retryable overload or server-busy failures.
 var ErrOverloaded = errors.New("codex overloaded")
+
+// CodexCompatibilityError reports why a spawned Codex CLI could not be proven
+// compatible with the generated protocol package.
+type CodexCompatibilityError struct {
+	Path             string
+	RuntimeVersion   string
+	GeneratedVersion string
+	GeneratedCommit  string
+	Reason           string
+	Hint             string
+	Cause            error
+}
+
+func (e *CodexCompatibilityError) Error() string {
+	message := fmt.Sprintf("codex CLI compatibility check failed for %q: %s", e.Path, e.Reason)
+	if e.RuntimeVersion != "" {
+		message += fmt.Sprintf(" (runtime %s, generated %s)", e.RuntimeVersion, e.GeneratedVersion)
+	} else if e.GeneratedVersion != "" {
+		message += fmt.Sprintf(" (generated %s)", e.GeneratedVersion)
+	}
+	if e.Cause != nil {
+		message += ": " + e.Cause.Error()
+	}
+	if e.Hint != "" {
+		message += "; " + e.Hint
+	}
+	return message
+}
+
+// Unwrap exposes a version-probe failure, when present.
+func (e *CodexCompatibilityError) Unwrap() error {
+	return e.Cause
+}
 
 // IsOverloaded reports whether err indicates an overload or server-busy failure.
 func IsOverloaded(err error) bool {

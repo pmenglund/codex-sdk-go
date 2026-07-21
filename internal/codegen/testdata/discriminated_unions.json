@@ -1,0 +1,36 @@
+{
+  "definitions": {
+    "SandboxPolicy": {
+      "oneOf": [
+        {"properties": {"type": {"enum": ["dangerFullAccess"]}}},
+        {"properties": {"type": {"enum": ["readOnly"]}}},
+        {"properties": {"type": {"enum": ["externalSandbox"]}}},
+        {"properties": {"type": {"enum": ["workspaceWrite"]}, "writableRoots": {"type": "array", "items": {"type": "string"}}}}
+      ]
+    },
+    "UserInput": {
+      "oneOf": [
+        {"properties": {"type": {"enum": ["text"]}, "text": {"type": "string"}}},
+        {"properties": {"type": {"enum": ["image"]}}},
+        {"properties": {"type": {"enum": ["localImage"]}}},
+        {"properties": {"type": {"enum": ["skill"]}}},
+        {"properties": {"type": {"enum": ["mention"]}}}
+      ]
+    },
+    "ThreadStatus": {
+      "oneOf": [
+        {"properties": {"type": {"enum": ["notLoaded"]}}},
+        {"properties": {"type": {"enum": ["idle"]}}},
+        {"properties": {"type": {"enum": ["systemError"]}}},
+        {"properties": {"type": {"enum": ["active"]}, "activeFlags": {"type": "array", "items": {"type": "string"}}}}
+      ]
+    },
+    "ResponseItem": {
+      "oneOf": [
+        {"properties": {"type": {"enum": ["message"]}, "content": {"type": "array"}}},
+        {"properties": {"type": {"enum": ["reasoning"]}}},
+        {"properties": {"type": {"enum": ["other"]}, "opaque": true}}
+      ]
+    }
+  }
+}

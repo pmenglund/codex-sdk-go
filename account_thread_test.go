@@ -55,7 +55,7 @@ func TestAccountAndModelHelpersWithReplay(t *testing.T) {
 func TestLoginHelpersWithReplay(t *testing.T) {
 	ctx := context.Background()
 	info := protocol.ClientInfo{Name: "codex-go-test", Version: "test"}
-	loginParams := map[string]any{"mode": "chatgpt"}
+	loginParams := map[string]any{"type": "chatgpt"}
 
 	client, err := New(ctx, Options{
 		Transport: rpc.NewReplayTransport([]rpc.TranscriptEntry{
@@ -63,7 +63,7 @@ func TestLoginHelpersWithReplay(t *testing.T) {
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "account/login/start", Params: mustRaw(loginParams)}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"loginId": "login_1"})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"type": "chatgpt", "loginId": "login_1", "authUrl": "https://example.test/login"})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "account/login/cancel", Params: mustRaw(map[string]any{"loginId": "login_1"})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"status": "canceled"})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(4), Method: "account/logout"}),

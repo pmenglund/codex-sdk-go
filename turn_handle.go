@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/rpc"
 )
+
+var turnInterruptCleanupTimeout = 2 * time.Second
 
 // TurnHandle controls a running turn.
 type TurnHandle struct {
@@ -19,10 +22,9 @@ type TurnHandle struct {
 	logger   *slog.Logger
 	stream   *TurnStream
 
-	mu       sync.Mutex
-	turnID   string
-	closed   bool
-	closeErr error
+	mu     sync.Mutex
+	turnID string
+	closed bool
 }
 
 // StartTurn sends structured inputs and returns a handle for the running turn.
@@ -81,7 +83,9 @@ func (h *TurnHandle) Next(ctx context.Context) (rpc.Notification, error) {
 	return note, nil
 }
 
-// Run waits for this turn to complete and returns its aggregated result.
+// Run waits for this turn to complete and returns its aggregated result. It
+// best-effort interrupts remote work after context cancellation, deadline, or
+// notification overflow; cleanup is bounded and the original error is returned.
 func (h *TurnHandle) Run(ctx context.Context) (*TurnResult, error) {
 	if err := h.ensureReady(); err != nil {
 		return nil, err
@@ -92,6 +96,9 @@ func (h *TurnHandle) Run(ctx context.Context) (*TurnResult, error) {
 	for {
 		note, err := h.Next(ctx)
 		if err != nil {
+			if err == context.Canceled || err == context.DeadlineExceeded || errors.Is(err, rpc.ErrNotificationOverflow) {
+				h.interruptAfterRunError(ctx, err)
+			}
 			return nil, err
 		}
 		result.Notifications = append(result.Notifications, note)
@@ -120,6 +127,40 @@ func (h *TurnHandle) Run(ctx context.Context) (*TurnResult, error) {
 			}
 		}
 	}
+}
+
+func (h *TurnHandle) interruptAfterRunError(ctx context.Context, cause error) {
+	turnID := h.currentTurnID()
+	logger := resolveLogger(h.logger)
+	if turnID == "" {
+		logger.Warn("codex turn run failure could not be interrupted", "thread_id", h.threadID, "error", cause)
+		return
+	}
+
+	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), turnInterruptCleanupTimeout)
+	defer cancel()
+	interruptResult := make(chan error, 1)
+	go func() {
+		_, err := h.client.TurnInterrupt(cleanupCtx, protocol.TurnInterruptParams{ThreadID: h.threadID, TurnID: turnID})
+		interruptResult <- err
+	}()
+	select {
+	case err := <-interruptResult:
+		if err == nil {
+			return
+		}
+		logger.Warn("codex turn interrupt after run failure failed", "thread_id", h.threadID, "turn_id", turnID, "error", err)
+	case <-cleanupCtx.Done():
+		logger.Warn("codex turn interrupt after run failure timed out", "thread_id", h.threadID, "turn_id", turnID, "error", cleanupCtx.Err())
+	}
+}
+
+// ID returns the server-assigned turn ID when it is known.
+func (h *TurnHandle) ID() string {
+	if h == nil {
+		return ""
+	}
+	return h.currentTurnID()
 }
 
 // Steer sends additional input to the active turn.
@@ -235,7 +276,11 @@ func buildTurnSteerParams(threadID, turnID string, inputs []Input) (protocol.Tur
 		if err := input.validate(); err != nil {
 			return params, fmt.Errorf("input: %w", err)
 		}
-		params.Input = append(params.Input, input)
+		wrapped, err := protocol.NewUserInput(input)
+		if err != nil {
+			return params, fmt.Errorf("wrap input: %w", err)
+		}
+		params.Input = append(params.Input, wrapped)
 	}
 	return params, nil
 }

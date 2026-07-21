@@ -133,10 +133,11 @@ func TestReplayJSONLineHelpers(t *testing.T) {
 }
 
 func TestNotificationIteratorNext(t *testing.T) {
-	done := make(chan struct{})
+	subDone := make(chan struct{})
+	clientDone := make(chan struct{})
 	errFn := func() error { return errors.New("closed") }
 	ch := make(chan Notification, 1)
-	iter := NotificationIterator{ch: ch, done: done, err: errFn}
+	iter := NotificationIterator{ch: ch, subDone: subDone, clientDone: clientDone, subErr: errFn, clientErr: errFn}
 
 	ch <- Notification{Method: "note"}
 	note, err := iter.Next(context.Background())
@@ -150,7 +151,7 @@ func TestNotificationIteratorNext(t *testing.T) {
 		t.Fatalf("expected context error")
 	}
 
-	close(done)
+	close(subDone)
 	if _, err := iter.Next(context.Background()); err == nil {
 		t.Fatalf("expected done error")
 	}

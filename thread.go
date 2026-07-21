@@ -25,51 +25,20 @@ func (t *Thread) Run(ctx context.Context, prompt string, opts *TurnOptions) (*Tu
 	return t.RunInputs(ctx, []Input{TextInput(prompt)}, opts)
 }
 
-// RunInputs sends structured inputs and waits for the turn to finish.
+// RunInputs sends structured inputs and waits for the turn to finish. If ctx
+// is canceled or expires, it best-effort interrupts the remote turn before
+// returning the original context error. Use RunStreamed to retain manual
+// control over whether remote work is interrupted.
 func (t *Thread) RunInputs(ctx context.Context, inputs []Input, opts *TurnOptions) (*TurnResult, error) {
 	if err := t.ensureReady(); err != nil {
 		return nil, err
 	}
 
-	logger := resolveLogger(t.logger)
-	stream, err := t.RunStreamed(ctx, inputs, opts)
+	handle, err := t.StartTurn(ctx, inputs, opts)
 	if err != nil {
 		return nil, err
 	}
-	defer stream.Close()
-
-	result := &TurnResult{}
-	for {
-		note, err := stream.Next(ctx)
-		if err != nil {
-			return nil, err
-		}
-		result.Notifications = append(result.Notifications, note)
-		updateTurnResult(result, note)
-
-		if note.Method == "turn/completed" {
-			if turnErr := notificationError(note); turnErr != nil {
-				logger.Error("codex turn failed", "thread_id", t.id, "turn_id", result.TurnID, "error", turnErr)
-				return nil, turnErr
-			}
-			logger.Info("codex turn completed", "thread_id", t.id, "turn_id", result.TurnID)
-			return result, nil
-		}
-		if note.Method == "turn/failed" {
-			turnErr := notificationError(note)
-			if turnErr == nil {
-				turnErr = errors.New("turn failed")
-			}
-			logger.Error("codex turn failed", "thread_id", t.id, "turn_id", result.TurnID, "error", turnErr)
-			return nil, turnErr
-		}
-		if note.Method == "error" {
-			if turnErr := notificationError(note); turnErr != nil {
-				logger.Error("codex turn failed", "thread_id", t.id, "turn_id", result.TurnID, "error", turnErr)
-				return nil, turnErr
-			}
-		}
-	}
+	return handle.Run(ctx)
 }
 
 // RunStreamed sends structured inputs and returns a streaming iterator.

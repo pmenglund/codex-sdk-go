@@ -26,6 +26,16 @@ func attachApprovalLogger(handler rpc.ServerRequestHandler, logger *slog.Logger)
 			value.Logger = logger
 		}
 		return value
+	case UnsafeLoggingAutoApproveHandler:
+		if value.Logger == nil {
+			value.Logger = logger
+		}
+		return value
+	case *UnsafeLoggingAutoApproveHandler:
+		if value != nil && value.Logger == nil {
+			value.Logger = logger
+		}
+		return value
 	default:
 		return handler
 	}

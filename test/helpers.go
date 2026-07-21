@@ -20,8 +20,9 @@ import (
 
 // LockedBuffer is a concurrency-safe buffer for app-server stderr capture.
 type LockedBuffer struct {
-	mu  sync.Mutex
-	buf bytes.Buffer
+	mu      sync.Mutex
+	buf     bytes.Buffer
+	secrets []string
 }
 
 func (b *LockedBuffer) Write(p []byte) (int, error) {
@@ -33,6 +34,18 @@ func (b *LockedBuffer) Write(p []byte) (int, error) {
 func (b *LockedBuffer) String() string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	output := b.buf.String()
+	for _, secret := range b.secrets {
+		if secret != "" {
+			output = strings.ReplaceAll(output, secret, "[REDACTED]")
+		}
+	}
+	return output
+}
+
+func (b *LockedBuffer) rawString() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	return b.buf.String()
 }
 
@@ -41,7 +54,46 @@ type RealClientOptions struct {
 	Timeout          time.Duration
 	DisableAutoClose bool
 	Secrets          []string
+	RequestRecorder  *RequestRecorder
 }
+
+// RequestRecorder captures outbound JSON-RPC requests without changing them.
+type RequestRecorder struct {
+	mu    sync.Mutex
+	lines []string
+}
+
+// Request returns the first captured request with method.
+func (r *RequestRecorder) Request(method string) (rpc.JSONRPCRequest, bool) {
+	if r == nil {
+		return rpc.JSONRPCRequest{}, false
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, line := range r.lines {
+		var request rpc.JSONRPCRequest
+		if json.Unmarshal([]byte(line), &request) == nil && request.Method == method {
+			return request, true
+		}
+	}
+	return rpc.JSONRPCRequest{}, false
+}
+
+type recordingTransport struct {
+	transport rpc.Transport
+	recorder  *RequestRecorder
+}
+
+func (t *recordingTransport) ReadLine() (string, error) { return t.transport.ReadLine() }
+
+func (t *recordingTransport) WriteLine(line string) error {
+	t.recorder.mu.Lock()
+	t.recorder.lines = append(t.recorder.lines, line)
+	t.recorder.mu.Unlock()
+	return t.transport.WriteLine(line)
+}
+
+func (t *recordingTransport) Close() error { return t.transport.Close() }
 
 // NewRealClient starts a real codex app-server with an isolated CODEX_HOME.
 func NewRealClient(t testing.TB, opts RealClientOptions) (*codex.Codex, context.Context, *LockedBuffer) {
@@ -52,7 +104,12 @@ func NewRealClient(t testing.TB, opts RealClientOptions) (*codex.Codex, context.
 		t.Fatalf("codex must be available on PATH for e2e tests: %v", err)
 	}
 
-	t.Setenv("CODEX_HOME", t.TempDir())
+	codexHome, err := os.MkdirTemp("", "codex-sdk-go-e2e-")
+	if err != nil {
+		t.Fatalf("create temporary CODEX_HOME: %v", err)
+	}
+	t.Cleanup(func() { removeTemporaryCodexHome(t, codexHome) })
+	t.Setenv("CODEX_HOME", codexHome)
 
 	timeout := opts.Timeout
 	if timeout == 0 {
@@ -61,13 +118,16 @@ func NewRealClient(t testing.TB, opts RealClientOptions) (*codex.Codex, context.
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 
-	var stderr LockedBuffer
-	client, err := codex.New(ctx, codex.Options{
-		Spawn: codex.SpawnOptions{
-			CodexPath: codexPath,
-			Stderr:    &stderr,
-		},
-	})
+	stderr := LockedBuffer{secrets: secretMarkers(opts.Secrets...)}
+	clientOptions := codex.Options{Spawn: codex.SpawnOptions{CodexPath: codexPath, Stderr: &stderr}}
+	if opts.RequestRecorder != nil {
+		transport, spawnErr := rpc.SpawnStdio(context.WithoutCancel(ctx), codexPath, []string{"app-server"}, &stderr)
+		if spawnErr != nil {
+			t.Fatalf("spawn real codex app-server: %v\nstderr:\n%s", spawnErr, stderr.String())
+		}
+		clientOptions.Transport = &recordingTransport{transport: transport, recorder: opts.RequestRecorder}
+	}
+	client, err := codex.New(ctx, clientOptions)
 	if err != nil {
 		t.Fatalf("initialize real codex app-server: %v\nstderr:\n%s", err, stderr.String())
 	}
@@ -80,6 +140,63 @@ func NewRealClient(t testing.TB, opts RealClientOptions) (*codex.Codex, context.
 		})
 	}
 	return client, ctx, &stderr
+}
+
+func removeTemporaryCodexHome(t testing.TB, path string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		err := os.RemoveAll(path)
+		if err == nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Errorf("remove temporary CODEX_HOME %s: %v", path, err)
+			return
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+}
+
+func secretMarkers(values ...string) []string {
+	seen := make(map[string]struct{})
+	var markers []string
+	add := func(value string) {
+		if value == "" {
+			return
+		}
+		if _, ok := seen[value]; ok {
+			return
+		}
+		seen[value] = struct{}{}
+		markers = append(markers, value)
+	}
+	var visit func(string, any)
+	visit = func(key string, value any) {
+		switch value := value.(type) {
+		case string:
+			lowerKey := strings.ToLower(key)
+			if strings.Contains(lowerKey, "key") || strings.Contains(lowerKey, "token") || strings.Contains(lowerKey, "secret") || strings.Contains(lowerKey, "password") {
+				add(value)
+			}
+		case []any:
+			for _, item := range value {
+				visit(key, item)
+			}
+		case map[string]any:
+			for itemKey, item := range value {
+				visit(itemKey, item)
+			}
+		}
+	}
+	for _, value := range values {
+		add(value)
+		var decoded any
+		if json.Unmarshal([]byte(value), &decoded) == nil {
+			visit("", decoded)
+		}
+	}
+	return markers
 }
 
 // StartThread starts a real Codex thread and fails the test if no id is returned.
@@ -169,6 +286,7 @@ func AssertCompletedTurnResult(t testing.TB, label string, result *codex.TurnRes
 
 	if result == nil {
 		t.Fatalf("%s returned nil result", label)
+		return
 	}
 	if len(result.Notifications) == 0 {
 		t.Fatalf("%s returned no notifications", label)
@@ -260,8 +378,8 @@ func AssertJSONContains(t testing.TB, label string, value any, want string) {
 func AssertNoSecretLeak(t testing.TB, stderr *LockedBuffer, secrets ...string) {
 	t.Helper()
 
-	output := stderr.String()
-	for _, secret := range secrets {
+	output := stderr.rawString()
+	for _, secret := range secretMarkers(secrets...) {
 		if secret == "" {
 			continue
 		}

@@ -42,7 +42,7 @@ func exampleOptions(prompt string, logger *slog.Logger) codex.Options {
 	if os.Getenv(exampleReplayEnv) == "" {
 		return codex.Options{
 			Logger:          logger,
-			ApprovalHandler: codex.AutoApproveHandler{Logger: logger},
+			ApprovalHandler: codex.RejectingApprovalHandler{},
 		}
 	}
 
@@ -50,7 +50,7 @@ func exampleOptions(prompt string, logger *slog.Logger) codex.Options {
 	return codex.Options{
 		Transport:       rpc.NewReplayTransport(exampleTranscript(info, prompt, "Approved summary")),
 		ClientInfo:      info,
-		ApprovalHandler: codex.AutoApproveHandler{},
+		ApprovalHandler: codex.RejectingApprovalHandler{},
 	}
 }
 

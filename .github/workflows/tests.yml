@@ -1,51 +1,68 @@
-name: Tests
+name: Quality
 
 on:
   push:
   pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  quality:
+    name: Go ${{ matrix.go-version }}
     runs-on: ubuntu-latest
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.25.12", "1.26.5"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Codex CLI from GitHub Releases
-        run: |
-          arch="$(uname -m)"
-          case "${arch}" in
-            x86_64) codex_arch="x86_64" ;;
-            aarch64|arm64) codex_arch="aarch64" ;;
-            *)
-              echo "Unsupported runner architecture: ${arch}"
-              exit 1
-              ;;
-          esac
-          asset="codex-${codex_arch}-unknown-linux-musl.tar.gz"
-          binary_name="${asset%.tar.gz}"
-          curl -fsSL -o codex.tar.gz "https://github.com/openai/codex/releases/latest/download/${asset}"
-          tar -xzf codex.tar.gz
-          install -m 0755 "${binary_name}" "${RUNNER_TEMP}/codex"
-          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
-
-      - name: Verify Codex CLI
-        run: codex --version
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          go-version-file: go.mod
+          go-version: ${{ matrix.go-version }}
           cache: true
 
-      - name: Validate API key secret
+      - name: Check formatting
+        shell: bash
         run: |
-          if [ -z "${OPENAI_API_KEY}" ]; then
-            echo "Missing OPENAI_API_KEY secret. Add it in repo Settings -> Secrets and variables -> Actions."
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          if [[ -n "$unformatted" ]]; then
+            echo "$unformatted"
             exit 1
           fi
 
-      - name: Run tests
+      - name: Test verified Codex installer
+        run: |
+          .github/scripts/test-install-codex-cli.sh
+          .github/scripts/test-validate-release-tag.sh
+          .github/scripts/test-content-manifest.sh
+
+      - name: Validate workflows
+        if: matrix.go-version == '1.25.12'
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
         run: go test ./...
+
+      - name: Test with race detector
+        run: go test -race ./...
+
+      - name: Install pinned analyzers
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
+          go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+
+      - name: Staticcheck
+        run: staticcheck ./...
+
+      - name: Vulnerability scan
+        run: govulncheck ./...

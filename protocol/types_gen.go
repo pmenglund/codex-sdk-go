@@ -12,8 +12,6 @@ package protocol
 // will fail unless the path being deserialized is already absolute.
 type AbsolutePathBuf string
 
-type Account interface{}
-
 type AccountTokenUsageDailyBucket struct {
 	// StartDate corresponds to the JSON schema field "startDate".
 	StartDate string `json:"startDate"`
@@ -103,8 +101,6 @@ type AdditionalNetworkPermissions struct {
 }
 
 type AdditionalNetworkPermissionsEnabled *bool
-
-type AgentMessageInputContent interface{}
 
 type AmazonBedrockCredentialSource string
 
@@ -714,8 +710,6 @@ type ConfigValueWriteParamsExpectedVersion *string
 // omitted.
 type ConfigValueWriteParamsFilePath *string
 
-type ConfiguredHookHandler interface{}
-
 type ConfiguredHookMatcherGroup struct {
 	// Hooks corresponds to the JSON schema field "hooks".
 	Hooks []ConfiguredHookHandler `json:"hooks"`
@@ -742,8 +736,6 @@ type ConsumeAccountRateLimitResetCreditParams struct {
 // next available credit.
 type ConsumeAccountRateLimitResetCreditParamsCreditID *string
 
-type ContentItem interface{}
-
 type ConversationTextRole string
 
 const ConversationTextRoleAssistant ConversationTextRole = "assistant"
@@ -763,11 +755,7 @@ type CreditsSnapshot struct {
 
 type CreditsSnapshotBalance *string
 
-type DynamicToolCallOutputContentItem interface{}
-
 type DynamicToolNamespaceTool interface{}
-
-type DynamicToolSpec interface{}
 
 type ExperimentalFeature struct {
 	// Announcement copy shown to users when the feature is introduced. Null when this
@@ -999,8 +987,6 @@ type FeedbackUploadParamsTags map[string]string
 
 type FeedbackUploadParamsThreadID *string
 
-type FileChange interface{}
-
 type FileChangeApprovalDecision interface{}
 
 type FileSystemAccessMode string
@@ -1009,8 +995,6 @@ const FileSystemAccessModeDeny FileSystemAccessMode = "deny"
 const FileSystemAccessModeRead FileSystemAccessMode = "read"
 const FileSystemAccessModeWrite FileSystemAccessMode = "write"
 
-type FileSystemPath interface{}
-
 type FileSystemSandboxEntry struct {
 	// Access corresponds to the JSON schema field "access".
 	Access FileSystemAccessMode `json:"access"`
@@ -1018,8 +1002,6 @@ type FileSystemSandboxEntry struct {
 	// Path corresponds to the JSON schema field "path".
 	Path FileSystemPath `json:"path"`
 }
-
-type FileSystemSpecialPath interface{}
 
 type FileUpdateChange struct {
 	// Diff corresponds to the JSON schema field "diff".
@@ -1132,7 +1114,6 @@ type FunctionCallOutputBody interface{}
 
 // Responses API compatible content items that can be returned by a tool call. This
 // is a subset of ContentItem with the types we support as function call outputs.
-type FunctionCallOutputContentItem interface{}
 
 type FuzzyFileSearchMatchType string
 
@@ -1284,8 +1265,6 @@ type LocalShellStatus string
 const LocalShellStatusCompleted LocalShellStatus = "completed"
 const LocalShellStatusInProgress LocalShellStatus = "in_progress"
 const LocalShellStatusIncomplete LocalShellStatus = "incomplete"
-
-type LoginAccountParams interface{}
 
 type LoginAppBrand string
 
@@ -1972,10 +1951,6 @@ type NonSteerableTurnKind string
 const NonSteerableTurnKindCompact NonSteerableTurnKind = "compact"
 const NonSteerableTurnKindReview NonSteerableTurnKind = "review"
 
-type ParsedCommand interface{}
-
-type PatchChangeKind interface{}
-
 type PermissionGrantScope string
 
 const PermissionGrantScopeSession PermissionGrantScope = "session"
@@ -2410,8 +2385,6 @@ type ReasoningEffortOption struct {
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort"`
 }
 
-type ReasoningItemContent interface{}
-
 type ReasoningItemReasoningSummary interface{}
 
 // A summary of the reasoning performed by the model. This can be useful for
@@ -2512,10 +2485,6 @@ type ResourceTemplateTitle *string
 
 type ResourceTitle *string
 
-type ResponseItem interface{}
-
-type ResponsesApiWebSearchAction interface{}
-
 // User's decision in response to an ExecApprovalRequest.
 type ReviewDecision interface{}
 
@@ -2536,15 +2505,11 @@ type ReviewStartParams struct {
 	ThreadID string `json:"threadId"`
 }
 
-type ReviewTarget interface{}
-
 type SandboxMode string
 
 const SandboxModeDangerFullAccess SandboxMode = "danger-full-access"
 const SandboxModeReadOnly SandboxMode = "read-only"
 const SandboxModeWorkspaceWrite SandboxMode = "workspace-write"
-
-type SandboxPolicy interface{}
 
 type SanitizedAccountLoginCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
@@ -4934,7 +4899,6 @@ type ThreadRealtimeAudioChunkItemID *string
 type ThreadRealtimeAudioChunkSamplesPerChannel *int
 
 // EXPERIMENTAL - transport used by thread realtime.
-type ThreadRealtimeStartTransport interface{}
 
 type ThreadResumeInitialTurnsPageParams struct {
 	// How much item detail to include for each returned turn; defaults to summary.
@@ -5033,7 +4997,6 @@ const ThreadSourceKindSubAgentThreadSpawn ThreadSourceKind = "subAgentThreadSpaw
 const ThreadSourceKindUnknown ThreadSourceKind = "unknown"
 const ThreadSourceKindVscode ThreadSourceKind = "vscode"
 
-
 type ThreadStartParamsBaseInstructions *string
 
 type ThreadStartParamsConfig map[string]interface{}
@@ -5056,8 +5019,6 @@ type ThreadStartSource string
 
 const ThreadStartSourceClear ThreadStartSource = "clear"
 const ThreadStartSourceStartup ThreadStartSource = "startup"
-
-type ThreadStatus interface{}
 
 type ThreadTokenUsage struct {
 	// Last corresponds to the JSON schema field "last".
@@ -5223,7 +5184,6 @@ const TurnPlanStepStatusCompleted TurnPlanStepStatus = "completed"
 const TurnPlanStepStatusInProgress TurnPlanStepStatus = "inProgress"
 const TurnPlanStepStatusPending TurnPlanStepStatus = "pending"
 
-
 type TurnStartParamsClientUserMessageID *string
 
 // Override the working directory for this turn and subsequent turns.
@@ -5251,8 +5211,6 @@ type TurnSteerParams struct {
 }
 
 type TurnSteerParamsClientUserMessageID *string
-
-type UserInput interface{}
 
 type WebSearchMode string
 

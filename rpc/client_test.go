@@ -90,13 +90,22 @@ func TestNotificationDelivery(t *testing.T) {
 	}
 }
 
-func TestNotificationDeliveryDoesNotDropWhenBufferFills(t *testing.T) {
+func TestNotificationOverflowIsBoundedAndIsolated(t *testing.T) {
 	transport := newChannelTransport()
 	client := NewClient(transport, ClientOptions{})
 	defer client.Close()
 
-	iter := client.SubscribeNotifications(1)
-	defer iter.Close()
+	slow := client.SubscribeNotifications(1)
+	defer slow.Close()
+	healthy := client.SubscribeNotifications(4)
+	defer healthy.Close()
+
+	callDone := make(chan error, 1)
+	go func() {
+		var result map[string]any
+		callDone <- client.Call(context.Background(), "ping", map[string]any{}, &result)
+	}()
+	transport.waitForWrites(t, 1)
 
 	transport.pushReadLine(mustJSON(JSONRPCNotification{
 		Method: "turn/started",
@@ -106,27 +115,115 @@ func TestNotificationDeliveryDoesNotDropWhenBufferFills(t *testing.T) {
 		Method: "turn/completed",
 		Params: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1"}}),
 	}))
+	transport.pushReadLine(mustJSON(JSONRPCResponse{
+		ID:     NewIntRequestID(1),
+		Result: mustRaw(map[string]any{"ok": true}),
+	}))
 
-	transport.waitForReads(t, 2)
+	transport.waitForReads(t, 3)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	first, err := iter.Next(ctx)
-	if err != nil {
-		t.Fatalf("first notification error: %v", err)
+	_, err := slow.Next(ctx)
+	var overflow *NotificationOverflowError
+	if !errors.As(err, &overflow) {
+		t.Fatalf("expected NotificationOverflowError, got %v", err)
 	}
-	if first.Method != "turn/started" {
-		t.Fatalf("unexpected first notification: %s", first.Method)
+	if overflow.Capacity != 1 {
+		t.Fatalf("unexpected overflow capacity: %d", overflow.Capacity)
+	}
+	if !errors.Is(err, ErrNotificationOverflow) {
+		t.Fatalf("expected ErrNotificationOverflow compatibility, got %v", err)
 	}
 
-	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second)
-	defer cancel2()
-	second, err := iter.Next(ctx2)
-	if err != nil {
-		t.Fatalf("second notification error: %v", err)
+	for _, want := range []string{"turn/started", "turn/completed"} {
+		note, nextErr := healthy.Next(ctx)
+		if nextErr != nil {
+			t.Fatalf("healthy notification error: %v", nextErr)
+		}
+		if note.Method != want {
+			t.Fatalf("unexpected healthy notification: got %s want %s", note.Method, want)
+		}
 	}
-	if second.Method != "turn/completed" {
-		t.Fatalf("unexpected second notification: %s", second.Method)
+
+	select {
+	case callErr := <-callDone:
+		if callErr != nil {
+			t.Fatalf("call failed after another subscriber overflowed: %v", callErr)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("reader was blocked by overflowing subscriber")
+	}
+
+	client.subsMu.Lock()
+	subCount := len(client.subs)
+	client.subsMu.Unlock()
+	if subCount != 1 {
+		t.Fatalf("expected only healthy subscriber to remain, got %d", subCount)
+	}
+}
+
+func TestNotificationPublishCloseRace(t *testing.T) {
+	for iteration := 0; iteration < 100; iteration++ {
+		transport := newChannelTransport()
+		client := NewClient(transport, ClientOptions{})
+		iter := client.SubscribeNotifications(2)
+		note := JSONRPCNotification{Method: "turn/started", Params: mustRaw(map[string]any{"threadId": "thr_1"})}
+
+		var wg sync.WaitGroup
+		wg.Add(3)
+		go func() {
+			defer wg.Done()
+			for publish := 0; publish < 100; publish++ {
+				client.handleNotification(note)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for closeCall := 0; closeCall < 10; closeCall++ {
+				iter.Close()
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			_ = client.Close()
+		}()
+
+		done := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatalf("publish/close race did not finish at iteration %d", iteration)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		_, err := iter.Next(ctx)
+		cancel()
+		if err == nil {
+			t.Fatalf("expected terminal iterator error at iteration %d", iteration)
+		}
+	}
+}
+
+func TestSubscribeAfterClientCloseIsNotRetained(t *testing.T) {
+	client := NewClient(newChannelTransport(), ClientOptions{})
+	if err := client.Close(); err != nil {
+		t.Fatalf("close client: %v", err)
+	}
+	iter := client.SubscribeNotifications(1)
+	client.subsMu.Lock()
+	subCount := len(client.subs)
+	client.subsMu.Unlock()
+	if subCount != 0 {
+		t.Fatalf("closed client retained %d subscriptions", subCount)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if _, err := iter.Next(ctx); err == nil {
+		t.Fatalf("expected closed-client iterator error")
 	}
 }
 

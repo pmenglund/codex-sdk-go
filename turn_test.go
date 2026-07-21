@@ -299,6 +299,12 @@ func runWithoutCompletionTranscript(info protocol.ClientInfo, prompt string) []r
 			ID:     rpc.NewIntRequestID(3),
 			Result: mustRaw(map[string]any{"turn": turnPayload("turn_1", "inProgress")}),
 		}),
+		writeLine(rpc.JSONRPCRequest{
+			ID:     rpc.NewIntRequestID(4),
+			Method: "turn/interrupt",
+			Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1"}),
+		}),
+		readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(4), Result: mustRaw(map[string]any{})}),
 	}
 }
 

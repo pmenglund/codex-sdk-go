@@ -1,0 +1,84 @@
+name: Release
+
+concurrency:
+  group: sdk-release
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: New immutable SDK tag, for example v0.145.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main branch
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Release must be dispatched from main." >&2
+            exit 1
+          fi
+
+  quality:
+    needs: validate-branch
+    permissions:
+      contents: read
+    uses: ./.github/workflows/tests.yml
+
+  e2e:
+    needs: validate-branch
+    permissions:
+      contents: read
+    uses: ./.github/workflows/e2e.yml
+
+  publish-tag:
+    needs: [quality, e2e]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main with tags
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate release request and pinned Codex metadata
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+        run: |
+          git fetch origin main --no-tags
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
+            echo "main advanced after this release was dispatched; start a new release for the current main commit." >&2
+            exit 1
+          fi
+          .github/scripts/validate-release-tag.sh "$REQUESTED_TAG"
+          .github/scripts/test-install-codex-cli.sh
+          generated_version="$(sed -n 's/^const GeneratedCodexVersion = "\([0-9.]*\)"/\1/p' protocol/metadata_gen.go)"
+          cli_version="$(tr -d '[:space:]' < .github/codex/version)"
+          if [[ -z "$generated_version" || "${generated_version%.*}" != "${cli_version%.*}" ]]; then
+            echo "Pinned Codex CLI ${cli_version} does not match generated protocol ${generated_version} at major/minor." >&2
+            exit 1
+          fi
+
+      - name: Create and push immutable tag only
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag -a "$REQUESTED_TAG" -m "Release ${REQUESTED_TAG}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin "refs/tags/${REQUESTED_TAG}"

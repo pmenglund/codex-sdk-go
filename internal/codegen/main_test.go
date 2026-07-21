@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"go/format"
 	"os"
 	"path/filepath"
 	"strings"
@@ -242,7 +243,7 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 		"KnownJSON":            {},
 		"SanitizedMissingJSON": {},
 	}
-	fallbacks := []string{"Missing", "Opaque"}
+	fallbacks := []string{"Missing", "ClientNotification"}
 
 	if err := writeFallbackTypes(dir, fallbacks, generated, testCodexCommit); err != nil {
 		t.Fatalf("writeFallbackTypes error: %v", err)
@@ -257,8 +258,8 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 	if !strings.Contains(string(data), "type Missing = SanitizedMissingJSON") {
 		t.Fatalf("expected Missing alias fallback")
 	}
-	if !strings.Contains(string(data), "type Opaque interface{}") {
-		t.Fatalf("expected Opaque interface fallback")
+	if !strings.Contains(string(data), "type ClientNotification interface{}") {
+		t.Fatalf("expected allowlisted interface fallback")
 	}
 
 	if err := writeProtocolAliases(dir, generated, fallbacks, testCodexCommit); err != nil {
@@ -270,6 +271,16 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 	}
 	if !strings.Contains(string(aliasData), "type Known = KnownJSON") {
 		t.Fatalf("expected alias for Known")
+	}
+}
+
+func TestRejectsUnreviewedInterfaceFallbacks(t *testing.T) {
+	dir := t.TempDir()
+	if err := writeFallbackTypes(dir, []string{"NewOpaqueType"}, map[string]struct{}{}, testCodexCommit); err == nil {
+		t.Fatalf("expected unreviewed fallback to fail")
+	}
+	if err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": []byte("package protocol\ntype NewOpaqueType interface{}\n")}); err == nil {
+		t.Fatalf("expected unreviewed generated interface to fail")
 	}
 }
 
@@ -386,6 +397,80 @@ func TestWriteFileAndExists(t *testing.T) {
 	}
 	if exists(filepath.Join(dir, "missing.txt")) {
 		t.Fatalf("expected missing file to be absent")
+	}
+}
+
+func TestWriteGoFileFormatsAndRejectsInvalidSource(t *testing.T) {
+	dir := t.TempDir()
+	if err := writeGoFile(dir, "formatted.go", []byte("package example\n\nfunc f(){println(\"ok\")}\n")); err != nil {
+		t.Fatalf("writeGoFile error: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "formatted.go"))
+	if err != nil {
+		t.Fatalf("read formatted file: %v", err)
+	}
+	if !strings.Contains(string(data), "func f() { println(\"ok\") }") {
+		t.Fatalf("generated source was not formatted:\n%s", data)
+	}
+
+	if err := writeGoFile(dir, "invalid.go", []byte("package")); err == nil {
+		t.Fatalf("expected invalid Go source error")
+	}
+	if exists(filepath.Join(dir, "invalid.go")) {
+		t.Fatalf("invalid Go source should not be written")
+	}
+}
+
+func TestRenderSupportedUnionTypes(t *testing.T) {
+	unions, err := collectDiscriminatedUnions("testdata", false)
+	if err != nil {
+		t.Fatalf("collectDiscriminatedUnions error: %v", err)
+	}
+	source := renderDiscriminatedUnionTypes(unions, testCodexCommit)
+	formatted, err := format.Source(source)
+	if err != nil {
+		t.Fatalf("rendered union source is invalid Go: %v\n%s", err, source)
+	}
+	text := string(formatted)
+	for _, want := range []string{
+		"type SandboxPolicy struct",
+		"UserInputKindText",
+		"ThreadStatusKindActive",
+		"ResponseItemKindMessage",
+		"func decodeDiscriminatedUnion",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("rendered union source missing %q", want)
+		}
+	}
+}
+
+func TestExternalUnionInventoryWhenConfigured(t *testing.T) {
+	schemaDir := os.Getenv("CODEX_SCHEMA_TEST_DIR")
+	if schemaDir == "" {
+		t.Skip("set CODEX_SCHEMA_TEST_DIR to verify an exported production schema inventory")
+	}
+	if err := validateUnionInventory(schemaDir); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestUnapprovedUnionInventoryFailsClosed(t *testing.T) {
+	err := validateUnionInventory("testdata")
+	if err == nil || !strings.Contains(err.Error(), "schema union inventory changed") {
+		t.Fatalf("expected unapproved union inventory error, got %v", err)
+	}
+}
+
+func TestRequiredUnionEnforcementDoesNotFailOpen(t *testing.T) {
+	dir := t.TempDir()
+	data := []byte(`{"definitions":{"UserInput":{"oneOf":[{"properties":{"type":{"enum":["text"]}}},{"properties":{"type":{"enum":["image"]}}}]}}}`)
+	if err := os.WriteFile(filepath.Join(dir, "partial.json"), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := collectDiscriminatedUnions(dir, true)
+	if err == nil || !strings.Contains(err.Error(), "required discriminated union") {
+		t.Fatalf("expected missing required union error, got %v", err)
 	}
 }
 

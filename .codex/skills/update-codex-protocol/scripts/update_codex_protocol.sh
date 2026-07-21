@@ -3,40 +3,24 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: update_codex_protocol.sh [--allow-dirty] [--no-commit] [--tag-release] [--push-release]
+Usage: update_codex_protocol.sh [--allow-dirty]
 
-Fetch upstream openai/codex tags, choose the highest stable rust-vMAJOR.MINOR.PATCH tag,
-run go generate ./..., run go test ./..., and commit the resulting changes.
+Fetch upstream openai/codex tags, choose the highest stable rust-vMAJOR.MINOR.PATCH
+tag, generate twice to prove determinism, and run the complete local quality gate.
+The script never commits, tags, stages, or pushes changes.
+Staticcheck v0.7.0 and govulncheck v1.3.0 are run through Go's pinned module
+tool support, so no separately installed analyzer binary is required.
 
 Options:
-  --allow-dirty  Run even when the SDK worktree already has changes.
-  --no-commit    Leave validated changes uncommitted.
-  --tag-release  Create or verify an annotated SDK release tag vMAJOR.MINOR.PATCH.
-  --push-release Push the current branch and SDK release tag to origin atomically.
+  --allow-dirty  Run while preserving intentional pre-existing changes.
   -h, --help     Show this help.
 USAGE
 }
 
 allow_dirty=0
-no_commit=0
-tag_release=0
-push_release=0
-
 while (($#)); do
   case "$1" in
-    --allow-dirty)
-      allow_dirty=1
-      ;;
-    --no-commit)
-      no_commit=1
-      ;;
-    --tag-release)
-      tag_release=1
-      ;;
-    --push-release)
-      tag_release=1
-      push_release=1
-      ;;
+    --allow-dirty) allow_dirty=1 ;;
     -h|--help)
       usage
       exit 0
@@ -50,13 +34,15 @@ while (($#)); do
   shift
 done
 
-if [[ "$no_commit" -eq 1 && "$tag_release" -eq 1 ]]; then
-  echo "error: --no-commit cannot be combined with --tag-release or --push-release" >&2
-  exit 2
-fi
-
 sdk_root="$(git rev-parse --show-toplevel)"
 cd "$sdk_root"
+
+for tool in git go cargo; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "error: required tool is not installed: $tool" >&2
+    exit 1
+  fi
+done
 
 if [[ ! -f "gen.go" || ! -d "internal/codegen" ]]; then
   echo "error: run this script from the codex-sdk-go repository" >&2
@@ -64,7 +50,7 @@ if [[ ! -f "gen.go" || ! -d "internal/codegen" ]]; then
 fi
 
 if [[ "$allow_dirty" -eq 0 && -n "$(git status --porcelain)" ]]; then
-  echo "error: SDK worktree has pre-existing changes; rerun with --allow-dirty only if they should be included" >&2
+  echo "error: SDK worktree has pre-existing changes; rerun with --allow-dirty only after reviewing them" >&2
   git status --short
   exit 1
 fi
@@ -91,27 +77,6 @@ expand_home() {
   printf '%s\n' "$value"
 }
 
-create_or_verify_release_tag() {
-  local sdk_tag="$1"
-  local latest_tag="$2"
-
-  if git show-ref --verify --quiet "refs/tags/$sdk_tag"; then
-    local tag_target
-    local head_commit
-    tag_target="$(git rev-list -n 1 "$sdk_tag")"
-    head_commit="$(git rev-parse HEAD)"
-    if [[ "$tag_target" != "$head_commit" ]]; then
-      echo "error: tag $sdk_tag already exists on $tag_target, not HEAD $head_commit" >&2
-      exit 1
-    fi
-    echo "Tag $sdk_tag already exists on HEAD."
-    return
-  fi
-
-  git tag -a "$sdk_tag" -m "Release $sdk_tag from $latest_tag"
-  echo "Created release tag $sdk_tag."
-}
-
 codex_root="${CODEX_REPO_ROOT:-}"
 if [[ -z "$codex_root" && -f ".envrc" ]]; then
   envrc_line="$(grep -E '^[[:space:]]*(export[[:space:]]+)?CODEX_REPO_ROOT=' .envrc | tail -n 1 || true)"
@@ -120,76 +85,59 @@ if [[ -z "$codex_root" && -f ".envrc" ]]; then
     codex_root="$(expand_home "$(strip_quotes "$envrc_value")")"
   fi
 fi
-
 if [[ -z "$codex_root" && -d "../codex/.git" ]]; then
   codex_root="../codex"
 fi
-
 if [[ -z "$codex_root" ]]; then
   echo "error: CODEX_REPO_ROOT is not set, not present in .envrc, and ../codex was not found" >&2
   exit 1
 fi
-
 if ! git -C "$codex_root" rev-parse --show-toplevel >/dev/null 2>&1; then
   echo "error: CODEX_REPO_ROOT does not point to a git repository: $codex_root" >&2
   exit 1
 fi
-
 codex_root="$(cd "$codex_root" && pwd)"
 
 echo "Fetching upstream Codex tags in $codex_root"
 git -C "$codex_root" fetch --tags --force
 
-latest_tag="$(
-  git -C "$codex_root" tag --list 'rust-v*' | python3 -c '
-import re
-import sys
-
-tags = []
-for raw in sys.stdin:
-    tag = raw.strip()
-    match = re.fullmatch(r"rust-v([0-9]+)\.([0-9]+)\.([0-9]+)", tag)
-    if match:
-        tags.append((tuple(int(part) for part in match.groups()), tag))
-
-if tags:
-    tags.sort()
-    print(tags[-1][1])
-'
-)"
-
+latest_tag="$({
+  git -C "$codex_root" tag --list 'rust-v*' | awk '
+    /^rust-v[0-9]+\.[0-9]+\.[0-9]+$/ { print }
+  ' | sort -V | tail -n 1
+})"
 if [[ -z "$latest_tag" ]]; then
   echo "error: no stable rust-vMAJOR.MINOR.PATCH tags found in $codex_root" >&2
   exit 1
 fi
-
 echo "Selected upstream Codex tag: $latest_tag"
-sdk_tag="v${latest_tag#rust-v}"
 
-echo "Running go generate ./..."
-CODEX_REPO_ROOT="$codex_root" CODEX_REPO_REF="$latest_tag" go generate ./...
+generate() {
+  CODEX_REPO_ROOT="$codex_root" CODEX_REPO_REF="$latest_tag" go generate ./...
+}
 
-echo "Running go test ./..."
+echo "Running first deterministic generation"
+generate
+first_manifest="$(.github/scripts/content-manifest.sh protocol rpc internal/codegen)"
+echo "Running second deterministic generation"
+generate
+second_manifest="$(.github/scripts/content-manifest.sh protocol rpc internal/codegen)"
+if [[ "$first_manifest" != "$second_manifest" ]]; then
+  echo "error: a second generation changed generated output" >&2
+  exit 1
+fi
+
+unformatted="$(gofmt -l $(git ls-files '*.go'))"
+if [[ -n "$unformatted" ]]; then
+  echo "$unformatted"
+  exit 1
+fi
+go vet ./...
 go test ./...
+go test -race ./...
+go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
+go run golang.org/x/vuln/cmd/govulncheck@v1.3.0 ./...
+git diff --check
 
-if git diff --quiet && git diff --cached --quiet; then
-  echo "No changes to commit."
-else
-  if [[ "$no_commit" -eq 1 ]]; then
-    echo "Validation passed; leaving changes uncommitted because --no-commit was set."
-    git status --short
-    exit 0
-  fi
-
-  git add .
-  git commit -m "Update Codex protocol from $latest_tag"
-fi
-
-if [[ "$tag_release" -eq 1 ]]; then
-  create_or_verify_release_tag "$sdk_tag" "$latest_tag"
-fi
-
-if [[ "$push_release" -eq 1 ]]; then
-  branch="$(git symbolic-ref --short HEAD)"
-  git push --atomic origin "HEAD:refs/heads/$branch" "refs/tags/$sdk_tag"
-fi
+echo "Generation and all quality gates passed. Changes remain unstaged for review."
+git status --short

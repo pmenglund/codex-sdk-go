@@ -119,7 +119,6 @@ type WindowsSandboxSetupCompletedNotification = SanitizedWindowsSandboxSetupComp
 type WindowsSandboxSetupStartResponse = SanitizedWindowsSandboxSetupStartResponseJSON
 type WindowsWorldWritableWarningNotification = SanitizedWindowsWorldWritableWarningNotificationJSON
 type ClientNotification interface{}
-type ClientRequest interface{}
 type CodexAppServerProtocolV2 interface{}
 type ConfigReadResponse interface{}
 type ConfigWriteResponse interface{}
@@ -134,7 +133,6 @@ type ItemGuardianApprovalReviewStartedNotification interface{}
 type ItemStartedNotification interface{}
 type ListMcpServerStatusParams interface{}
 type ListMcpServerStatusResponse interface{}
-type LoginAccountResponse interface{}
 type MarketplaceAddResponse interface{}
 type MarketplaceRemoveResponse interface{}
 type MarketplaceUpgradeResponse interface{}
@@ -156,8 +154,6 @@ type PluginReadResponse interface{}
 type PluginShareCheckoutResponse interface{}
 type PluginShareListResponse interface{}
 type ReviewStartResponse interface{}
-type ServerNotification interface{}
-type ServerRequest interface{}
 type SkillsListResponse interface{}
 type ThreadForkResponse interface{}
 type ThreadListResponse interface{}

@@ -4,13 +4,60 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
 	codex "github.com/pmenglund/codex-sdk-go"
+	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/test"
 )
+
+func TestRealCodexSynchronousCancellationInterrupts(t *testing.T) {
+	loginParams, secret := test.RequireLoginParams(t)
+	var recorder test.RequestRecorder
+	client, ctx, stderr := test.NewRealClient(t, test.RealClientOptions{
+		Timeout:         2 * time.Minute,
+		Secrets:         []string{secret},
+		RequestRecorder: &recorder,
+	})
+	if _, err := client.StartLogin(ctx, loginParams); err != nil {
+		t.Fatalf("start login for cancellation test: %v\nstderr:\n%s", err, stderr.String())
+	}
+	t.Cleanup(func() {
+		logoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, _ = client.Logout(logoutCtx)
+	})
+
+	thread := test.StartThread(t, client, ctx, stderr, t.TempDir())
+	handle, err := thread.StartTurn(ctx, []codex.Input{codex.TextInput("Write a detailed multi-paragraph response.")}, test.LiveTurnOptions(t))
+	if err != nil {
+		t.Fatalf("start cancellable turn: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if handle.ID() == "" {
+		t.Fatalf("expected a known turn id before cancellation\nstderr:\n%s", stderr.String())
+	}
+	canceledCtx, cancel := context.WithCancel(ctx)
+	cancel()
+	_, err = handle.Run(canceledCtx)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation after turn interrupt, got %v\nstderr:\n%s", err, stderr.String())
+	}
+	request, ok := recorder.Request("turn/interrupt")
+	if !ok {
+		t.Fatalf("expected an outbound turn/interrupt request\nstderr:\n%s", stderr.String())
+	}
+	var params protocol.TurnInterruptParams
+	if err := json.Unmarshal(request.Params, &params); err != nil {
+		t.Fatalf("decode turn/interrupt params: %v", err)
+	}
+	if params.ThreadID != thread.ID() || params.TurnID != handle.ID() {
+		t.Fatalf("unexpected turn/interrupt params: %#v", params)
+	}
+}
 
 func TestRealCodexHighLevelCoverageMatrix(t *testing.T) {
 	coverage := map[string]string{
@@ -208,7 +255,9 @@ func TestRealCodexLiveTurnHelpers(t *testing.T) {
 		t.Fatalf("start login for live turns: %v\nstderr:\n%s", err, stderr.String())
 	}
 	t.Cleanup(func() {
-		if _, err := client.Logout(context.Background()); err != nil {
+		logoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if _, err := client.Logout(logoutCtx); err != nil {
 			t.Logf("logout temp e2e account after live turns: %v", err)
 		}
 	})

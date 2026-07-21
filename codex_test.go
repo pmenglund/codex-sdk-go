@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"os"
@@ -558,9 +559,12 @@ func TestNewSpawnSurvivesInitContextCancellation(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	// Compatibility probing is covered separately; this test isolates whether
+	// canceling the initialization context terminates the spawned app-server.
 	client, err := New(ctx, Options{
-		Spawn:  SpawnOptions{CodexPath: writeFakeCodexBinary(t)},
-		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Spawn:               SpawnOptions{CodexPath: writeFakeCodexBinary(t)},
+		Logger:              slog.New(slog.NewTextHandler(io.Discard, nil)),
+		CompatibilityPolicy: Ignore,
 	})
 	if err != nil {
 		t.Fatalf("new client error: %v", err)
@@ -639,8 +643,9 @@ func TestNewLogsCodexVersionMismatch(t *testing.T) {
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, nil))
 	client, err := New(context.Background(), Options{
-		Spawn:  SpawnOptions{CodexPath: writeFakeCodexBinary(t)},
-		Logger: logger,
+		Spawn:               SpawnOptions{CodexPath: writeFakeCodexBinaryWithVersion(t, "999.999.999")},
+		Logger:              logger,
+		CompatibilityPolicy: Warn,
 	})
 	if err != nil {
 		t.Fatalf("new client error: %v", err)
@@ -648,7 +653,7 @@ func TestNewLogsCodexVersionMismatch(t *testing.T) {
 	defer client.Close()
 
 	logOutput := logs.String()
-	if !strings.Contains(logOutput, "codex binary version differs from generated protocol version") {
+	if !strings.Contains(logOutput, "codex binary compatibility could not be guaranteed") {
 		t.Fatalf("expected version mismatch warning, got %s", logOutput)
 	}
 	if !strings.Contains(logOutput, "generated_version="+protocol.GeneratedCodexVersion) {
@@ -659,18 +664,109 @@ func TestNewLogsCodexVersionMismatch(t *testing.T) {
 func TestWarnIfCodexVersionCannotBeVerified(t *testing.T) {
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, nil))
-	warnIfCodexVersionMismatch(context.Background(), logger, filepath.Join(t.TempDir(), "missing-codex"))
+	if err := checkCodexCompatibility(context.Background(), logger, filepath.Join(t.TempDir(), "missing-codex"), Warn); err != nil {
+		t.Fatalf("warn policy returned error: %v", err)
+	}
 
 	logOutput := logs.String()
 	if !strings.Contains(logOutput, "level=WARN") {
 		t.Fatalf("expected warning level, got %s", logOutput)
 	}
-	if !strings.Contains(logOutput, "codex binary version could not be verified") {
+	if !strings.Contains(logOutput, "codex binary compatibility could not be guaranteed") {
 		t.Fatalf("expected verification warning, got %s", logOutput)
 	}
 	if !strings.Contains(logOutput, "generated_version="+protocol.GeneratedCodexVersion) {
 		t.Fatalf("expected generated version in warning, got %s", logOutput)
 	}
+}
+
+func TestSpawnLogsDoNotExposeArgumentValues(t *testing.T) {
+	const secret = "spawn-secret-marker"
+	var logs bytes.Buffer
+	client, err := New(context.Background(), Options{
+		Logger: slog.New(slog.NewTextHandler(&logs, nil)),
+		Spawn: SpawnOptions{
+			CodexPath:       writeFakeCodexBinary(t),
+			ConfigOverrides: []string{"provider_token=" + secret},
+			ExtraArgs:       []string{"--credential", secret},
+		},
+	})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	defer client.Close()
+	if strings.Contains(logs.String(), secret) {
+		t.Fatalf("spawn logs exposed argument values: %s", logs.String())
+	}
+}
+
+func TestRequireMajorMinorRejectsMismatch(t *testing.T) {
+	_, err := New(context.Background(), Options{
+		Spawn: SpawnOptions{CodexPath: writeFakeCodexBinaryWithVersion(t, "999.999.999")},
+	})
+	var compatibilityErr *CodexCompatibilityError
+	if !errors.As(err, &compatibilityErr) {
+		t.Fatalf("expected CodexCompatibilityError, got %v", err)
+	}
+	if compatibilityErr.RuntimeVersion != "999.999.999" || compatibilityErr.GeneratedVersion != protocol.GeneratedCodexVersion {
+		t.Fatalf("unexpected compatibility error: %#v", compatibilityErr)
+	}
+}
+
+func TestCompatibilityPoliciesAndPatchTolerance(t *testing.T) {
+	parts := strings.Split(protocol.GeneratedCodexVersion, ".")
+	if len(parts) < 3 {
+		t.Fatalf("generated version lacks patch: %q", protocol.GeneratedCodexVersion)
+	}
+	patchVersion := strings.Join([]string{parts[0], parts[1], "999"}, ".")
+
+	for _, tt := range []struct {
+		name    string
+		version string
+		policy  CompatibilityPolicy
+	}{
+		{name: "same major minor patch", version: patchVersion, policy: RequireMajorMinor},
+		{name: "warn unparseable", version: "dev", policy: Warn},
+		{name: "ignore unparseable", version: "dev", policy: Ignore},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			client, err := New(context.Background(), Options{
+				Spawn:               SpawnOptions{CodexPath: writeFakeCodexBinaryWithVersion(t, tt.version)},
+				CompatibilityPolicy: tt.policy,
+			})
+			if err != nil {
+				t.Fatalf("new client error: %v", err)
+			}
+			defer client.Close()
+		})
+	}
+}
+
+func TestRequireMajorMinorRejectsUnprobeableAndUnparseable(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join(t.TempDir(), "missing-codex"),
+		writeFakeCodexBinaryWithVersion(t, "dev"),
+	} {
+		err := checkCodexCompatibility(context.Background(), nil, path, RequireMajorMinor)
+		var compatibilityErr *CodexCompatibilityError
+		if !errors.As(err, &compatibilityErr) {
+			t.Fatalf("expected typed compatibility error for %q, got %v", path, err)
+		}
+		if compatibilityErr.Cause != nil && !strings.Contains(err.Error(), compatibilityErr.Cause.Error()) {
+			t.Fatalf("compatibility error omitted its underlying cause: %v", err)
+		}
+	}
+}
+
+func TestCustomTransportSkipsCompatibilityProbe(t *testing.T) {
+	client, err := New(context.Background(), Options{
+		Transport: rpc.NewReplayTransport(initializeTranscript()),
+		Spawn:     SpawnOptions{CodexPath: filepath.Join(t.TempDir(), "missing-codex")},
+	})
+	if err != nil {
+		t.Fatalf("custom transport should skip probe: %v", err)
+	}
+	defer client.Close()
 }
 
 func TestParseCodexVersionOutput(t *testing.T) {
@@ -702,12 +798,16 @@ func initializeTranscript() []rpc.TranscriptEntry {
 }
 
 func writeFakeCodexBinary(t *testing.T) string {
+	return writeFakeCodexBinaryWithVersion(t, protocol.GeneratedCodexVersion)
+}
+
+func writeFakeCodexBinaryWithVersion(t *testing.T, version string) string {
 	t.Helper()
 
 	path := filepath.Join(t.TempDir(), "fake-codex")
 	script := `#!/bin/sh
 if [ "$1" = "--version" ]; then
-	printf 'codex-cli 999.999.999\n'
+	printf 'codex-cli ` + version + `\n'
 	exit 0
 fi
 
