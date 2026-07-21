@@ -33,13 +33,19 @@ type StdioTransport struct {
 }
 
 // SpawnStdio starts a command and uses its stdin/stdout for JSON-RPC.
-func SpawnStdio(ctx context.Context, binary string, args []string, stderr io.Writer) (*StdioTransport, error) {
+// Optional env entries ("KEY=value") are appended to the parent process
+// environment, so a later entry overrides an inherited variable of the same
+// name; passing none inherits the parent environment unchanged.
+func SpawnStdio(ctx context.Context, binary string, args []string, stderr io.Writer, env ...string) (*StdioTransport, error) {
 	if binary == "" {
 		return nil, errors.New("codex binary path is empty")
 	}
 
 	cmd := exec.CommandContext(ctx, binary, args...)
 	cmd.Stderr = stderr
+	if len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

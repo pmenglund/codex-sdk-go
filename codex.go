@@ -52,7 +52,7 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		}
 		logger.Info("codex starting app-server", "path", spawn.CodexPath, "argument_count", len(args))
 		// The constructor context is only for initialization; process lifetime is managed by Close.
-		transport, err = rpc.SpawnStdio(context.WithoutCancel(ctx), spawn.CodexPath, args, spawn.Stderr)
+		transport, err = rpc.SpawnStdio(context.WithoutCancel(ctx), spawn.CodexPath, args, spawn.Stderr, spawn.Env...)
 		if err != nil {
 			return nil, err
 		}

@@ -210,3 +210,52 @@ func (w *writeCloser) Write(p []byte) (int, error) {
 func (w *writeCloser) Close() error {
 	return w.closeErr
 }
+
+func TestSpawnStdioExtraEnv(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("test spawns /bin/sh")
+	}
+
+	t.Setenv("SPAWN_ENV_INHERITED", "from-parent")
+	t.Setenv("SPAWN_ENV_OVERRIDDEN", "parent-value")
+
+	transport, err := SpawnStdio(context.Background(), "/bin/sh",
+		[]string{"-c", `printf '%s|%s|%s\n' "$SPAWN_ENV_EXTRA" "$SPAWN_ENV_INHERITED" "$SPAWN_ENV_OVERRIDDEN"`},
+		io.Discard,
+		"SPAWN_ENV_EXTRA=hello", "SPAWN_ENV_OVERRIDDEN=child-value")
+	if err != nil {
+		t.Fatalf("SpawnStdio error: %v", err)
+	}
+	defer transport.Close()
+
+	line, err := transport.ReadLine()
+	if err != nil {
+		t.Fatalf("ReadLine error: %v", err)
+	}
+	if line != "hello|from-parent|child-value" {
+		t.Errorf("child env = %q, want extra entry set, parent inherited, duplicate overridden", line)
+	}
+}
+
+func TestSpawnStdioWithoutEnvInheritsParent(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("test spawns /bin/sh")
+	}
+
+	t.Setenv("SPAWN_ENV_INHERITED", "still-here")
+
+	transport, err := SpawnStdio(context.Background(), "/bin/sh",
+		[]string{"-c", `printf '%s\n' "$SPAWN_ENV_INHERITED"`}, io.Discard)
+	if err != nil {
+		t.Fatalf("SpawnStdio error: %v", err)
+	}
+	defer transport.Close()
+
+	line, err := transport.ReadLine()
+	if err != nil {
+		t.Fatalf("ReadLine error: %v", err)
+	}
+	if line != "still-here" {
+		t.Errorf("child env = %q, want inherited parent environment", line)
+	}
+}
