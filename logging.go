@@ -3,6 +3,7 @@ package codex
 import (
 	"io"
 	"log/slog"
+	"reflect"
 
 	"github.com/pmenglund/codex-sdk-go/rpc"
 )
@@ -15,6 +16,9 @@ func resolveLogger(logger *slog.Logger) *slog.Logger {
 }
 
 func attachApprovalLogger(handler rpc.ServerRequestHandler, logger *slog.Logger) rpc.ServerRequestHandler {
+	if isNilServerRequestHandler(handler) {
+		return nil
+	}
 	switch value := handler.(type) {
 	case AutoApproveHandler:
 		if value.Logger == nil {
@@ -22,21 +26,36 @@ func attachApprovalLogger(handler rpc.ServerRequestHandler, logger *slog.Logger)
 		}
 		return value
 	case *AutoApproveHandler:
-		if value != nil && value.Logger == nil {
-			value.Logger = logger
+		copy := *value
+		if copy.Logger == nil {
+			copy.Logger = logger
 		}
-		return value
+		return &copy
 	case UnsafeLoggingAutoApproveHandler:
 		if value.Logger == nil {
 			value.Logger = logger
 		}
 		return value
 	case *UnsafeLoggingAutoApproveHandler:
-		if value != nil && value.Logger == nil {
-			value.Logger = logger
+		copy := *value
+		if copy.Logger == nil {
+			copy.Logger = logger
 		}
-		return value
+		return &copy
 	default:
 		return handler
+	}
+}
+
+func isNilServerRequestHandler(handler rpc.ServerRequestHandler) bool {
+	value := reflect.ValueOf(handler)
+	if !value.IsValid() {
+		return true
+	}
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
 	}
 }

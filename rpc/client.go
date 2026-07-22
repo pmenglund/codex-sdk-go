@@ -17,6 +17,13 @@ type ClientOptions struct {
 	RequestHandler ServerRequestHandler
 }
 
+// ErrClientClosed identifies a client closed by its caller.
+var ErrClientClosed = errors.New("rpc client closed")
+
+// ErrConnectionClosed identifies a client whose connection closed without a
+// more specific transport error.
+var ErrConnectionClosed = errors.New("rpc connection closed")
+
 // Client manages JSON-RPC requests over a Transport.
 type Client struct {
 	transport Transport
@@ -41,8 +48,21 @@ type Client struct {
 	err       error
 }
 
-// NewClient creates a JSON-RPC client over a Transport.
+// NewClient creates a JSON-RPC client over a Transport. It panics if transport
+// is nil. Use NewClientChecked when the dependency is not statically known.
 func NewClient(transport Transport, options ClientOptions) *Client {
+	client, err := NewClientChecked(transport, options)
+	if err != nil {
+		panic(err)
+	}
+	return client
+}
+
+// NewClientChecked creates a JSON-RPC client over a validated Transport.
+func NewClientChecked(transport Transport, options ClientOptions) (*Client, error) {
+	if isNilInterface(transport) {
+		return nil, errors.New("rpc transport is nil")
+	}
 	logger := options.Logger
 	if logger == nil {
 		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -63,12 +83,12 @@ func NewClient(transport Transport, options ClientOptions) *Client {
 
 	go client.readLoop()
 
-	return client
+	return client, nil
 }
 
 // Close shuts down the client and transport.
 func (c *Client) Close() error {
-	c.finish(errors.New("client closed"))
+	c.finish(ErrClientClosed)
 	return c.transport.Close()
 }
 
@@ -373,7 +393,7 @@ func (c *Client) errOrClosed() error {
 	if c.err != nil {
 		return c.err
 	}
-	return errors.New("connection closed")
+	return ErrConnectionClosed
 }
 
 func (c *Client) finish(err error) {

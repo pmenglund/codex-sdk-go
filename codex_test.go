@@ -456,23 +456,31 @@ func TestAttachApprovalLogger(t *testing.T) {
 
 	ptr := &AutoApproveHandler{}
 	attached = attachApprovalLogger(ptr, logger)
-	if attached != ptr {
-		t.Fatalf("expected pointer handler to be returned")
+	if attached == ptr {
+		t.Fatalf("expected pointer handler to be copied")
 	}
-	if ptr.Logger == nil {
-		t.Fatalf("expected pointer logger to be attached")
+	if ptr.Logger != nil {
+		t.Fatalf("caller-owned pointer was mutated")
+	}
+	if copied, ok := attached.(*AutoApproveHandler); !ok || copied.Logger == nil {
+		t.Fatalf("expected copied pointer logger to be attached: %#v", attached)
 	}
 
 	customLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	ptr = &AutoApproveHandler{Logger: customLogger}
 	attached = attachApprovalLogger(ptr, logger)
-	if attached != ptr || ptr.Logger != customLogger {
-		t.Fatalf("expected existing pointer logger to remain")
+	if attached == ptr || ptr.Logger != customLogger {
+		t.Fatalf("expected existing pointer logger to be copied without mutation")
 	}
 
 	gotNil := attachApprovalLogger((*AutoApproveHandler)(nil), logger)
-	if got, ok := gotNil.(*AutoApproveHandler); !ok || got != nil {
-		t.Fatalf("expected nil pointer handler to remain nil, got %#v", gotNil)
+	if gotNil != nil {
+		t.Fatalf("expected typed nil handler to normalize to nil, got %#v", gotNil)
+	}
+
+	var typedNilCustom *testServerRequestHandler
+	if got := attachApprovalLogger(typedNilCustom, logger); got != nil {
+		t.Fatalf("expected custom typed nil handler to normalize to nil, got %#v", got)
 	}
 
 	other := &testServerRequestHandler{}

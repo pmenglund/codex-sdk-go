@@ -34,4 +34,10 @@ func TestRetryableErrorHelpers(t *testing.T) {
 	if IsRetryable(errors.New("plain boom")) {
 		t.Fatalf("plain boom should not be retryable")
 	}
+	if IsRetryable(errors.New("request was not overloaded")) {
+		t.Fatalf("arbitrary outer error text must not imply retry safety")
+	}
+	if IsOverloaded(fmt.Errorf("operation failed: server busy")) {
+		t.Fatalf("only structured response errors should use overload text")
+	}
 }

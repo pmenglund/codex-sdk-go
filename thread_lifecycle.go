@@ -191,7 +191,8 @@ type ThreadForkOptions struct {
 	BaseInstructions      string
 	DeveloperInstructions string
 	Ephemeral             *bool
-	ExcludeTurns          *bool
+	// Deprecated: exclude turns is no longer supported by the app-server protocol.
+	ExcludeTurns *bool
 }
 
 func (o ThreadForkOptions) toParams(threadID string) (protocol.ThreadForkParams, error) {

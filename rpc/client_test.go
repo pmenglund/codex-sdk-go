@@ -485,8 +485,8 @@ func TestCallAfterClose(t *testing.T) {
 	client := NewClient(NewReplayTransport(nil), ClientOptions{})
 	_ = client.Close()
 	var result map[string]any
-	if err := client.Call(context.Background(), "ping", map[string]any{}, &result); err == nil {
-		t.Fatalf("expected error after close")
+	if err := client.Call(context.Background(), "ping", map[string]any{}, &result); !errors.Is(err, ErrClientClosed) {
+		t.Fatalf("expected ErrClientClosed after close, got %v", err)
 	}
 }
 

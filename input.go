@@ -24,7 +24,7 @@ type Input struct {
 	// Type must be one of the InputType* constants.
 	Type         string                 `json:"type"`
 	Text         string                 `json:"text,omitempty"`
-	TextElements []protocol.TextElement `json:"textElements,omitempty"`
+	TextElements []protocol.TextElement `json:"text_elements,omitempty"`
 	URL          string                 `json:"url,omitempty"`
 	Path         string                 `json:"path,omitempty"`
 	Name         string                 `json:"name,omitempty"`

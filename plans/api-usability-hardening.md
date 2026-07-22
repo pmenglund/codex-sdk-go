@@ -38,8 +38,8 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
 
 - [x] (2026-07-22 09:04Z) Rechecked the repository instructions, current `main` at `31fb6e9`, existing plans, generated version metadata, untracked `GC.md`, and the 17 finding locations.
 - [x] (2026-07-22 09:04Z) Completed the required independent planner pass and validated its proposed milestones against the current repository.
-- [ ] Create and switch to local branch `codex/api-usability-hardening`; keep `GC.md` untracked.
-- [ ] Complete Milestone 1: patch-safe wire, panic, retry, constructor, replay, deprecation, and error-sentinel fixes with tests.
+- [x] (2026-07-22 09:20Z) Created and switched to local branch `codex/api-usability-hardening`; committed this plan as `e46e828`; kept `GC.md` untracked.
+- [ ] Complete Milestone 1: patch-safe wire, panic, retry, constructor, replay, deprecation, and error-sentinel fixes with tests. Regression tests failed for the intended pre-fix reasons and focused tests now pass; race validation and the milestone commit remain.
 - [ ] Complete Milestone 2: context-bounded outbound writes and bounded, correctly classified server-request dispatch with concurrency tests.
 - [ ] Complete Milestone 3: canonical complete protocol generation and upgrade-safe handler/client interfaces from pinned `rust-v0.144.6`.
 - [ ] Complete Milestone 4: dependable high-level lifecycle and turn behavior with typed results, errors, and single-consumer enforcement.
@@ -54,6 +54,8 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
   Evidence: `internal/codegen/main.go` normalizes initialisms for generated declarations but fallback resolution uses raw schema titles; it also removes nested `oneOf`/`anyOf`, producing both the duplicate `Mcp...` names and constrained `interface{}` fields.
 - Observation: Some public signatures can become typed without changing the method declaration text.
   Evidence: `ListThreads`, `ReadThread`, `ForkThread`, and `UnarchiveThread` refer to named `protocol.Thread*Response` declarations. Replacing those declarations from empty interfaces with structs preserves the method names and source shape for callers that did not depend on the old dynamic values.
+- Observation: The sandboxed Go test process cannot read the user's Go build cache.
+  Evidence: The first post-fix `go test . ./rpc` failed with `operation not permitted` under `~/Library/Caches/go-build`; rerunning the same tests with the approved Go test escalation passed.
 
 ## Decision Log
 

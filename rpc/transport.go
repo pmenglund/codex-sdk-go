@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -130,9 +131,22 @@ type ConnTransport struct {
 	mu     sync.Mutex
 }
 
-// NewConnTransport wraps the connection in a Transport.
+// NewConnTransport wraps the connection in a Transport. It panics if conn is nil.
+// Use NewConnTransportChecked when the dependency is not statically known.
 func NewConnTransport(conn io.ReadWriteCloser) *ConnTransport {
-	return &ConnTransport{conn: conn, reader: bufio.NewReader(conn)}
+	transport, err := NewConnTransportChecked(conn)
+	if err != nil {
+		panic(err)
+	}
+	return transport
+}
+
+// NewConnTransportChecked wraps the connection in a Transport.
+func NewConnTransportChecked(conn io.ReadWriteCloser) (*ConnTransport, error) {
+	if isNilInterface(conn) {
+		return nil, errors.New("rpc connection is nil")
+	}
+	return &ConnTransport{conn: conn, reader: bufio.NewReader(conn)}, nil
 }
 
 // ReadLine reads a line from the connection.
@@ -168,4 +182,17 @@ func (t *ConnTransport) Close() error {
 // DefaultStderr returns a safe default for spawned processes.
 func DefaultStderr() io.Writer {
 	return os.Stderr
+}
+
+func isNilInterface(value any) bool {
+	if value == nil {
+		return true
+	}
+	reflected := reflect.ValueOf(value)
+	switch reflected.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return reflected.IsNil()
+	default:
+		return false
+	}
 }

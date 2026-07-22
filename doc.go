@@ -64,6 +64,7 @@
 //   - codex.SandboxModeReadOnly / codex.SandboxModeWorkspaceWrite / ...
 //   - codex.ReasoningEffortLow / codex.ReasoningEffortMedium / ...
 //
-// Retryable overload errors can be detected with codex.IsRetryable or
-// codex.IsOverloaded. Both helpers work with wrapped errors.
+// Overload errors can be classified with codex.IsOverloaded. The helper works
+// with wrapped errors, but callers must decide retry safety from the operation's
+// idempotency; classification alone cannot prove that a retry is safe.
 package codex

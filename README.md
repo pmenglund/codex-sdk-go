@@ -256,7 +256,7 @@ For common values, prefer typed constants from this package:
 - `codex.SandboxModeReadOnly`, `codex.SandboxModeWorkspaceWrite`, `codex.SandboxModeDangerFullAccess`
 - `codex.ReasoningEffortNone`, `codex.ReasoningEffortMinimal`, `codex.ReasoningEffortLow`, `codex.ReasoningEffortMedium`, `codex.ReasoningEffortHigh`, `codex.ReasoningEffortXHigh`
 
-## Inputs and retryable errors
+## Inputs and overload errors
 
 Use helpers to build structured inputs:
 
@@ -267,13 +267,18 @@ inputs := []codex.Input{
 }
 ```
 
-Retry classification uses ordinary Go errors:
+Overload classification uses ordinary Go errors:
 
 ```go
-if codex.IsRetryable(err) {
+if codex.IsOverloaded(err) && operationIsIdempotent {
     // Retry according to your caller policy.
 }
 ```
+
+`IsOverloaded` classifies structured overload failures; it does not prove that
+repeating an operation is safe. Base retries on idempotency or an
+application-level idempotency key. `IsRetryable` remains as a deprecated alias
+for source compatibility.
 
 ## Low-level RPC
 

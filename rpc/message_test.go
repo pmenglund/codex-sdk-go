@@ -126,10 +126,58 @@ func TestReplayJSONLineHelpers(t *testing.T) {
 	if equalJSONLine(`{}`, `{bad}`) {
 		t.Fatalf("expected invalid actual json to fail normalization")
 	}
+	if equalJSONLine(`{"id":9007199254740992}`, `{"id":9007199254740993}`) {
+		t.Fatalf("large adjacent integers must remain distinct")
+	}
 
 	if got, ok := normalizeJSONLine(" \n "); ok || got != "" {
 		t.Fatalf("expected blank line normalization to fail")
 	}
+}
+
+func TestCheckedConstructorsRejectInvalidDependencies(t *testing.T) {
+	if _, err := NewClientChecked(nil, ClientOptions{}); err == nil {
+		t.Fatalf("expected nil client transport error")
+	}
+	if _, err := NewConnTransportChecked(nil); err == nil {
+		t.Fatalf("expected nil connection error")
+	}
+	if _, err := NewRecordTransportChecked(nil); err == nil {
+		t.Fatalf("expected nil record transport error")
+	}
+	if _, err := NewReplayTransportChecked([]TranscriptEntry{{Direction: TranscriptDirection("sideways")}}); err == nil {
+		t.Fatalf("expected invalid replay direction error")
+	}
+
+	var typedNilTransport *ReplayTransport
+	if _, err := NewClientChecked(typedNilTransport, ClientOptions{}); err == nil {
+		t.Fatalf("expected typed-nil client transport error")
+	}
+	var typedNilConn *testReadWriteCloser
+	if _, err := NewConnTransportChecked(typedNilConn); err == nil {
+		t.Fatalf("expected typed-nil connection error")
+	}
+}
+
+type testReadWriteCloser struct{}
+
+func (*testReadWriteCloser) Read([]byte) (int, error)  { return 0, nil }
+func (*testReadWriteCloser) Write([]byte) (int, error) { return 0, nil }
+func (*testReadWriteCloser) Close() error              { return nil }
+
+func TestLegacyConstructorsRejectNilSynchronously(t *testing.T) {
+	assertPanics := func(name string, fn func()) {
+		t.Helper()
+		defer func() {
+			if recover() == nil {
+				t.Errorf("%s did not panic", name)
+			}
+		}()
+		fn()
+	}
+	assertPanics("NewClient", func() { NewClient(nil, ClientOptions{}) })
+	assertPanics("NewConnTransport", func() { NewConnTransport(nil) })
+	assertPanics("NewRecordTransport", func() { NewRecordTransport(nil) })
 }
 
 func TestNotificationIteratorNext(t *testing.T) {

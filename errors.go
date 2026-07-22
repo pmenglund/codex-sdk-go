@@ -69,10 +69,14 @@ func IsOverloaded(err error) bool {
 			}
 		}
 	}
-	return containsOverloadText(err.Error())
+	return false
 }
 
-// IsRetryable reports whether err is safe for SDK callers to retry.
+// IsRetryable reports whether err is classified as an overload failure.
+// It does not determine whether retrying a particular operation is safe.
+//
+// Deprecated: use IsOverloaded and decide retry safety based on whether the
+// operation is idempotent or has an application-level idempotency key.
 func IsRetryable(err error) bool {
 	return IsOverloaded(err)
 }

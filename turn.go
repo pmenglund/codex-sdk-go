@@ -33,6 +33,8 @@ type TurnOptions struct {
 	// CollaborationMode is retained for source compatibility, but the current
 	// app-server protocol no longer supports this option. Setting it returns an
 	// error from buildTurnParams.
+	//
+	// Deprecated: collaboration mode is no longer supported by the app-server protocol.
 	CollaborationMode any
 }
 
