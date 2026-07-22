@@ -191,7 +191,7 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 	for name, src := range sources {
 		normalized := normalizeGeneratedHeader(src, codexCommit)
 		normalized = deprecateSanitizedFallbacks(normalized, deprecatedSanitized)
-		if err := writeGoFile(outDir, name, normalized); err != nil {
+		if err := writeProtocolGoFile(outDir, name, normalized); err != nil {
 			return err
 		}
 	}
@@ -225,7 +225,7 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 	unionPath := filepath.Join(outDir, "unions_gen.go")
 	if len(unionSource) == 0 {
 		_ = os.Remove(unionPath)
-	} else if err := writeGoFile(outDir, filepath.Base(unionPath), unionSource); err != nil {
+	} else if err := writeProtocolGoFile(outDir, filepath.Base(unionPath), unionSource); err != nil {
 		return err
 	}
 
@@ -936,7 +936,7 @@ func writeFallbackTypes(outDir string, titles []string, generated map[string]str
 		b.WriteString(" interface{}\n")
 	}
 
-	return writeGoFile(outDir, filepath.Base(fallbackPath), []byte(b.String()))
+	return writeProtocolGoFile(outDir, filepath.Base(fallbackPath), []byte(b.String()))
 }
 
 var opaqueFallbackTypeAllowlist = map[string]struct{}{
@@ -1069,7 +1069,7 @@ func writeProtocolAliases(outDir string, generated map[string]struct{}, fallback
 		b.WriteString("\n")
 	}
 
-	return writeGoFile(outDir, filepath.Base(aliasPath), []byte(b.String()))
+	return writeProtocolGoFile(outDir, filepath.Base(aliasPath), []byte(b.String()))
 }
 
 func protocolAliasNames(generated map[string]struct{}, fallbacks []string) map[string]string {
@@ -1177,7 +1177,7 @@ func writeCompatibilityAliases(outDir string, generated map[string]struct{}, cod
 		canonical := constantCandidates[name]
 		fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nconst %s = %s\n\n", name, canonical, canonical, name, canonical)
 	}
-	return writeGoFile(outDir, filepath.Base(path), []byte(b.String()))
+	return writeProtocolGoFile(outDir, filepath.Base(path), []byte(b.String()))
 }
 
 func skipSchemaFiles() map[string]bool {
@@ -1672,7 +1672,7 @@ func writeProtocolMetadata(outDir, codexCommit, codexVersion string) error {
 	b.WriteString(fmt.Sprintf("const GeneratedCodexCommit = %q\n\n", codexCommit))
 	b.WriteString("// GeneratedCodexVersion is the Codex package version used to generate this protocol package.\n")
 	b.WriteString(fmt.Sprintf("const GeneratedCodexVersion = %q\n", codexVersion))
-	return writeGoFile(outDir, "metadata_gen.go", []byte(b.String()))
+	return writeProtocolGoFile(outDir, "metadata_gen.go", []byte(b.String()))
 }
 
 func writeFile(dir, name string, contents []byte) error {
@@ -1686,6 +1686,182 @@ func writeGoFile(dir, name string, contents []byte) error {
 		return fmt.Errorf("format generated Go file %s: %w", name, err)
 	}
 	return writeFile(dir, name, formatted)
+}
+
+type generatedDocInsertion struct {
+	offset int
+	text   string
+}
+
+func writeProtocolGoFile(dir, name string, contents []byte) error {
+	documented, err := documentExportedDeclarations(contents)
+	if err != nil {
+		return fmt.Errorf("document generated protocol file %s: %w", name, err)
+	}
+	if err := validateExportedDeclarationComments(documented); err != nil {
+		return fmt.Errorf("validate generated protocol file %s: %w", name, err)
+	}
+	return writeFile(dir, name, documented)
+}
+
+func documentExportedDeclarations(contents []byte) ([]byte, error) {
+	formatted, err := format.Source(contents)
+	if err != nil {
+		return nil, fmt.Errorf("format source before documenting declarations: %w", err)
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "generated.go", formatted, parser.ParseComments)
+	if err != nil {
+		return nil, fmt.Errorf("parse generated source: %w", err)
+	}
+
+	insertions := make([]generatedDocInsertion, 0)
+	for _, declaration := range file.Decls {
+		switch declaration := declaration.(type) {
+		case *ast.GenDecl:
+			for _, specification := range declaration.Specs {
+				switch specification := specification.(type) {
+				case *ast.TypeSpec:
+					if !specification.Name.IsExported() {
+						continue
+					}
+					doc := specification.Doc
+					if doc == nil && len(declaration.Specs) == 1 {
+						doc = declaration.Doc
+					}
+					if exportedDeclarationCommentStartsWith(doc, specification.Name.Name) {
+						continue
+					}
+					description := specification.Name.Name + " represents a generated Codex app-server protocol type."
+					if specification.Assign.IsValid() {
+						description = specification.Name.Name + " is a generated alias for a Codex app-server protocol type."
+					}
+					insertions = append(insertions, generatedDocCommentInsertion(formatted, fset, declarationCommentPosition(doc, specification.Pos()), description))
+				case *ast.ValueSpec:
+					doc := specification.Doc
+					if doc == nil && len(declaration.Specs) == 1 {
+						doc = declaration.Doc
+					}
+					var exported []string
+					for _, name := range specification.Names {
+						if name.IsExported() {
+							exported = append(exported, name.Name)
+						}
+					}
+					if len(exported) == 0 {
+						continue
+					}
+					if len(exported) != 1 {
+						return nil, fmt.Errorf("generated %s declaration contains multiple exported names %s", declaration.Tok, strings.Join(exported, ", "))
+					}
+					name := exported[0]
+					if exportedDeclarationCommentStartsWith(doc, name) {
+						continue
+					}
+					kind := "variable"
+					if declaration.Tok == token.CONST {
+						kind = "constant"
+					}
+					description := fmt.Sprintf("%s is a generated Codex app-server protocol %s.", name, kind)
+					insertions = append(insertions, generatedDocCommentInsertion(formatted, fset, declarationCommentPosition(doc, specification.Pos()), description))
+				}
+			}
+		case *ast.FuncDecl:
+			if !declaration.Name.IsExported() || exportedDeclarationCommentStartsWith(declaration.Doc, declaration.Name.Name) {
+				continue
+			}
+			description := declaration.Name.Name + " implements generated Codex app-server protocol behavior."
+			insertions = append(insertions, generatedDocCommentInsertion(formatted, fset, declarationCommentPosition(declaration.Doc, declaration.Pos()), description))
+		}
+	}
+
+	sort.SliceStable(insertions, func(i, j int) bool { return insertions[i].offset > insertions[j].offset })
+	documented := append([]byte(nil), formatted...)
+	for _, insertion := range insertions {
+		documented = append(documented[:insertion.offset], append([]byte(insertion.text), documented[insertion.offset:]...)...)
+	}
+	documented, err = format.Source(documented)
+	if err != nil {
+		return nil, fmt.Errorf("format documented source: %w", err)
+	}
+	return documented, nil
+}
+
+func validateExportedDeclarationComments(contents []byte) error {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "generated.go", contents, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("parse generated source: %w", err)
+	}
+	var missing []string
+	for _, declaration := range file.Decls {
+		switch declaration := declaration.(type) {
+		case *ast.GenDecl:
+			for _, specification := range declaration.Specs {
+				switch specification := specification.(type) {
+				case *ast.TypeSpec:
+					if !specification.Name.IsExported() {
+						continue
+					}
+					doc := specification.Doc
+					if doc == nil && len(declaration.Specs) == 1 {
+						doc = declaration.Doc
+					}
+					if !exportedDeclarationCommentStartsWith(doc, specification.Name.Name) {
+						missing = append(missing, specification.Name.Name)
+					}
+				case *ast.ValueSpec:
+					doc := specification.Doc
+					if doc == nil && len(declaration.Specs) == 1 {
+						doc = declaration.Doc
+					}
+					for _, name := range specification.Names {
+						if name.IsExported() && !exportedDeclarationCommentStartsWith(doc, name.Name) {
+							missing = append(missing, name.Name)
+						}
+					}
+				}
+			}
+		case *ast.FuncDecl:
+			if declaration.Name.IsExported() && !exportedDeclarationCommentStartsWith(declaration.Doc, declaration.Name.Name) {
+				missing = append(missing, declaration.Name.Name)
+			}
+		}
+	}
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		return fmt.Errorf("exported declarations missing name-leading GoDoc: %s", strings.Join(missing, ", "))
+	}
+	return nil
+}
+
+func exportedDeclarationCommentStartsWith(doc *ast.CommentGroup, name string) bool {
+	if doc == nil {
+		return false
+	}
+	text := strings.TrimSpace(doc.Text())
+	return text == name || strings.HasPrefix(text, name+" ")
+}
+
+func declarationCommentPosition(doc *ast.CommentGroup, fallback token.Pos) token.Pos {
+	if doc != nil {
+		return doc.Pos()
+	}
+	return fallback
+}
+
+func generatedDocCommentInsertion(contents []byte, fset *token.FileSet, position token.Pos, description string) generatedDocInsertion {
+	offset := fset.Position(position).Offset
+	lineStart := offset
+	for lineStart > 0 && contents[lineStart-1] != '\n' {
+		lineStart--
+	}
+	indentEnd := lineStart
+	for indentEnd < len(contents) && (contents[indentEnd] == ' ' || contents[indentEnd] == '\t') {
+		indentEnd++
+	}
+	indent := string(contents[lineStart:indentEnd])
+	return generatedDocInsertion{offset: lineStart, text: indent + "// " + description + "\n"}
 }
 
 func findSchemaFiles(schemaDir string) ([]string, error) {

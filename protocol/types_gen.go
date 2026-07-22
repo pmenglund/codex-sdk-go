@@ -4,6 +4,7 @@
 
 package protocol
 
+// AbsolutePathBuf represents a generated Codex app-server protocol type.
 // A path that is guaranteed to be absolute and normalized (though it is not
 // guaranteed to be canonicalized or exist on the filesystem).
 //
@@ -12,6 +13,7 @@ package protocol
 // will fail unless the path being deserialized is already absolute.
 type AbsolutePathBuf string
 
+// AccountTokenUsageDailyBucket represents a generated Codex app-server protocol type.
 type AccountTokenUsageDailyBucket struct {
 	// StartDate corresponds to the JSON schema field "startDate".
 	StartDate string `json:"startDate"`
@@ -20,6 +22,7 @@ type AccountTokenUsageDailyBucket struct {
 	Tokens int `json:"tokens"`
 }
 
+// AccountTokenUsageSummary represents a generated Codex app-server protocol type.
 type AccountTokenUsageSummary struct {
 	// CurrentStreakDays corresponds to the JSON schema field "currentStreakDays".
 	CurrentStreakDays AccountTokenUsageSummaryCurrentStreakDays `json:"currentStreakDays,omitempty,omitzero"`
@@ -38,26 +41,40 @@ type AccountTokenUsageSummary struct {
 	PeakDailyTokens AccountTokenUsageSummaryPeakDailyTokens `json:"peakDailyTokens,omitempty,omitzero"`
 }
 
+// AccountTokenUsageSummaryCurrentStreakDays represents a generated Codex app-server protocol type.
 type AccountTokenUsageSummaryCurrentStreakDays *int
 
+// AccountTokenUsageSummaryLifetimeTokens represents a generated Codex app-server protocol type.
 type AccountTokenUsageSummaryLifetimeTokens *int
 
+// AccountTokenUsageSummaryLongestRunningTurnSec represents a generated Codex app-server protocol type.
 type AccountTokenUsageSummaryLongestRunningTurnSec *int
 
+// AccountTokenUsageSummaryLongestStreakDays represents a generated Codex app-server protocol type.
 type AccountTokenUsageSummaryLongestStreakDays *int
 
+// AccountTokenUsageSummaryPeakDailyTokens represents a generated Codex app-server protocol type.
 type AccountTokenUsageSummaryPeakDailyTokens *int
 
+// AddCreditsNudgeCreditType represents a generated Codex app-server protocol type.
 type AddCreditsNudgeCreditType string
 
+// AddCreditsNudgeCreditTypeCredits is a generated Codex app-server protocol constant.
 const AddCreditsNudgeCreditTypeCredits AddCreditsNudgeCreditType = "credits"
+
+// AddCreditsNudgeCreditTypeUsageLimit is a generated Codex app-server protocol constant.
 const AddCreditsNudgeCreditTypeUsageLimit AddCreditsNudgeCreditType = "usage_limit"
 
+// AddCreditsNudgeEmailStatus represents a generated Codex app-server protocol type.
 type AddCreditsNudgeEmailStatus string
 
+// AddCreditsNudgeEmailStatusCooldownActive is a generated Codex app-server protocol constant.
 const AddCreditsNudgeEmailStatusCooldownActive AddCreditsNudgeEmailStatus = "cooldown_active"
+
+// AddCreditsNudgeEmailStatusSent is a generated Codex app-server protocol constant.
 const AddCreditsNudgeEmailStatusSent AddCreditsNudgeEmailStatus = "sent"
 
+// AdditionalContextEntry represents a generated Codex app-server protocol type.
 type AdditionalContextEntry struct {
 	// Kind corresponds to the JSON schema field "kind".
 	Kind AdditionalContextKind `json:"kind"`
@@ -66,11 +83,16 @@ type AdditionalContextEntry struct {
 	Value string `json:"value"`
 }
 
+// AdditionalContextKind represents a generated Codex app-server protocol type.
 type AdditionalContextKind string
 
+// AdditionalContextKindApplication is a generated Codex app-server protocol constant.
 const AdditionalContextKindApplication AdditionalContextKind = "application"
+
+// AdditionalContextKindUntrusted is a generated Codex app-server protocol constant.
 const AdditionalContextKindUntrusted AdditionalContextKind = "untrusted"
 
+// AdditionalFileSystemPermissions represents a generated Codex app-server protocol type.
 type AdditionalFileSystemPermissions struct {
 	// Entries corresponds to the JSON schema field "entries".
 	Entries *AdditionalFileSystemPermissionsEntries `json:"entries,omitempty,omitzero"`
@@ -85,28 +107,39 @@ type AdditionalFileSystemPermissions struct {
 	Write *AdditionalFileSystemPermissionsWrite `json:"write,omitempty,omitzero"`
 }
 
+// AdditionalFileSystemPermissionsEntries represents a generated Codex app-server protocol type.
 type AdditionalFileSystemPermissionsEntries []FileSystemSandboxEntry
 
+// AdditionalFileSystemPermissionsGlobScanMaxDepth represents a generated Codex app-server protocol type.
 type AdditionalFileSystemPermissionsGlobScanMaxDepth *int
 
+// AdditionalFileSystemPermissionsRead represents a generated Codex app-server protocol type.
 // This will be removed in favor of `entries`.
 type AdditionalFileSystemPermissionsRead []LegacyAppPathString
 
+// AdditionalFileSystemPermissionsWrite represents a generated Codex app-server protocol type.
 // This will be removed in favor of `entries`.
 type AdditionalFileSystemPermissionsWrite []LegacyAppPathString
 
+// AdditionalNetworkPermissions represents a generated Codex app-server protocol type.
 type AdditionalNetworkPermissions struct {
 	// Enabled corresponds to the JSON schema field "enabled".
 	Enabled AdditionalNetworkPermissionsEnabled `json:"enabled,omitempty,omitzero"`
 }
 
+// AdditionalNetworkPermissionsEnabled represents a generated Codex app-server protocol type.
 type AdditionalNetworkPermissionsEnabled *bool
 
+// AmazonBedrockCredentialSource represents a generated Codex app-server protocol type.
 type AmazonBedrockCredentialSource string
 
+// AmazonBedrockCredentialSourceAwsManaged is a generated Codex app-server protocol constant.
 const AmazonBedrockCredentialSourceAwsManaged AmazonBedrockCredentialSource = "awsManaged"
+
+// AmazonBedrockCredentialSourceCodexManaged is a generated Codex app-server protocol constant.
 const AmazonBedrockCredentialSourceCodexManaged AmazonBedrockCredentialSource = "codexManaged"
 
+// AppBranding represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - app metadata returned by app-list APIs.
 type AppBranding struct {
 	// Category corresponds to the JSON schema field "category".
@@ -128,16 +161,22 @@ type AppBranding struct {
 	Website AppBrandingWebsite `json:"website,omitempty,omitzero"`
 }
 
+// AppBrandingCategory represents a generated Codex app-server protocol type.
 type AppBrandingCategory *string
 
+// AppBrandingDeveloper represents a generated Codex app-server protocol type.
 type AppBrandingDeveloper *string
 
+// AppBrandingPrivacyPolicy represents a generated Codex app-server protocol type.
 type AppBrandingPrivacyPolicy *string
 
+// AppBrandingTermsOfService represents a generated Codex app-server protocol type.
 type AppBrandingTermsOfService *string
 
+// AppBrandingWebsite represents a generated Codex app-server protocol type.
 type AppBrandingWebsite *string
 
+// AppInfo represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - app metadata returned by app-list APIs.
 type AppInfo struct {
 	// AppMetadata corresponds to the JSON schema field "appMetadata".
@@ -187,22 +226,31 @@ type AppInfo struct {
 	PluginDisplayNames []string `json:"pluginDisplayNames,omitempty,omitzero"`
 }
 
+// AppInfoDescription represents a generated Codex app-server protocol type.
 type AppInfoDescription *string
 
+// AppInfoDistributionChannel represents a generated Codex app-server protocol type.
 type AppInfoDistributionChannel *string
 
+// AppInfoIconAssets represents a generated Codex app-server protocol type.
 type AppInfoIconAssets map[string]string
 
+// AppInfoIconDarkAssets represents a generated Codex app-server protocol type.
 type AppInfoIconDarkAssets map[string]string
 
+// AppInfoInstallURL represents a generated Codex app-server protocol type.
 type AppInfoInstallURL *string
 
+// AppInfoLabels represents a generated Codex app-server protocol type.
 type AppInfoLabels map[string]string
 
+// AppInfoLogoURL represents a generated Codex app-server protocol type.
 type AppInfoLogoURL *string
 
+// AppInfoLogoURLDark represents a generated Codex app-server protocol type.
 type AppInfoLogoURLDark *string
 
+// AppMetadata represents a generated Codex app-server protocol type.
 type AppMetadata struct {
 	// Categories corresponds to the JSON schema field "categories".
 	Categories *AppMetadataCategories `json:"categories,omitempty,omitzero"`
@@ -243,33 +291,46 @@ type AppMetadata struct {
 	VersionNotes AppMetadataVersionNotes `json:"versionNotes,omitempty,omitzero"`
 }
 
+// AppMetadataCategories represents a generated Codex app-server protocol type.
 type AppMetadataCategories []string
 
+// AppMetadataDeveloper represents a generated Codex app-server protocol type.
 type AppMetadataDeveloper *string
 
+// AppMetadataFirstPartyRequiresInstall represents a generated Codex app-server protocol type.
 type AppMetadataFirstPartyRequiresInstall *bool
 
+// AppMetadataFirstPartyType represents a generated Codex app-server protocol type.
 type AppMetadataFirstPartyType *string
 
+// AppMetadataScreenshots represents a generated Codex app-server protocol type.
 type AppMetadataScreenshots []AppScreenshot
 
+// AppMetadataSeoDescription represents a generated Codex app-server protocol type.
 type AppMetadataSeoDescription *string
 
+// AppMetadataShowInComposerWhenUnlinked represents a generated Codex app-server protocol type.
 type AppMetadataShowInComposerWhenUnlinked *bool
 
+// AppMetadataSubCategories represents a generated Codex app-server protocol type.
 type AppMetadataSubCategories []string
 
+// AppMetadataVersion represents a generated Codex app-server protocol type.
 type AppMetadataVersion *string
 
+// AppMetadataVersionID represents a generated Codex app-server protocol type.
 type AppMetadataVersionID *string
 
+// AppMetadataVersionNotes represents a generated Codex app-server protocol type.
 type AppMetadataVersionNotes *string
 
+// AppReview represents a generated Codex app-server protocol type.
 type AppReview struct {
 	// Status corresponds to the JSON schema field "status".
 	Status string `json:"status"`
 }
 
+// AppScreenshot represents a generated Codex app-server protocol type.
 type AppScreenshot struct {
 	// FileID corresponds to the JSON schema field "fileId".
 	FileID AppScreenshotFileID `json:"fileId,omitempty,omitzero"`
@@ -281,10 +342,13 @@ type AppScreenshot struct {
 	UserPrompt string `json:"userPrompt"`
 }
 
+// AppScreenshotFileID represents a generated Codex app-server protocol type.
 type AppScreenshotFileID *string
 
+// AppScreenshotURL represents a generated Codex app-server protocol type.
 type AppScreenshotURL *string
 
+// AppSummary represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - app metadata summary for plugin responses.
 type AppSummary struct {
 	// Category corresponds to the JSON schema field "category".
@@ -303,18 +367,28 @@ type AppSummary struct {
 	Name string `json:"name"`
 }
 
+// AppSummaryCategory represents a generated Codex app-server protocol type.
 type AppSummaryCategory *string
 
+// AppSummaryDescription represents a generated Codex app-server protocol type.
 type AppSummaryDescription *string
 
+// AppSummaryInstallURL represents a generated Codex app-server protocol type.
 type AppSummaryInstallURL *string
 
+// ApprovalsReviewer represents a generated Codex app-server protocol type.
 type ApprovalsReviewer string
 
+// ApprovalsReviewerAutoReview is a generated Codex app-server protocol constant.
 const ApprovalsReviewerAutoReview ApprovalsReviewer = "auto_review"
+
+// ApprovalsReviewerGuardianSubagent is a generated Codex app-server protocol constant.
 const ApprovalsReviewerGuardianSubagent ApprovalsReviewer = "guardian_subagent"
+
+// ApprovalsReviewerUser is a generated Codex app-server protocol constant.
 const ApprovalsReviewerUser ApprovalsReviewer = "user"
 
+// AppsListParams represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - list available apps/connectors.
 type AppsListParams struct {
 	// Opaque pagination cursor returned by a previous call.
@@ -331,21 +405,27 @@ type AppsListParams struct {
 	ThreadID AppsListParamsThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// AppsListParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type AppsListParamsCursor *string
 
+// AppsListParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type AppsListParamsLimit *int
 
+// AppsListParamsThreadID represents a generated Codex app-server protocol type.
 // Optional thread id used to evaluate app feature gating from that thread's
 // config.
 type AppsListParamsThreadID *string
 
+// AskForApproval represents a generated Codex app-server protocol type.
 type AskForApproval interface{}
 
+// AuthMode represents a generated Codex app-server protocol type.
 // Authentication mode for OpenAI-backed providers.
 type AuthMode interface{}
 
+// ByteRange represents a generated Codex app-server protocol type.
 type ByteRange struct {
 	// End corresponds to the JSON schema field "end".
 	End int `json:"end"`
@@ -354,21 +434,29 @@ type ByteRange struct {
 	Start int `json:"start"`
 }
 
+// CancelLoginAccountParams represents a generated Codex app-server protocol type.
 type CancelLoginAccountParams struct {
 	// LoginID corresponds to the JSON schema field "loginId".
 	LoginID string `json:"loginId"`
 }
 
+// CancelLoginAccountStatus represents a generated Codex app-server protocol type.
 type CancelLoginAccountStatus string
 
+// CancelLoginAccountStatusCanceled is a generated Codex app-server protocol constant.
 const CancelLoginAccountStatusCanceled CancelLoginAccountStatus = "canceled"
+
+// CancelLoginAccountStatusNotFound is a generated Codex app-server protocol constant.
 const CancelLoginAccountStatusNotFound CancelLoginAccountStatus = "notFound"
 
+// CapabilityRootLocation represents a generated Codex app-server protocol type.
 // Location used to resolve a selected capability root.
 type CapabilityRootLocation interface{}
 
+// ChatgptAuthTokensRefreshReason represents a generated Codex app-server protocol type.
 type ChatgptAuthTokensRefreshReason interface{}
 
+// ClientInfo represents a generated Codex app-server protocol type.
 type ClientInfo struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -380,8 +468,10 @@ type ClientInfo struct {
 	Version string `json:"version"`
 }
 
+// ClientInfoTitle represents a generated Codex app-server protocol type.
 type ClientInfoTitle *string
 
+// CodexErrorInfo represents a generated Codex app-server protocol type.
 // This translation layer make sure that we expose codex error code in camel case.
 //
 // When an upstream HTTP status is available (for example, from the Responses API
@@ -389,6 +479,7 @@ type ClientInfoTitle *string
 // `codexErrorInfo` variant.
 type CodexErrorInfo interface{}
 
+// CollaborationMode represents a generated Codex app-server protocol type.
 // Collaboration mode for a Codex session.
 type CollaborationMode struct {
 	// Mode corresponds to the JSON schema field "mode".
@@ -398,9 +489,11 @@ type CollaborationMode struct {
 	Settings Settings `json:"settings"`
 }
 
+// CommandExecOutputStream represents a generated Codex app-server protocol type.
 // Stream label for `command/exec/outputDelta` notifications.
 type CommandExecOutputStream interface{}
 
+// CommandExecParams represents a generated Codex app-server protocol type.
 // Run a standalone command (argv vector) in the server sandbox without creating a
 // thread or turn.
 //
@@ -477,21 +570,25 @@ type CommandExecParams struct {
 	Tty *bool `json:"tty,omitempty,omitzero"`
 }
 
+// CommandExecParamsCwd represents a generated Codex app-server protocol type.
 // Optional working directory. Defaults to the server cwd.
 type CommandExecParamsCwd *string
 
+// CommandExecParamsEnv represents a generated Codex app-server protocol type.
 // Optional environment overrides merged into the server-computed environment.
 //
 // Matching names override inherited values. Set a key to `null` to unset an
 // inherited variable.
 type CommandExecParamsEnv map[string]*string
 
+// CommandExecParamsOutputBytesCap represents a generated Codex app-server protocol type.
 // Optional per-stream stdout/stderr capture cap in bytes.
 //
 // When omitted, the server default applies. Cannot be combined with
 // `disableOutputCap`.
 type CommandExecParamsOutputBytesCap *int
 
+// CommandExecParamsProcessID represents a generated Codex app-server protocol type.
 // Optional client-supplied, connection-scoped process id.
 //
 // Required for `tty`, `streamStdin`, `streamStdoutStderr`, and follow-up
@@ -500,12 +597,14 @@ type CommandExecParamsOutputBytesCap *int
 // client.
 type CommandExecParamsProcessID *string
 
+// CommandExecParamsTimeoutMs represents a generated Codex app-server protocol type.
 // Optional timeout in milliseconds.
 //
 // When omitted, the server default applies. Cannot be combined with
 // `disableTimeout`.
 type CommandExecParamsTimeoutMs *int
 
+// CommandExecResizeParams represents a generated Codex app-server protocol type.
 // Resize a running PTY-backed `command/exec` session.
 type CommandExecResizeParams struct {
 	// Client-supplied, connection-scoped `processId` from the original `command/exec`
@@ -516,6 +615,7 @@ type CommandExecResizeParams struct {
 	Size CommandExecResizeParamsSize `json:"size"`
 }
 
+// CommandExecResizeParamsSize represents a generated Codex app-server protocol type.
 // New PTY size in character cells.
 type CommandExecResizeParamsSize struct {
 	// Terminal width in character cells.
@@ -525,6 +625,7 @@ type CommandExecResizeParamsSize struct {
 	Rows int `json:"rows"`
 }
 
+// CommandExecTerminalSize represents a generated Codex app-server protocol type.
 // PTY size in character cells for `command/exec` PTY sessions.
 type CommandExecTerminalSize struct {
 	// Terminal width in character cells.
@@ -534,6 +635,7 @@ type CommandExecTerminalSize struct {
 	Rows int `json:"rows"`
 }
 
+// CommandExecTerminateParams represents a generated Codex app-server protocol type.
 // Terminate a running `command/exec` session.
 type CommandExecTerminateParams struct {
 	// Client-supplied, connection-scoped `processId` from the original `command/exec`
@@ -541,6 +643,7 @@ type CommandExecTerminateParams struct {
 	ProcessID string `json:"processId"`
 }
 
+// CommandExecWriteParams represents a generated Codex app-server protocol type.
 // Write stdin bytes to a running `command/exec` session, close stdin, or both.
 type CommandExecWriteParams struct {
 	// Close stdin after writing `deltaBase64`, if present.
@@ -554,22 +657,27 @@ type CommandExecWriteParams struct {
 	ProcessID string `json:"processId"`
 }
 
+// CommandExecWriteParamsDeltaBase64 represents a generated Codex app-server protocol type.
 // Optional base64-encoded stdin bytes to write.
 type CommandExecWriteParamsDeltaBase64 *string
 
+// CommandMigration represents a generated Codex app-server protocol type.
 type CommandMigration struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 }
 
+// ComputerUseRequirements represents a generated Codex app-server protocol type.
 type ComputerUseRequirements struct {
 	// AllowLockedComputerUse corresponds to the JSON schema field
 	// "allowLockedComputerUse".
 	AllowLockedComputerUse ComputerUseRequirementsAllowLockedComputerUse `json:"allowLockedComputerUse,omitempty,omitzero"`
 }
 
+// ComputerUseRequirementsAllowLockedComputerUse represents a generated Codex app-server protocol type.
 type ComputerUseRequirementsAllowLockedComputerUse *bool
 
+// ConfigBatchWriteParams represents a generated Codex app-server protocol type.
 type ConfigBatchWriteParams struct {
 	// Edits corresponds to the JSON schema field "edits".
 	Edits []ConfigEdit `json:"edits"`
@@ -586,12 +694,15 @@ type ConfigBatchWriteParams struct {
 	ReloadUserConfig *bool `json:"reloadUserConfig,omitempty,omitzero"`
 }
 
+// ConfigBatchWriteParamsExpectedVersion represents a generated Codex app-server protocol type.
 type ConfigBatchWriteParamsExpectedVersion *string
 
+// ConfigBatchWriteParamsFilePath represents a generated Codex app-server protocol type.
 // Path to the config file to write; defaults to the user's `config.toml` when
 // omitted.
 type ConfigBatchWriteParamsFilePath *string
 
+// ConfigEdit represents a generated Codex app-server protocol type.
 type ConfigEdit struct {
 	// KeyPath corresponds to the JSON schema field "keyPath".
 	KeyPath string `json:"keyPath"`
@@ -603,6 +714,7 @@ type ConfigEdit struct {
 	Value interface{} `json:"value"`
 }
 
+// ConfigReadParams represents a generated Codex app-server protocol type.
 type ConfigReadParams struct {
 	// Optional working directory to resolve project config layers. If specified,
 	// return the effective config as seen from that directory (i.e., including any
@@ -613,11 +725,13 @@ type ConfigReadParams struct {
 	IncludeLayers *bool `json:"includeLayers,omitempty,omitzero"`
 }
 
+// ConfigReadParamsCwd represents a generated Codex app-server protocol type.
 // Optional working directory to resolve project config layers. If specified,
 // return the effective config as seen from that directory (i.e., including any
 // project layers between `cwd` and the project/repo root).
 type ConfigReadParamsCwd *string
 
+// ConfigRequirements represents a generated Codex app-server protocol type.
 type ConfigRequirements struct {
 	// AllowAppshots corresponds to the JSON schema field "allowAppshots".
 	AllowAppshots ConfigRequirementsAllowAppshots `json:"allowAppshots,omitempty,omitzero"`
@@ -664,26 +778,37 @@ type ConfigRequirements struct {
 	Models interface{} `json:"models,omitempty,omitzero"`
 }
 
+// ConfigRequirementsAllowAppshots represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowAppshots *bool
 
+// ConfigRequirementsAllowManagedHooksOnly represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowManagedHooksOnly *bool
 
+// ConfigRequirementsAllowRemoteControl represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowRemoteControl *bool
 
+// ConfigRequirementsAllowedApprovalPolicies represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowedApprovalPolicies []AskForApproval
 
+// ConfigRequirementsAllowedPermissionProfiles represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowedPermissionProfiles map[string]bool
 
+// ConfigRequirementsAllowedSandboxModes represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowedSandboxModes []SandboxMode
 
+// ConfigRequirementsAllowedWebSearchModes represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowedWebSearchModes []WebSearchMode
 
+// ConfigRequirementsAllowedWindowsSandboxImplementations represents a generated Codex app-server protocol type.
 type ConfigRequirementsAllowedWindowsSandboxImplementations []WindowsSandboxSetupMode
 
+// ConfigRequirementsDefaultPermissions represents a generated Codex app-server protocol type.
 type ConfigRequirementsDefaultPermissions *string
 
+// ConfigRequirementsFeatureRequirements represents a generated Codex app-server protocol type.
 type ConfigRequirementsFeatureRequirements map[string]bool
 
+// ConfigValueWriteParams represents a generated Codex app-server protocol type.
 type ConfigValueWriteParams struct {
 	// ExpectedVersion corresponds to the JSON schema field "expectedVersion".
 	ExpectedVersion ConfigValueWriteParamsExpectedVersion `json:"expectedVersion,omitempty,omitzero"`
@@ -702,12 +827,15 @@ type ConfigValueWriteParams struct {
 	Value interface{} `json:"value"`
 }
 
+// ConfigValueWriteParamsExpectedVersion represents a generated Codex app-server protocol type.
 type ConfigValueWriteParamsExpectedVersion *string
 
+// ConfigValueWriteParamsFilePath represents a generated Codex app-server protocol type.
 // Path to the config file to write; defaults to the user's `config.toml` when
 // omitted.
 type ConfigValueWriteParamsFilePath *string
 
+// ConfiguredHookMatcherGroup represents a generated Codex app-server protocol type.
 type ConfiguredHookMatcherGroup struct {
 	// Hooks corresponds to the JSON schema field "hooks".
 	Hooks []ConfiguredHookHandler `json:"hooks"`
@@ -716,10 +844,13 @@ type ConfiguredHookMatcherGroup struct {
 	Matcher ConfiguredHookMatcherGroupMatcher `json:"matcher,omitempty,omitzero"`
 }
 
+// ConfiguredHookMatcherGroupMatcher represents a generated Codex app-server protocol type.
 type ConfiguredHookMatcherGroupMatcher *string
 
+// ConsumeAccountRateLimitResetCreditOutcome represents a generated Codex app-server protocol type.
 type ConsumeAccountRateLimitResetCreditOutcome interface{}
 
+// ConsumeAccountRateLimitResetCreditParams represents a generated Codex app-server protocol type.
 type ConsumeAccountRateLimitResetCreditParams struct {
 	// Opaque reset-credit identifier to redeem. When omitted, the backend selects the
 	// next available credit.
@@ -730,16 +861,24 @@ type ConsumeAccountRateLimitResetCreditParams struct {
 	IdempotencyKey string `json:"idempotencyKey"`
 }
 
+// ConsumeAccountRateLimitResetCreditParamsCreditID represents a generated Codex app-server protocol type.
 // Opaque reset-credit identifier to redeem. When omitted, the backend selects the
 // next available credit.
 type ConsumeAccountRateLimitResetCreditParamsCreditID *string
 
+// ConversationTextRole represents a generated Codex app-server protocol type.
 type ConversationTextRole string
 
+// ConversationTextRoleAssistant is a generated Codex app-server protocol constant.
 const ConversationTextRoleAssistant ConversationTextRole = "assistant"
+
+// ConversationTextRoleDeveloper is a generated Codex app-server protocol constant.
 const ConversationTextRoleDeveloper ConversationTextRole = "developer"
+
+// ConversationTextRoleUser is a generated Codex app-server protocol constant.
 const ConversationTextRoleUser ConversationTextRole = "user"
 
+// CreditsSnapshot represents a generated Codex app-server protocol type.
 type CreditsSnapshot struct {
 	// Balance corresponds to the JSON schema field "balance".
 	Balance CreditsSnapshotBalance `json:"balance,omitempty,omitzero"`
@@ -751,10 +890,13 @@ type CreditsSnapshot struct {
 	Unlimited bool `json:"unlimited"`
 }
 
+// CreditsSnapshotBalance represents a generated Codex app-server protocol type.
 type CreditsSnapshotBalance *string
 
+// DynamicToolNamespaceTool represents a generated Codex app-server protocol type.
 type DynamicToolNamespaceTool interface{}
 
+// ExperimentalFeature represents a generated Codex app-server protocol type.
 type ExperimentalFeature struct {
 	// Announcement copy shown to users when the feature is introduced. Null when this
 	// feature is not in beta.
@@ -781,18 +923,22 @@ type ExperimentalFeature struct {
 	Stage interface{} `json:"stage"`
 }
 
+// ExperimentalFeatureAnnouncement represents a generated Codex app-server protocol type.
 // Announcement copy shown to users when the feature is introduced. Null when this
 // feature is not in beta.
 type ExperimentalFeatureAnnouncement *string
 
+// ExperimentalFeatureDescription represents a generated Codex app-server protocol type.
 // Short summary describing what the feature does. Null when this feature is not in
 // beta.
 type ExperimentalFeatureDescription *string
 
+// ExperimentalFeatureDisplayName represents a generated Codex app-server protocol type.
 // User-facing display name shown in the experimental features UI. Null when this
 // feature is not in beta.
 type ExperimentalFeatureDisplayName *string
 
+// ExperimentalFeatureEnablementSetParams represents a generated Codex app-server protocol type.
 type ExperimentalFeatureEnablementSetParams struct {
 	// Process-wide runtime feature enablement keyed by canonical feature name.
 	//
@@ -801,12 +947,14 @@ type ExperimentalFeatureEnablementSetParams struct {
 	Enablement ExperimentalFeatureEnablementSetParamsEnablement `json:"enablement"`
 }
 
+// ExperimentalFeatureEnablementSetParamsEnablement represents a generated Codex app-server protocol type.
 // Process-wide runtime feature enablement keyed by canonical feature name.
 //
 // Only named features are updated. Omitted features are left unchanged. Send an
 // empty map for a no-op.
 type ExperimentalFeatureEnablementSetParamsEnablement map[string]bool
 
+// ExperimentalFeatureListParams represents a generated Codex app-server protocol type.
 type ExperimentalFeatureListParams struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor ExperimentalFeatureListParamsCursor `json:"cursor,omitempty,omitzero"`
@@ -820,19 +968,24 @@ type ExperimentalFeatureListParams struct {
 	ThreadID ExperimentalFeatureListParamsThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// ExperimentalFeatureListParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type ExperimentalFeatureListParamsCursor *string
 
+// ExperimentalFeatureListParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type ExperimentalFeatureListParamsLimit *int
 
+// ExperimentalFeatureListParamsThreadID represents a generated Codex app-server protocol type.
 // Optional loaded thread id. Pass this when showing feature state for an existing
 // thread so enablement is computed from that thread's refreshed config, including
 // project-local config for the thread's cwd.
 type ExperimentalFeatureListParamsThreadID *string
 
+// ExperimentalFeatureStage represents a generated Codex app-server protocol type.
 type ExperimentalFeatureStage interface{}
 
+// ExternalAgentConfigDetectParams represents a generated Codex app-server protocol type.
 type ExternalAgentConfigDetectParams struct {
 	// Zero or more working directories to include for repo-scoped detection.
 	Cwds *ExternalAgentConfigDetectParamsCwds `json:"cwds,omitempty,omitzero"`
@@ -841,9 +994,11 @@ type ExternalAgentConfigDetectParams struct {
 	IncludeHome *bool `json:"includeHome,omitempty,omitzero"`
 }
 
+// ExternalAgentConfigDetectParamsCwds represents a generated Codex app-server protocol type.
 // Zero or more working directories to include for repo-scoped detection.
 type ExternalAgentConfigDetectParamsCwds []string
 
+// ExternalAgentConfigImportHistory represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportHistory struct {
 	// CompletedAtMs corresponds to the JSON schema field "completedAtMs".
 	CompletedAtMs int `json:"completedAtMs"`
@@ -858,6 +1013,7 @@ type ExternalAgentConfigImportHistory struct {
 	Successes []ExternalAgentConfigImportItemTypeSuccess `json:"successes"`
 }
 
+// ExternalAgentConfigImportItemTypeFailure represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeFailure struct {
 	// Cwd corresponds to the JSON schema field "cwd".
 	Cwd ExternalAgentConfigImportItemTypeFailureCwd `json:"cwd,omitempty,omitzero"`
@@ -878,12 +1034,16 @@ type ExternalAgentConfigImportItemTypeFailure struct {
 	Source ExternalAgentConfigImportItemTypeFailureSource `json:"source,omitempty,omitzero"`
 }
 
+// ExternalAgentConfigImportItemTypeFailureCwd represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeFailureCwd *string
 
+// ExternalAgentConfigImportItemTypeFailureErrorType represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeFailureErrorType *string
 
+// ExternalAgentConfigImportItemTypeFailureSource represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeFailureSource *string
 
+// ExternalAgentConfigImportItemTypeSuccess represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeSuccess struct {
 	// Cwd corresponds to the JSON schema field "cwd".
 	Cwd ExternalAgentConfigImportItemTypeSuccessCwd `json:"cwd,omitempty,omitzero"`
@@ -898,12 +1058,16 @@ type ExternalAgentConfigImportItemTypeSuccess struct {
 	Target ExternalAgentConfigImportItemTypeSuccessTarget `json:"target,omitempty,omitzero"`
 }
 
+// ExternalAgentConfigImportItemTypeSuccessCwd represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeSuccessCwd *string
 
+// ExternalAgentConfigImportItemTypeSuccessSource represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeSuccessSource *string
 
+// ExternalAgentConfigImportItemTypeSuccessTarget represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportItemTypeSuccessTarget *string
 
+// ExternalAgentConfigImportParams represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportParams struct {
 	// MigrationItems corresponds to the JSON schema field "migrationItems".
 	MigrationItems []ExternalAgentConfigMigrationItem `json:"migrationItems"`
@@ -912,9 +1076,11 @@ type ExternalAgentConfigImportParams struct {
 	Source ExternalAgentConfigImportParamsSource `json:"source,omitempty,omitzero"`
 }
 
+// ExternalAgentConfigImportParamsSource represents a generated Codex app-server protocol type.
 // Source product that produced the migration items. Missing means unspecified.
 type ExternalAgentConfigImportParamsSource *string
 
+// ExternalAgentConfigImportTypeResult represents a generated Codex app-server protocol type.
 type ExternalAgentConfigImportTypeResult struct {
 	// Failures corresponds to the JSON schema field "failures".
 	Failures []ExternalAgentConfigImportItemTypeFailure `json:"failures"`
@@ -926,6 +1092,7 @@ type ExternalAgentConfigImportTypeResult struct {
 	Successes []ExternalAgentConfigImportItemTypeSuccess `json:"successes"`
 }
 
+// ExternalAgentConfigMigrationItem represents a generated Codex app-server protocol type.
 type ExternalAgentConfigMigrationItem struct {
 	// Null or empty means home-scoped migration; non-empty means repo-scoped
 	// migration.
@@ -941,22 +1108,42 @@ type ExternalAgentConfigMigrationItem struct {
 	ItemType ExternalAgentConfigMigrationItemType `json:"itemType"`
 }
 
+// ExternalAgentConfigMigrationItemCwd represents a generated Codex app-server protocol type.
 // Null or empty means home-scoped migration; non-empty means repo-scoped
 // migration.
 type ExternalAgentConfigMigrationItemCwd *string
 
+// ExternalAgentConfigMigrationItemType represents a generated Codex app-server protocol type.
 type ExternalAgentConfigMigrationItemType string
 
+// ExternalAgentConfigMigrationItemTypeAGENTSMD is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeAGENTSMD ExternalAgentConfigMigrationItemType = "AGENTS_MD"
+
+// ExternalAgentConfigMigrationItemTypeCOMMANDS is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeCOMMANDS ExternalAgentConfigMigrationItemType = "COMMANDS"
+
+// ExternalAgentConfigMigrationItemTypeCONFIG is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeCONFIG ExternalAgentConfigMigrationItemType = "CONFIG"
+
+// ExternalAgentConfigMigrationItemTypeHOOKS is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeHOOKS ExternalAgentConfigMigrationItemType = "HOOKS"
+
+// ExternalAgentConfigMigrationItemTypeMCPSERVERCONFIG is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeMCPSERVERCONFIG ExternalAgentConfigMigrationItemType = "MCP_SERVER_CONFIG"
+
+// ExternalAgentConfigMigrationItemTypePLUGINS is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypePLUGINS ExternalAgentConfigMigrationItemType = "PLUGINS"
+
+// ExternalAgentConfigMigrationItemTypeSESSIONS is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeSESSIONS ExternalAgentConfigMigrationItemType = "SESSIONS"
+
+// ExternalAgentConfigMigrationItemTypeSKILLS is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeSKILLS ExternalAgentConfigMigrationItemType = "SKILLS"
+
+// ExternalAgentConfigMigrationItemTypeSUBAGENTS is a generated Codex app-server protocol constant.
 const ExternalAgentConfigMigrationItemTypeSUBAGENTS ExternalAgentConfigMigrationItemType = "SUBAGENTS"
 
+// FeedbackUploadParams represents a generated Codex app-server protocol type.
 type FeedbackUploadParams struct {
 	// Classification corresponds to the JSON schema field "classification".
 	Classification string `json:"classification"`
@@ -977,20 +1164,31 @@ type FeedbackUploadParams struct {
 	ThreadID FeedbackUploadParamsThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// FeedbackUploadParamsExtraLogFiles represents a generated Codex app-server protocol type.
 type FeedbackUploadParamsExtraLogFiles []string
 
+// FeedbackUploadParamsReason represents a generated Codex app-server protocol type.
 type FeedbackUploadParamsReason *string
 
+// FeedbackUploadParamsTags represents a generated Codex app-server protocol type.
 type FeedbackUploadParamsTags map[string]string
 
+// FeedbackUploadParamsThreadID represents a generated Codex app-server protocol type.
 type FeedbackUploadParamsThreadID *string
 
+// FileSystemAccessMode represents a generated Codex app-server protocol type.
 type FileSystemAccessMode string
 
+// FileSystemAccessModeDeny is a generated Codex app-server protocol constant.
 const FileSystemAccessModeDeny FileSystemAccessMode = "deny"
+
+// FileSystemAccessModeRead is a generated Codex app-server protocol constant.
 const FileSystemAccessModeRead FileSystemAccessMode = "read"
+
+// FileSystemAccessModeWrite is a generated Codex app-server protocol constant.
 const FileSystemAccessModeWrite FileSystemAccessMode = "write"
 
+// FileSystemSandboxEntry represents a generated Codex app-server protocol type.
 type FileSystemSandboxEntry struct {
 	// Access corresponds to the JSON schema field "access".
 	Access FileSystemAccessMode `json:"access"`
@@ -999,6 +1197,7 @@ type FileSystemSandboxEntry struct {
 	Path FileSystemPath `json:"path"`
 }
 
+// FileUpdateChange represents a generated Codex app-server protocol type.
 type FileUpdateChange struct {
 	// Diff corresponds to the JSON schema field "diff".
 	Diff string `json:"diff"`
@@ -1010,6 +1209,7 @@ type FileUpdateChange struct {
 	Path string `json:"path"`
 }
 
+// FsCopyParams represents a generated Codex app-server protocol type.
 // Copy a file or directory tree on the host filesystem.
 type FsCopyParams struct {
 	// Absolute destination path.
@@ -1022,6 +1222,7 @@ type FsCopyParams struct {
 	SourcePath interface{} `json:"sourcePath"`
 }
 
+// FsCreateDirectoryParams represents a generated Codex app-server protocol type.
 // Create a directory on the host filesystem.
 type FsCreateDirectoryParams struct {
 	// Absolute directory path to create.
@@ -1031,15 +1232,18 @@ type FsCreateDirectoryParams struct {
 	Recursive FsCreateDirectoryParamsRecursive `json:"recursive,omitempty,omitzero"`
 }
 
+// FsCreateDirectoryParamsRecursive represents a generated Codex app-server protocol type.
 // Whether parent directories should also be created. Defaults to `true`.
 type FsCreateDirectoryParamsRecursive *bool
 
+// FsGetMetadataParams represents a generated Codex app-server protocol type.
 // Request metadata for an absolute path.
 type FsGetMetadataParams struct {
 	// Absolute path to inspect.
 	Path interface{} `json:"path"`
 }
 
+// FsReadDirectoryEntry represents a generated Codex app-server protocol type.
 // A directory entry returned by `fs/readDirectory`.
 type FsReadDirectoryEntry struct {
 	// Direct child entry name only, not an absolute or relative path.
@@ -1052,18 +1256,21 @@ type FsReadDirectoryEntry struct {
 	IsFile bool `json:"isFile"`
 }
 
+// FsReadDirectoryParams represents a generated Codex app-server protocol type.
 // List direct child names for a directory.
 type FsReadDirectoryParams struct {
 	// Absolute directory path to read.
 	Path interface{} `json:"path"`
 }
 
+// FsReadFileParams represents a generated Codex app-server protocol type.
 // Read a file from the host filesystem.
 type FsReadFileParams struct {
 	// Absolute path to read.
 	Path interface{} `json:"path"`
 }
 
+// FsRemoveParams represents a generated Codex app-server protocol type.
 // Remove a file or directory tree from the host filesystem.
 type FsRemoveParams struct {
 	// Whether missing paths should be ignored. Defaults to `true`.
@@ -1076,18 +1283,22 @@ type FsRemoveParams struct {
 	Recursive FsRemoveParamsRecursive `json:"recursive,omitempty,omitzero"`
 }
 
+// FsRemoveParamsForce represents a generated Codex app-server protocol type.
 // Whether missing paths should be ignored. Defaults to `true`.
 type FsRemoveParamsForce *bool
 
+// FsRemoveParamsRecursive represents a generated Codex app-server protocol type.
 // Whether directory removal should recurse. Defaults to `true`.
 type FsRemoveParamsRecursive *bool
 
+// FsUnwatchParams represents a generated Codex app-server protocol type.
 // Stop filesystem watch notifications for a prior `fs/watch`.
 type FsUnwatchParams struct {
 	// Watch identifier previously provided to `fs/watch`.
 	WatchID string `json:"watchId"`
 }
 
+// FsWatchParams represents a generated Codex app-server protocol type.
 // Start filesystem watch notifications for an absolute path.
 type FsWatchParams struct {
 	// Absolute file or directory path to watch.
@@ -1097,6 +1308,7 @@ type FsWatchParams struct {
 	WatchID string `json:"watchId"`
 }
 
+// FsWriteFileParams represents a generated Codex app-server protocol type.
 // Write a file on the host filesystem.
 type FsWriteFileParams struct {
 	// File contents encoded as base64.
@@ -1106,16 +1318,22 @@ type FsWriteFileParams struct {
 	Path interface{} `json:"path"`
 }
 
+// FunctionCallOutputBody represents a generated Codex app-server protocol type.
 type FunctionCallOutputBody interface{}
 
 // Responses API compatible content items that can be returned by a tool call. This
 // is a subset of ContentItem with the types we support as function call outputs.
 
+// FuzzyFileSearchMatchType represents a generated Codex app-server protocol type.
 type FuzzyFileSearchMatchType string
 
+// FuzzyFileSearchMatchTypeDirectory is a generated Codex app-server protocol constant.
 const FuzzyFileSearchMatchTypeDirectory FuzzyFileSearchMatchType = "directory"
+
+// FuzzyFileSearchMatchTypeFile is a generated Codex app-server protocol constant.
 const FuzzyFileSearchMatchTypeFile FuzzyFileSearchMatchType = "file"
 
+// FuzzyFileSearchParams represents a generated Codex app-server protocol type.
 type FuzzyFileSearchParams struct {
 	// CancellationToken corresponds to the JSON schema field "cancellationToken".
 	CancellationToken FuzzyFileSearchParamsCancellationToken `json:"cancellationToken,omitempty,omitzero"`
@@ -1127,8 +1345,10 @@ type FuzzyFileSearchParams struct {
 	Roots []string `json:"roots"`
 }
 
+// FuzzyFileSearchParamsCancellationToken represents a generated Codex app-server protocol type.
 type FuzzyFileSearchParamsCancellationToken *string
 
+// FuzzyFileSearchResult represents a generated Codex app-server protocol type.
 // Superset of [`codex_file_search::FileMatch`]
 type FuzzyFileSearchResult struct {
 	// FileName corresponds to the JSON schema field "file_name".
@@ -1150,8 +1370,10 @@ type FuzzyFileSearchResult struct {
 	Score int `json:"score"`
 }
 
+// FuzzyFileSearchResultIndices represents a generated Codex app-server protocol type.
 type FuzzyFileSearchResultIndices []int
 
+// GetAccountParams represents a generated Codex app-server protocol type.
 type GetAccountParams struct {
 	// When `true`, requests a proactive token refresh before returning.
 	//
@@ -1161,6 +1383,7 @@ type GetAccountParams struct {
 	RefreshToken *bool `json:"refreshToken,omitempty,omitzero"`
 }
 
+// GrantedPermissionProfile represents a generated Codex app-server protocol type.
 type GrantedPermissionProfile struct {
 	// FileSystem corresponds to the JSON schema field "fileSystem".
 	FileSystem interface{} `json:"fileSystem,omitempty,omitzero"`
@@ -1169,23 +1392,34 @@ type GrantedPermissionProfile struct {
 	Network interface{} `json:"network,omitempty,omitzero"`
 }
 
+// HookMigration represents a generated Codex app-server protocol type.
 type HookMigration struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 }
 
+// HooksListParams represents a generated Codex app-server protocol type.
 type HooksListParams struct {
 	// When empty, defaults to the current session working directory.
 	Cwds []string `json:"cwds,omitempty,omitzero"`
 }
 
+// ImageDetail represents a generated Codex app-server protocol type.
 type ImageDetail string
 
+// ImageDetailAuto is a generated Codex app-server protocol constant.
 const ImageDetailAuto ImageDetail = "auto"
+
+// ImageDetailHigh is a generated Codex app-server protocol constant.
 const ImageDetailHigh ImageDetail = "high"
+
+// ImageDetailLow is a generated Codex app-server protocol constant.
 const ImageDetailLow ImageDetail = "low"
+
+// ImageDetailOriginal is a generated Codex app-server protocol constant.
 const ImageDetailOriginal ImageDetail = "original"
 
+// InitializeCapabilities represents a generated Codex app-server protocol type.
 // Client-declared capabilities negotiated during initialize.
 type InitializeCapabilities struct {
 	// Opt into receiving experimental API methods and fields.
@@ -1202,10 +1436,12 @@ type InitializeCapabilities struct {
 	RequestAttestation bool `json:"requestAttestation,omitempty,omitzero"`
 }
 
+// InitializeCapabilitiesOptOutNotificationMethods represents a generated Codex app-server protocol type.
 // Exact notification method names that should be suppressed for this connection
 // (for example `thread/started`).
 type InitializeCapabilitiesOptOutNotificationMethods []string
 
+// InitializeParams represents a generated Codex app-server protocol type.
 type InitializeParams struct {
 	// Capabilities corresponds to the JSON schema field "capabilities".
 	Capabilities interface{} `json:"capabilities,omitempty,omitzero"`
@@ -1214,9 +1450,11 @@ type InitializeParams struct {
 	ClientInfo ClientInfo `json:"clientInfo"`
 }
 
+// InputModality represents a generated Codex app-server protocol type.
 // Canonical user-input modality tags advertised by a model.
 type InputModality interface{}
 
+// InternalChatMessageMetadataPassthrough represents a generated Codex app-server protocol type.
 // Internal Responses API passthrough metadata copied into underlying chat
 // messages.
 //
@@ -1227,10 +1465,13 @@ type InternalChatMessageMetadataPassthrough struct {
 	TurnID InternalChatMessageMetadataPassthroughTurnID `json:"turn_id,omitempty,omitzero"`
 }
 
+// InternalChatMessageMetadataPassthroughTurnID represents a generated Codex app-server protocol type.
 type InternalChatMessageMetadataPassthroughTurnID *string
 
+// LegacyAppPathString represents a generated Codex app-server protocol type.
 type LegacyAppPathString string
 
+// ListMCPServerStatusParams represents a generated Codex app-server protocol type.
 type ListMCPServerStatusParams struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor ListMCPServerStatusParamsCursor `json:"cursor,omitempty,omitzero"`
@@ -1246,38 +1487,63 @@ type ListMCPServerStatusParams struct {
 	ThreadID ListMCPServerStatusParamsThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// ListMCPServerStatusParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type ListMCPServerStatusParamsCursor *string
 
+// ListMCPServerStatusParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a server-defined value.
 type ListMCPServerStatusParamsLimit *int
 
+// ListMCPServerStatusParamsThreadID represents a generated Codex app-server protocol type.
 type ListMCPServerStatusParamsThreadID *string
 
+// LocalShellAction represents a generated Codex app-server protocol type.
 type LocalShellAction interface{}
 
+// LocalShellStatus represents a generated Codex app-server protocol type.
 type LocalShellStatus string
 
+// LocalShellStatusCompleted is a generated Codex app-server protocol constant.
 const LocalShellStatusCompleted LocalShellStatus = "completed"
+
+// LocalShellStatusInProgress is a generated Codex app-server protocol constant.
 const LocalShellStatusInProgress LocalShellStatus = "in_progress"
+
+// LocalShellStatusIncomplete is a generated Codex app-server protocol constant.
 const LocalShellStatusIncomplete LocalShellStatus = "incomplete"
 
+// LoginAppBrand represents a generated Codex app-server protocol type.
 type LoginAppBrand string
 
+// LoginAppBrandChatgpt is a generated Codex app-server protocol constant.
 const LoginAppBrandChatgpt LoginAppBrand = "chatgpt"
+
+// LoginAppBrandCodex is a generated Codex app-server protocol constant.
 const LoginAppBrandCodex LoginAppBrand = "codex"
 
+// MCPAuthStatus represents a generated Codex app-server protocol type.
 type MCPAuthStatus string
 
+// MCPAuthStatusBearerToken is a generated Codex app-server protocol constant.
 const MCPAuthStatusBearerToken MCPAuthStatus = "bearerToken"
+
+// MCPAuthStatusNotLoggedIn is a generated Codex app-server protocol constant.
 const MCPAuthStatusNotLoggedIn MCPAuthStatus = "notLoggedIn"
+
+// MCPAuthStatusOAuth is a generated Codex app-server protocol constant.
 const MCPAuthStatusOAuth MCPAuthStatus = "oAuth"
+
+// MCPAuthStatusUnsupported is a generated Codex app-server protocol constant.
 const MCPAuthStatusUnsupported MCPAuthStatus = "unsupported"
 
+// MCPElicitationArrayType represents a generated Codex app-server protocol type.
 type MCPElicitationArrayType string
 
+// MCPElicitationArrayTypeArray is a generated Codex app-server protocol constant.
 const MCPElicitationArrayTypeArray MCPElicitationArrayType = "array"
 
+// MCPElicitationBooleanSchema represents a generated Codex app-server protocol type.
 type MCPElicitationBooleanSchema struct {
 	// Default corresponds to the JSON schema field "default".
 	Default MCPElicitationBooleanSchemaDefault `json:"default,omitempty,omitzero"`
@@ -1292,16 +1558,22 @@ type MCPElicitationBooleanSchema struct {
 	Type MCPElicitationBooleanType `json:"type"`
 }
 
+// MCPElicitationBooleanSchemaDefault represents a generated Codex app-server protocol type.
 type MCPElicitationBooleanSchemaDefault *bool
 
+// MCPElicitationBooleanSchemaDescription represents a generated Codex app-server protocol type.
 type MCPElicitationBooleanSchemaDescription *string
 
+// MCPElicitationBooleanSchemaTitle represents a generated Codex app-server protocol type.
 type MCPElicitationBooleanSchemaTitle *string
 
+// MCPElicitationBooleanType represents a generated Codex app-server protocol type.
 type MCPElicitationBooleanType string
 
+// MCPElicitationBooleanTypeBoolean is a generated Codex app-server protocol constant.
 const MCPElicitationBooleanTypeBoolean MCPElicitationBooleanType = "boolean"
 
+// MCPElicitationConstOption represents a generated Codex app-server protocol type.
 type MCPElicitationConstOption struct {
 	// Const corresponds to the JSON schema field "const".
 	Const string `json:"const"`
@@ -1310,8 +1582,10 @@ type MCPElicitationConstOption struct {
 	Title string `json:"title"`
 }
 
+// MCPElicitationEnumSchema represents a generated Codex app-server protocol type.
 type MCPElicitationEnumSchema interface{}
 
+// MCPElicitationLegacyTitledEnumSchema represents a generated Codex app-server protocol type.
 type MCPElicitationLegacyTitledEnumSchema struct {
 	// Default corresponds to the JSON schema field "default".
 	Default MCPElicitationLegacyTitledEnumSchemaDefault `json:"default,omitempty,omitzero"`
@@ -1332,16 +1606,22 @@ type MCPElicitationLegacyTitledEnumSchema struct {
 	Type MCPElicitationStringType `json:"type"`
 }
 
+// MCPElicitationLegacyTitledEnumSchemaDefault represents a generated Codex app-server protocol type.
 type MCPElicitationLegacyTitledEnumSchemaDefault *string
 
+// MCPElicitationLegacyTitledEnumSchemaDescription represents a generated Codex app-server protocol type.
 type MCPElicitationLegacyTitledEnumSchemaDescription *string
 
+// MCPElicitationLegacyTitledEnumSchemaEnumNames represents a generated Codex app-server protocol type.
 type MCPElicitationLegacyTitledEnumSchemaEnumNames []string
 
+// MCPElicitationLegacyTitledEnumSchemaTitle represents a generated Codex app-server protocol type.
 type MCPElicitationLegacyTitledEnumSchemaTitle *string
 
+// MCPElicitationMultiSelectEnumSchema represents a generated Codex app-server protocol type.
 type MCPElicitationMultiSelectEnumSchema interface{}
 
+// MCPElicitationNumberSchema represents a generated Codex app-server protocol type.
 type MCPElicitationNumberSchema struct {
 	// Default corresponds to the JSON schema field "default".
 	Default MCPElicitationNumberSchemaDefault `json:"default,omitempty,omitzero"`
@@ -1362,27 +1642,40 @@ type MCPElicitationNumberSchema struct {
 	Type MCPElicitationNumberType `json:"type"`
 }
 
+// MCPElicitationNumberSchemaDefault represents a generated Codex app-server protocol type.
 type MCPElicitationNumberSchemaDefault *float64
 
+// MCPElicitationNumberSchemaDescription represents a generated Codex app-server protocol type.
 type MCPElicitationNumberSchemaDescription *string
 
+// MCPElicitationNumberSchemaMaximum represents a generated Codex app-server protocol type.
 type MCPElicitationNumberSchemaMaximum *float64
 
+// MCPElicitationNumberSchemaMinimum represents a generated Codex app-server protocol type.
 type MCPElicitationNumberSchemaMinimum *float64
 
+// MCPElicitationNumberSchemaTitle represents a generated Codex app-server protocol type.
 type MCPElicitationNumberSchemaTitle *string
 
+// MCPElicitationNumberType represents a generated Codex app-server protocol type.
 type MCPElicitationNumberType string
 
+// MCPElicitationNumberTypeInteger is a generated Codex app-server protocol constant.
 const MCPElicitationNumberTypeInteger MCPElicitationNumberType = "integer"
+
+// MCPElicitationNumberTypeNumber is a generated Codex app-server protocol constant.
 const MCPElicitationNumberTypeNumber MCPElicitationNumberType = "number"
 
+// MCPElicitationObjectType represents a generated Codex app-server protocol type.
 type MCPElicitationObjectType string
 
+// MCPElicitationObjectTypeObject is a generated Codex app-server protocol constant.
 const MCPElicitationObjectTypeObject MCPElicitationObjectType = "object"
 
+// MCPElicitationPrimitiveSchema represents a generated Codex app-server protocol type.
 type MCPElicitationPrimitiveSchema interface{}
 
+// MCPElicitationSchema represents a generated Codex app-server protocol type.
 // Typed form schema for MCP `elicitation/create` requests.
 //
 // This matches the `requestedSchema` shape from the MCP 2025-11-25
@@ -1401,21 +1694,34 @@ type MCPElicitationSchema struct {
 	Type MCPElicitationObjectType `json:"type"`
 }
 
+// MCPElicitationSchemaProperties represents a generated Codex app-server protocol type.
 type MCPElicitationSchemaProperties map[string]MCPElicitationPrimitiveSchema
 
+// MCPElicitationSchemaRequired represents a generated Codex app-server protocol type.
 type MCPElicitationSchemaRequired []string
 
+// MCPElicitationSchemaSchema represents a generated Codex app-server protocol type.
 type MCPElicitationSchemaSchema *string
 
+// MCPElicitationSingleSelectEnumSchema represents a generated Codex app-server protocol type.
 type MCPElicitationSingleSelectEnumSchema interface{}
 
+// MCPElicitationStringFormat represents a generated Codex app-server protocol type.
 type MCPElicitationStringFormat string
 
+// MCPElicitationStringFormatDate is a generated Codex app-server protocol constant.
 const MCPElicitationStringFormatDate MCPElicitationStringFormat = "date"
+
+// MCPElicitationStringFormatDateTime is a generated Codex app-server protocol constant.
 const MCPElicitationStringFormatDateTime MCPElicitationStringFormat = "date-time"
+
+// MCPElicitationStringFormatEmail is a generated Codex app-server protocol constant.
 const MCPElicitationStringFormatEmail MCPElicitationStringFormat = "email"
+
+// MCPElicitationStringFormatUri is a generated Codex app-server protocol constant.
 const MCPElicitationStringFormatUri MCPElicitationStringFormat = "uri"
 
+// MCPElicitationStringSchema represents a generated Codex app-server protocol type.
 type MCPElicitationStringSchema struct {
 	// Default corresponds to the JSON schema field "default".
 	Default MCPElicitationStringSchemaDefault `json:"default,omitempty,omitzero"`
@@ -1439,20 +1745,28 @@ type MCPElicitationStringSchema struct {
 	Type MCPElicitationStringType `json:"type"`
 }
 
+// MCPElicitationStringSchemaDefault represents a generated Codex app-server protocol type.
 type MCPElicitationStringSchemaDefault *string
 
+// MCPElicitationStringSchemaDescription represents a generated Codex app-server protocol type.
 type MCPElicitationStringSchemaDescription *string
 
+// MCPElicitationStringSchemaMaxLength represents a generated Codex app-server protocol type.
 type MCPElicitationStringSchemaMaxLength *int
 
+// MCPElicitationStringSchemaMinLength represents a generated Codex app-server protocol type.
 type MCPElicitationStringSchemaMinLength *int
 
+// MCPElicitationStringSchemaTitle represents a generated Codex app-server protocol type.
 type MCPElicitationStringSchemaTitle *string
 
+// MCPElicitationStringType represents a generated Codex app-server protocol type.
 type MCPElicitationStringType string
 
+// MCPElicitationStringTypeString is a generated Codex app-server protocol constant.
 const MCPElicitationStringTypeString MCPElicitationStringType = "string"
 
+// MCPResourceReadParams represents a generated Codex app-server protocol type.
 type MCPResourceReadParams struct {
 	// Server corresponds to the JSON schema field "server".
 	Server string `json:"server"`
@@ -1464,14 +1778,22 @@ type MCPResourceReadParams struct {
 	Uri string `json:"uri"`
 }
 
+// MCPResourceReadParamsThreadID represents a generated Codex app-server protocol type.
 type MCPResourceReadParamsThreadID *string
 
+// MCPServerElicitationAction represents a generated Codex app-server protocol type.
 type MCPServerElicitationAction string
 
+// MCPServerElicitationActionAccept is a generated Codex app-server protocol constant.
 const MCPServerElicitationActionAccept MCPServerElicitationAction = "accept"
+
+// MCPServerElicitationActionCancel is a generated Codex app-server protocol constant.
 const MCPServerElicitationActionCancel MCPServerElicitationAction = "cancel"
+
+// MCPServerElicitationActionDecline is a generated Codex app-server protocol constant.
 const MCPServerElicitationActionDecline MCPServerElicitationAction = "decline"
 
+// MCPServerInfo represents a generated Codex app-server protocol type.
 // Presentation metadata advertised by an initialized MCP server.
 type MCPServerInfo struct {
 	// Description corresponds to the JSON schema field "description".
@@ -1493,19 +1815,25 @@ type MCPServerInfo struct {
 	WebsiteURL MCPServerInfoWebsiteURL `json:"websiteUrl,omitempty,omitzero"`
 }
 
+// MCPServerInfoDescription represents a generated Codex app-server protocol type.
 type MCPServerInfoDescription *string
 
+// MCPServerInfoIcons represents a generated Codex app-server protocol type.
 type MCPServerInfoIcons []interface{}
 
+// MCPServerInfoTitle represents a generated Codex app-server protocol type.
 type MCPServerInfoTitle *string
 
+// MCPServerInfoWebsiteURL represents a generated Codex app-server protocol type.
 type MCPServerInfoWebsiteURL *string
 
+// MCPServerMigration represents a generated Codex app-server protocol type.
 type MCPServerMigration struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 }
 
+// MCPServerOAuthLoginParams represents a generated Codex app-server protocol type.
 type MCPServerOAuthLoginParams struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -1520,23 +1848,37 @@ type MCPServerOAuthLoginParams struct {
 	TimeoutSecs MCPServerOAuthLoginParamsTimeoutSecs `json:"timeoutSecs,omitempty,omitzero"`
 }
 
+// MCPServerOAuthLoginParamsScopes represents a generated Codex app-server protocol type.
 type MCPServerOAuthLoginParamsScopes []string
 
+// MCPServerOAuthLoginParamsThreadID represents a generated Codex app-server protocol type.
 type MCPServerOAuthLoginParamsThreadID *string
 
+// MCPServerOAuthLoginParamsTimeoutSecs represents a generated Codex app-server protocol type.
 type MCPServerOAuthLoginParamsTimeoutSecs *int
 
+// MCPServerStartupFailureReason represents a generated Codex app-server protocol type.
 type MCPServerStartupFailureReason string
 
+// MCPServerStartupFailureReasonReauthenticationRequired is a generated Codex app-server protocol constant.
 const MCPServerStartupFailureReasonReauthenticationRequired MCPServerStartupFailureReason = "reauthenticationRequired"
 
+// MCPServerStartupState represents a generated Codex app-server protocol type.
 type MCPServerStartupState string
 
+// MCPServerStartupStateCancelled is a generated Codex app-server protocol constant.
 const MCPServerStartupStateCancelled MCPServerStartupState = "cancelled"
+
+// MCPServerStartupStateFailed is a generated Codex app-server protocol constant.
 const MCPServerStartupStateFailed MCPServerStartupState = "failed"
+
+// MCPServerStartupStateReady is a generated Codex app-server protocol constant.
 const MCPServerStartupStateReady MCPServerStartupState = "ready"
+
+// MCPServerStartupStateStarting is a generated Codex app-server protocol constant.
 const MCPServerStartupStateStarting MCPServerStartupState = "starting"
 
+// MCPServerStatus represents a generated Codex app-server protocol type.
 type MCPServerStatus struct {
 	// AuthStatus corresponds to the JSON schema field "authStatus".
 	AuthStatus MCPAuthStatus `json:"authStatus"`
@@ -1557,13 +1899,19 @@ type MCPServerStatus struct {
 	Tools MCPServerStatusTools `json:"tools"`
 }
 
+// MCPServerStatusDetail represents a generated Codex app-server protocol type.
 type MCPServerStatusDetail string
 
+// MCPServerStatusDetailFull is a generated Codex app-server protocol constant.
 const MCPServerStatusDetailFull MCPServerStatusDetail = "full"
+
+// MCPServerStatusDetailToolsAndAuthOnly is a generated Codex app-server protocol constant.
 const MCPServerStatusDetailToolsAndAuthOnly MCPServerStatusDetail = "toolsAndAuthOnly"
 
+// MCPServerStatusTools represents a generated Codex app-server protocol type.
 type MCPServerStatusTools map[string]Tool
 
+// MCPServerToolCallParams represents a generated Codex app-server protocol type.
 type MCPServerToolCallParams struct {
 	// Meta corresponds to the JSON schema field "_meta".
 	Meta interface{} `json:"_meta,omitempty,omitzero"`
@@ -1581,6 +1929,7 @@ type MCPServerToolCallParams struct {
 	Tool string `json:"tool"`
 }
 
+// ManagedHooksRequirements represents a generated Codex app-server protocol type.
 type ManagedHooksRequirements struct {
 	// PermissionRequest corresponds to the JSON schema field "PermissionRequest".
 	PermissionRequest []ConfiguredHookMatcherGroup `json:"PermissionRequest"`
@@ -1619,10 +1968,13 @@ type ManagedHooksRequirements struct {
 	WindowsManagedDir ManagedHooksRequirementsWindowsManagedDir `json:"windowsManagedDir,omitempty,omitzero"`
 }
 
+// ManagedHooksRequirementsManagedDir represents a generated Codex app-server protocol type.
 type ManagedHooksRequirementsManagedDir *string
 
+// ManagedHooksRequirementsWindowsManagedDir represents a generated Codex app-server protocol type.
 type ManagedHooksRequirementsWindowsManagedDir *string
 
+// MarketplaceAddParams represents a generated Codex app-server protocol type.
 type MarketplaceAddParams struct {
 	// RefName corresponds to the JSON schema field "refName".
 	RefName MarketplaceAddParamsRefName `json:"refName,omitempty,omitzero"`
@@ -1634,33 +1986,44 @@ type MarketplaceAddParams struct {
 	SparsePaths *MarketplaceAddParamsSparsePaths `json:"sparsePaths,omitempty,omitzero"`
 }
 
+// MarketplaceAddParamsRefName represents a generated Codex app-server protocol type.
 type MarketplaceAddParamsRefName *string
 
+// MarketplaceAddParamsSparsePaths represents a generated Codex app-server protocol type.
 type MarketplaceAddParamsSparsePaths []string
 
+// MarketplaceRemoveParams represents a generated Codex app-server protocol type.
 type MarketplaceRemoveParams struct {
 	// MarketplaceName corresponds to the JSON schema field "marketplaceName".
 	MarketplaceName string `json:"marketplaceName"`
 }
 
+// MarketplaceUpgradeParams represents a generated Codex app-server protocol type.
 type MarketplaceUpgradeParams struct {
 	// MarketplaceName corresponds to the JSON schema field "marketplaceName".
 	MarketplaceName MarketplaceUpgradeParamsMarketplaceName `json:"marketplaceName,omitempty,omitzero"`
 }
 
+// MarketplaceUpgradeParamsMarketplaceName represents a generated Codex app-server protocol type.
 type MarketplaceUpgradeParamsMarketplaceName *string
 
+// MergeStrategy represents a generated Codex app-server protocol type.
 type MergeStrategy string
 
+// MergeStrategyReplace is a generated Codex app-server protocol constant.
 const MergeStrategyReplace MergeStrategy = "replace"
+
+// MergeStrategyUpsert is a generated Codex app-server protocol constant.
 const MergeStrategyUpsert MergeStrategy = "upsert"
 
+// MessagePhase represents a generated Codex app-server protocol type.
 // Classifies an assistant message as interim commentary or final answer text.
 //
 // Providers do not emit this consistently, so callers must treat `None` as "phase
 // unknown" and keep compatibility behavior for legacy models.
 type MessagePhase interface{}
 
+// MigrationDetails represents a generated Codex app-server protocol type.
 type MigrationDetails struct {
 	// Commands corresponds to the JSON schema field "commands".
 	Commands []CommandMigration `json:"commands,omitempty,omitzero"`
@@ -1684,11 +2047,16 @@ type MigrationDetails struct {
 	Subagents []SubagentMigration `json:"subagents,omitempty,omitzero"`
 }
 
+// ModeKind represents a generated Codex app-server protocol type.
 type ModeKind string
 
+// ModeKindDefault is a generated Codex app-server protocol constant.
 const ModeKindDefault ModeKind = "default"
+
+// ModeKindPlan is a generated Codex app-server protocol constant.
 const ModeKindPlan ModeKind = "plan"
 
+// Model represents a generated Codex app-server protocol type.
 type Model struct {
 	// Deprecated: use `serviceTiers` instead.
 	AdditionalSpeedTiers []string `json:"additionalSpeedTiers,omitempty,omitzero"`
@@ -1741,14 +2109,17 @@ type Model struct {
 	UpgradeInfo interface{} `json:"upgradeInfo,omitempty,omitzero"`
 }
 
+// ModelAvailabilityNux represents a generated Codex app-server protocol type.
 type ModelAvailabilityNux struct {
 	// Message corresponds to the JSON schema field "message".
 	Message string `json:"message"`
 }
 
+// ModelDefaultServiceTier represents a generated Codex app-server protocol type.
 // Catalog default service tier id for this model, when one is configured.
 type ModelDefaultServiceTier *string
 
+// ModelListParams represents a generated Codex app-server protocol type.
 type ModelListParams struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor ModelListParamsCursor `json:"cursor,omitempty,omitzero"`
@@ -1760,21 +2131,28 @@ type ModelListParams struct {
 	Limit ModelListParamsLimit `json:"limit,omitempty,omitzero"`
 }
 
+// ModelListParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type ModelListParamsCursor *string
 
+// ModelListParamsIncludeHidden represents a generated Codex app-server protocol type.
 // When true, include models that are hidden from the default picker list.
 type ModelListParamsIncludeHidden *bool
 
+// ModelListParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type ModelListParamsLimit *int
 
+// ModelProviderCapabilitiesReadParams represents a generated Codex app-server protocol type.
 type ModelProviderCapabilitiesReadParams map[string]interface{}
 
+// ModelRerouteReason represents a generated Codex app-server protocol type.
 type ModelRerouteReason string
 
+// ModelRerouteReasonHighRiskCyberActivity is a generated Codex app-server protocol constant.
 const ModelRerouteReasonHighRiskCyberActivity ModelRerouteReason = "highRiskCyberActivity"
 
+// ModelServiceTier represents a generated Codex app-server protocol type.
 type ModelServiceTier struct {
 	// Description corresponds to the JSON schema field "description".
 	Description string `json:"description"`
@@ -1786,8 +2164,10 @@ type ModelServiceTier struct {
 	Name string `json:"name"`
 }
 
+// ModelUpgrade represents a generated Codex app-server protocol type.
 type ModelUpgrade *string
 
+// ModelUpgradeInfo represents a generated Codex app-server protocol type.
 type ModelUpgradeInfo struct {
 	// MigrationMarkdown corresponds to the JSON schema field "migrationMarkdown".
 	MigrationMarkdown ModelUpgradeInfoMigrationMarkdown `json:"migrationMarkdown,omitempty,omitzero"`
@@ -1802,35 +2182,51 @@ type ModelUpgradeInfo struct {
 	UpgradeCopy ModelUpgradeInfoUpgradeCopy `json:"upgradeCopy,omitempty,omitzero"`
 }
 
+// ModelUpgradeInfoMigrationMarkdown represents a generated Codex app-server protocol type.
 type ModelUpgradeInfoMigrationMarkdown *string
 
+// ModelUpgradeInfoModelLink represents a generated Codex app-server protocol type.
 type ModelUpgradeInfoModelLink *string
 
+// ModelUpgradeInfoUpgradeCopy represents a generated Codex app-server protocol type.
 type ModelUpgradeInfoUpgradeCopy *string
 
+// ModelVerification represents a generated Codex app-server protocol type.
 type ModelVerification string
 
+// ModelVerificationTrustedAccessForCyber is a generated Codex app-server protocol constant.
 const ModelVerificationTrustedAccessForCyber ModelVerification = "trustedAccessForCyber"
 
+// ModelsRequirements represents a generated Codex app-server protocol type.
 type ModelsRequirements struct {
 	// NewThread corresponds to the JSON schema field "newThread".
 	NewThread interface{} `json:"newThread,omitempty,omitzero"`
 }
 
+// MultiAgentMode represents a generated Codex app-server protocol type.
 // Controls the effective multi-agent delegation instructions for a turn. `custom`
 // means the configured mode hint defines the policy instead of a built-in policy.
 type MultiAgentMode interface{}
 
+// NetworkAccess represents a generated Codex app-server protocol type.
 type NetworkAccess string
 
+// NetworkAccessEnabled is a generated Codex app-server protocol constant.
 const NetworkAccessEnabled NetworkAccess = "enabled"
+
+// NetworkAccessRestricted is a generated Codex app-server protocol constant.
 const NetworkAccessRestricted NetworkAccess = "restricted"
 
+// NetworkDomainPermission represents a generated Codex app-server protocol type.
 type NetworkDomainPermission string
 
+// NetworkDomainPermissionAllow is a generated Codex app-server protocol constant.
 const NetworkDomainPermissionAllow NetworkDomainPermission = "allow"
+
+// NetworkDomainPermissionDeny is a generated Codex app-server protocol constant.
 const NetworkDomainPermissionDeny NetworkDomainPermission = "deny"
 
+// NetworkPolicyAmendment represents a generated Codex app-server protocol type.
 type NetworkPolicyAmendment struct {
 	// Action corresponds to the JSON schema field "action".
 	Action NetworkPolicyRuleAction `json:"action"`
@@ -1839,11 +2235,16 @@ type NetworkPolicyAmendment struct {
 	Host string `json:"host"`
 }
 
+// NetworkPolicyRuleAction represents a generated Codex app-server protocol type.
 type NetworkPolicyRuleAction string
 
+// NetworkPolicyRuleActionAllow is a generated Codex app-server protocol constant.
 const NetworkPolicyRuleActionAllow NetworkPolicyRuleAction = "allow"
+
+// NetworkPolicyRuleActionDeny is a generated Codex app-server protocol constant.
 const NetworkPolicyRuleActionDeny NetworkPolicyRuleAction = "deny"
 
+// NetworkRequirements represents a generated Codex app-server protocol type.
 type NetworkRequirements struct {
 	// AllowLocalBinding corresponds to the JSON schema field "allowLocalBinding".
 	AllowLocalBinding NetworkRequirementsAllowLocalBinding `json:"allowLocalBinding,omitempty,omitzero"`
@@ -1888,44 +2289,62 @@ type NetworkRequirements struct {
 	UnixSockets *NetworkRequirementsUnixSockets `json:"unixSockets,omitempty,omitzero"`
 }
 
+// NetworkRequirementsAllowLocalBinding represents a generated Codex app-server protocol type.
 type NetworkRequirementsAllowLocalBinding *bool
 
+// NetworkRequirementsAllowUnixSockets represents a generated Codex app-server protocol type.
 // Legacy compatibility view derived from `unix_sockets`.
 type NetworkRequirementsAllowUnixSockets []string
 
+// NetworkRequirementsAllowUpstreamProxy represents a generated Codex app-server protocol type.
 type NetworkRequirementsAllowUpstreamProxy *bool
 
+// NetworkRequirementsAllowedDomains represents a generated Codex app-server protocol type.
 // Legacy compatibility view derived from `domains`.
 type NetworkRequirementsAllowedDomains []string
 
+// NetworkRequirementsDangerouslyAllowAllUnixSockets represents a generated Codex app-server protocol type.
 type NetworkRequirementsDangerouslyAllowAllUnixSockets *bool
 
+// NetworkRequirementsDangerouslyAllowNonLoopbackProxy represents a generated Codex app-server protocol type.
 type NetworkRequirementsDangerouslyAllowNonLoopbackProxy *bool
 
+// NetworkRequirementsDeniedDomains represents a generated Codex app-server protocol type.
 // Legacy compatibility view derived from `domains`.
 type NetworkRequirementsDeniedDomains []string
 
+// NetworkRequirementsDomains represents a generated Codex app-server protocol type.
 // Canonical network permission map for `experimental_network`.
 type NetworkRequirementsDomains map[string]NetworkDomainPermission
 
+// NetworkRequirementsEnabled represents a generated Codex app-server protocol type.
 type NetworkRequirementsEnabled *bool
 
+// NetworkRequirementsHTTPPort represents a generated Codex app-server protocol type.
 type NetworkRequirementsHTTPPort *int
 
+// NetworkRequirementsManagedAllowedDomainsOnly represents a generated Codex app-server protocol type.
 // When true, only managed allowlist entries are respected while managed network
 // enforcement is active.
 type NetworkRequirementsManagedAllowedDomainsOnly *bool
 
+// NetworkRequirementsSocksPort represents a generated Codex app-server protocol type.
 type NetworkRequirementsSocksPort *int
 
+// NetworkRequirementsUnixSockets represents a generated Codex app-server protocol type.
 // Canonical unix socket permission map for `experimental_network`.
 type NetworkRequirementsUnixSockets map[string]NetworkUnixSocketPermission
 
+// NetworkUnixSocketPermission represents a generated Codex app-server protocol type.
 type NetworkUnixSocketPermission string
 
+// NetworkUnixSocketPermissionAllow is a generated Codex app-server protocol constant.
 const NetworkUnixSocketPermissionAllow NetworkUnixSocketPermission = "allow"
+
+// NetworkUnixSocketPermissionDeny is a generated Codex app-server protocol constant.
 const NetworkUnixSocketPermissionDeny NetworkUnixSocketPermission = "deny"
 
+// NewThreadModelDefaults represents a generated Codex app-server protocol type.
 type NewThreadModelDefaults struct {
 	// Model corresponds to the JSON schema field "model".
 	Model NewThreadModelDefaultsModel `json:"model,omitempty,omitzero"`
@@ -1938,20 +2357,31 @@ type NewThreadModelDefaults struct {
 	ServiceTier NewThreadModelDefaultsServiceTier `json:"serviceTier,omitempty,omitzero"`
 }
 
+// NewThreadModelDefaultsModel represents a generated Codex app-server protocol type.
 type NewThreadModelDefaultsModel *string
 
+// NewThreadModelDefaultsServiceTier represents a generated Codex app-server protocol type.
 type NewThreadModelDefaultsServiceTier *string
 
+// NonSteerableTurnKind represents a generated Codex app-server protocol type.
 type NonSteerableTurnKind string
 
+// NonSteerableTurnKindCompact is a generated Codex app-server protocol constant.
 const NonSteerableTurnKindCompact NonSteerableTurnKind = "compact"
+
+// NonSteerableTurnKindReview is a generated Codex app-server protocol constant.
 const NonSteerableTurnKindReview NonSteerableTurnKind = "review"
 
+// PermissionGrantScope represents a generated Codex app-server protocol type.
 type PermissionGrantScope string
 
+// PermissionGrantScopeSession is a generated Codex app-server protocol constant.
 const PermissionGrantScopeSession PermissionGrantScope = "session"
+
+// PermissionGrantScopeTurn is a generated Codex app-server protocol constant.
 const PermissionGrantScopeTurn PermissionGrantScope = "turn"
 
+// PermissionProfileListParams represents a generated Codex app-server protocol type.
 type PermissionProfileListParams struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor PermissionProfileListParamsCursor `json:"cursor,omitempty,omitzero"`
@@ -1963,15 +2393,19 @@ type PermissionProfileListParams struct {
 	Limit PermissionProfileListParamsLimit `json:"limit,omitempty,omitzero"`
 }
 
+// PermissionProfileListParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type PermissionProfileListParamsCursor *string
 
+// PermissionProfileListParamsCwd represents a generated Codex app-server protocol type.
 // Optional working directory to resolve project config layers.
 type PermissionProfileListParamsCwd *string
 
+// PermissionProfileListParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to the full result set.
 type PermissionProfileListParamsLimit *int
 
+// PermissionProfileSummary represents a generated Codex app-server protocol type.
 type PermissionProfileSummary struct {
 	// Whether the effective requirements allow selecting this profile.
 	Allowed bool `json:"allowed"`
@@ -1983,35 +2417,71 @@ type PermissionProfileSummary struct {
 	ID string `json:"id"`
 }
 
+// PermissionProfileSummaryDescription represents a generated Codex app-server protocol type.
 // Optional user-facing description for display in clients.
 type PermissionProfileSummaryDescription *string
 
+// Personality represents a generated Codex app-server protocol type.
 type Personality string
 
+// PersonalityFriendly is a generated Codex app-server protocol constant.
 const PersonalityFriendly Personality = "friendly"
+
+// PersonalityNone is a generated Codex app-server protocol constant.
 const PersonalityNone Personality = "none"
+
+// PersonalityPragmatic is a generated Codex app-server protocol constant.
 const PersonalityPragmatic Personality = "pragmatic"
 
+// PlanType represents a generated Codex app-server protocol type.
 type PlanType string
 
+// PlanTypeBusiness is a generated Codex app-server protocol constant.
 const PlanTypeBusiness PlanType = "business"
+
+// PlanTypeEdu is a generated Codex app-server protocol constant.
 const PlanTypeEdu PlanType = "edu"
+
+// PlanTypeEnterprise is a generated Codex app-server protocol constant.
 const PlanTypeEnterprise PlanType = "enterprise"
+
+// PlanTypeEnterpriseCbpUsageBased is a generated Codex app-server protocol constant.
 const PlanTypeEnterpriseCbpUsageBased PlanType = "enterprise_cbp_usage_based"
+
+// PlanTypeFree is a generated Codex app-server protocol constant.
 const PlanTypeFree PlanType = "free"
+
+// PlanTypeGo is a generated Codex app-server protocol constant.
 const PlanTypeGo PlanType = "go"
+
+// PlanTypePlus is a generated Codex app-server protocol constant.
 const PlanTypePlus PlanType = "plus"
+
+// PlanTypePro is a generated Codex app-server protocol constant.
 const PlanTypePro PlanType = "pro"
+
+// PlanTypeProlite is a generated Codex app-server protocol constant.
 const PlanTypeProlite PlanType = "prolite"
+
+// PlanTypeSelfServeBusinessUsageBased is a generated Codex app-server protocol constant.
 const PlanTypeSelfServeBusinessUsageBased PlanType = "self_serve_business_usage_based"
+
+// PlanTypeTeam is a generated Codex app-server protocol constant.
 const PlanTypeTeam PlanType = "team"
+
+// PlanTypeUnknown is a generated Codex app-server protocol constant.
 const PlanTypeUnknown PlanType = "unknown"
 
+// PluginAuthPolicy represents a generated Codex app-server protocol type.
 type PluginAuthPolicy string
 
+// PluginAuthPolicyONINSTALL is a generated Codex app-server protocol constant.
 const PluginAuthPolicyONINSTALL PluginAuthPolicy = "ON_INSTALL"
+
+// PluginAuthPolicyONUSE is a generated Codex app-server protocol constant.
 const PluginAuthPolicyONUSE PluginAuthPolicy = "ON_USE"
 
+// PluginInstallParams represents a generated Codex app-server protocol type.
 type PluginInstallParams struct {
 	// MarketplacePath corresponds to the JSON schema field "marketplacePath".
 	MarketplacePath interface{} `json:"marketplacePath,omitempty,omitzero"`
@@ -2024,8 +2494,10 @@ type PluginInstallParams struct {
 	RemoteMarketplaceName PluginInstallParamsRemoteMarketplaceName `json:"remoteMarketplaceName,omitempty,omitzero"`
 }
 
+// PluginInstallParamsRemoteMarketplaceName represents a generated Codex app-server protocol type.
 type PluginInstallParamsRemoteMarketplaceName *string
 
+// PluginInstalledParams represents a generated Codex app-server protocol type.
 type PluginInstalledParams struct {
 	// Optional working directories used to discover repo marketplaces.
 	Cwds *PluginInstalledParamsCwds `json:"cwds,omitempty,omitzero"`
@@ -2036,22 +2508,35 @@ type PluginInstalledParams struct {
 	InstallSuggestionPluginNames *PluginInstalledParamsInstallSuggestionPluginNames `json:"installSuggestionPluginNames,omitempty,omitzero"`
 }
 
+// PluginInstalledParamsCwds represents a generated Codex app-server protocol type.
 // Optional working directories used to discover repo marketplaces.
 type PluginInstalledParamsCwds []AbsolutePathBuf
 
+// PluginInstalledParamsInstallSuggestionPluginNames represents a generated Codex app-server protocol type.
 // Additional uninstalled plugin names that should be returned when present
 // locally. This is used by mention surfaces that intentionally expose install
 // entrypoints.
 type PluginInstalledParamsInstallSuggestionPluginNames []string
 
+// PluginListMarketplaceKind represents a generated Codex app-server protocol type.
 type PluginListMarketplaceKind string
 
+// PluginListMarketplaceKindCreatedByMeRemote is a generated Codex app-server protocol constant.
 const PluginListMarketplaceKindCreatedByMeRemote PluginListMarketplaceKind = "created-by-me-remote"
+
+// PluginListMarketplaceKindLocal is a generated Codex app-server protocol constant.
 const PluginListMarketplaceKindLocal PluginListMarketplaceKind = "local"
+
+// PluginListMarketplaceKindSharedWithMe is a generated Codex app-server protocol constant.
 const PluginListMarketplaceKindSharedWithMe PluginListMarketplaceKind = "shared-with-me"
+
+// PluginListMarketplaceKindVertical is a generated Codex app-server protocol constant.
 const PluginListMarketplaceKindVertical PluginListMarketplaceKind = "vertical"
+
+// PluginListMarketplaceKindWorkspaceDirectory is a generated Codex app-server protocol constant.
 const PluginListMarketplaceKindWorkspaceDirectory PluginListMarketplaceKind = "workspace-directory"
 
+// PluginListParams represents a generated Codex app-server protocol type.
 type PluginListParams struct {
 	// Optional working directories used to discover repo marketplaces. When omitted,
 	// only home-scoped marketplaces and the official curated marketplace are
@@ -2063,15 +2548,18 @@ type PluginListParams struct {
 	MarketplaceKinds *PluginListParamsMarketplaceKinds `json:"marketplaceKinds,omitempty,omitzero"`
 }
 
+// PluginListParamsCwds represents a generated Codex app-server protocol type.
 // Optional working directories used to discover repo marketplaces. When omitted,
 // only home-scoped marketplaces and the official curated marketplace are
 // considered.
 type PluginListParamsCwds []AbsolutePathBuf
 
+// PluginListParamsMarketplaceKinds represents a generated Codex app-server protocol type.
 // Optional marketplace kind filter. When omitted, only local marketplaces are
 // queried, plus the default remote catalog when enabled by feature flag.
 type PluginListParamsMarketplaceKinds []PluginListMarketplaceKind
 
+// PluginReadParams represents a generated Codex app-server protocol type.
 type PluginReadParams struct {
 	// MarketplacePath corresponds to the JSON schema field "marketplacePath".
 	MarketplacePath interface{} `json:"marketplacePath,omitempty,omitzero"`
@@ -2084,26 +2572,37 @@ type PluginReadParams struct {
 	RemoteMarketplaceName PluginReadParamsRemoteMarketplaceName `json:"remoteMarketplaceName,omitempty,omitzero"`
 }
 
+// PluginReadParamsRemoteMarketplaceName represents a generated Codex app-server protocol type.
 type PluginReadParamsRemoteMarketplaceName *string
 
+// PluginShareCheckoutParams represents a generated Codex app-server protocol type.
 type PluginShareCheckoutParams struct {
 	// RemotePluginID corresponds to the JSON schema field "remotePluginId".
 	RemotePluginID string `json:"remotePluginId"`
 }
 
+// PluginShareDeleteParams represents a generated Codex app-server protocol type.
 type PluginShareDeleteParams struct {
 	// RemotePluginID corresponds to the JSON schema field "remotePluginId".
 	RemotePluginID string `json:"remotePluginId"`
 }
 
+// PluginShareDiscoverability represents a generated Codex app-server protocol type.
 type PluginShareDiscoverability string
 
+// PluginShareDiscoverabilityLISTED is a generated Codex app-server protocol constant.
 const PluginShareDiscoverabilityLISTED PluginShareDiscoverability = "LISTED"
+
+// PluginShareDiscoverabilityPRIVATE is a generated Codex app-server protocol constant.
 const PluginShareDiscoverabilityPRIVATE PluginShareDiscoverability = "PRIVATE"
+
+// PluginShareDiscoverabilityUNLISTED is a generated Codex app-server protocol constant.
 const PluginShareDiscoverabilityUNLISTED PluginShareDiscoverability = "UNLISTED"
 
+// PluginShareListParams represents a generated Codex app-server protocol type.
 type PluginShareListParams map[string]interface{}
 
+// PluginSharePrincipal represents a generated Codex app-server protocol type.
 type PluginSharePrincipal struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -2118,18 +2617,31 @@ type PluginSharePrincipal struct {
 	Role PluginSharePrincipalRole `json:"role"`
 }
 
+// PluginSharePrincipalRole represents a generated Codex app-server protocol type.
 type PluginSharePrincipalRole string
 
+// PluginSharePrincipalRoleEditor is a generated Codex app-server protocol constant.
 const PluginSharePrincipalRoleEditor PluginSharePrincipalRole = "editor"
+
+// PluginSharePrincipalRoleOwner is a generated Codex app-server protocol constant.
 const PluginSharePrincipalRoleOwner PluginSharePrincipalRole = "owner"
+
+// PluginSharePrincipalRoleReader is a generated Codex app-server protocol constant.
 const PluginSharePrincipalRoleReader PluginSharePrincipalRole = "reader"
 
+// PluginSharePrincipalType represents a generated Codex app-server protocol type.
 type PluginSharePrincipalType string
 
+// PluginSharePrincipalTypeGroup is a generated Codex app-server protocol constant.
 const PluginSharePrincipalTypeGroup PluginSharePrincipalType = "group"
+
+// PluginSharePrincipalTypeUser is a generated Codex app-server protocol constant.
 const PluginSharePrincipalTypeUser PluginSharePrincipalType = "user"
+
+// PluginSharePrincipalTypeWorkspace is a generated Codex app-server protocol constant.
 const PluginSharePrincipalTypeWorkspace PluginSharePrincipalType = "workspace"
 
+// PluginShareSaveParams represents a generated Codex app-server protocol type.
 type PluginShareSaveParams struct {
 	// Discoverability corresponds to the JSON schema field "discoverability".
 	Discoverability interface{} `json:"discoverability,omitempty,omitzero"`
@@ -2144,10 +2656,13 @@ type PluginShareSaveParams struct {
 	ShareTargets *PluginShareSaveParamsShareTargets `json:"shareTargets,omitempty,omitzero"`
 }
 
+// PluginShareSaveParamsRemotePluginID represents a generated Codex app-server protocol type.
 type PluginShareSaveParamsRemotePluginID *string
 
+// PluginShareSaveParamsShareTargets represents a generated Codex app-server protocol type.
 type PluginShareSaveParamsShareTargets []PluginShareTarget
 
+// PluginShareTarget represents a generated Codex app-server protocol type.
 type PluginShareTarget struct {
 	// PrincipalID corresponds to the JSON schema field "principalId".
 	PrincipalID string `json:"principalId"`
@@ -2159,16 +2674,25 @@ type PluginShareTarget struct {
 	Role PluginShareTargetRole `json:"role"`
 }
 
+// PluginShareTargetRole represents a generated Codex app-server protocol type.
 type PluginShareTargetRole string
 
+// PluginShareTargetRoleEditor is a generated Codex app-server protocol constant.
 const PluginShareTargetRoleEditor PluginShareTargetRole = "editor"
+
+// PluginShareTargetRoleReader is a generated Codex app-server protocol constant.
 const PluginShareTargetRoleReader PluginShareTargetRole = "reader"
 
+// PluginShareUpdateDiscoverability represents a generated Codex app-server protocol type.
 type PluginShareUpdateDiscoverability string
 
+// PluginShareUpdateDiscoverabilityPRIVATE is a generated Codex app-server protocol constant.
 const PluginShareUpdateDiscoverabilityPRIVATE PluginShareUpdateDiscoverability = "PRIVATE"
+
+// PluginShareUpdateDiscoverabilityUNLISTED is a generated Codex app-server protocol constant.
 const PluginShareUpdateDiscoverabilityUNLISTED PluginShareUpdateDiscoverability = "UNLISTED"
 
+// PluginShareUpdateTargetsParams represents a generated Codex app-server protocol type.
 type PluginShareUpdateTargetsParams struct {
 	// Discoverability corresponds to the JSON schema field "discoverability".
 	Discoverability PluginShareUpdateDiscoverability `json:"discoverability"`
@@ -2180,6 +2704,7 @@ type PluginShareUpdateTargetsParams struct {
 	ShareTargets []PluginShareTarget `json:"shareTargets"`
 }
 
+// PluginSkillReadParams represents a generated Codex app-server protocol type.
 type PluginSkillReadParams struct {
 	// RemoteMarketplaceName corresponds to the JSON schema field
 	// "remoteMarketplaceName".
@@ -2192,11 +2717,13 @@ type PluginSkillReadParams struct {
 	SkillName string `json:"skillName"`
 }
 
+// PluginUninstallParams represents a generated Codex app-server protocol type.
 type PluginUninstallParams struct {
 	// PluginID corresponds to the JSON schema field "pluginId".
 	PluginID string `json:"pluginId"`
 }
 
+// PluginsMigration represents a generated Codex app-server protocol type.
 type PluginsMigration struct {
 	// MarketplaceName corresponds to the JSON schema field "marketplaceName".
 	MarketplaceName string `json:"marketplaceName"`
@@ -2205,9 +2732,11 @@ type PluginsMigration struct {
 	PluginNames []string `json:"pluginNames"`
 }
 
+// ProcessOutputStream represents a generated Codex app-server protocol type.
 // Stream label for `process/outputDelta` notifications.
 type ProcessOutputStream interface{}
 
+// ProcessTerminalSize represents a generated Codex app-server protocol type.
 // PTY size in character cells for `process/spawn` PTY sessions.
 type ProcessTerminalSize struct {
 	// Terminal width in character cells.
@@ -2217,14 +2746,25 @@ type ProcessTerminalSize struct {
 	Rows int `json:"rows"`
 }
 
+// RateLimitReachedType represents a generated Codex app-server protocol type.
 type RateLimitReachedType string
 
+// RateLimitReachedTypeRateLimitReached is a generated Codex app-server protocol constant.
 const RateLimitReachedTypeRateLimitReached RateLimitReachedType = "rate_limit_reached"
+
+// RateLimitReachedTypeWorkspaceMemberCreditsDepleted is a generated Codex app-server protocol constant.
 const RateLimitReachedTypeWorkspaceMemberCreditsDepleted RateLimitReachedType = "workspace_member_credits_depleted"
+
+// RateLimitReachedTypeWorkspaceMemberUsageLimitReached is a generated Codex app-server protocol constant.
 const RateLimitReachedTypeWorkspaceMemberUsageLimitReached RateLimitReachedType = "workspace_member_usage_limit_reached"
+
+// RateLimitReachedTypeWorkspaceOwnerCreditsDepleted is a generated Codex app-server protocol constant.
 const RateLimitReachedTypeWorkspaceOwnerCreditsDepleted RateLimitReachedType = "workspace_owner_credits_depleted"
+
+// RateLimitReachedTypeWorkspaceOwnerUsageLimitReached is a generated Codex app-server protocol constant.
 const RateLimitReachedTypeWorkspaceOwnerUsageLimitReached RateLimitReachedType = "workspace_owner_usage_limit_reached"
 
+// RateLimitResetCredit represents a generated Codex app-server protocol type.
 type RateLimitResetCredit struct {
 	// Backend-provided display description for this credit, or `null` when
 	// unavailable.
@@ -2250,24 +2790,36 @@ type RateLimitResetCredit struct {
 	Title RateLimitResetCreditTitle `json:"title,omitempty,omitzero"`
 }
 
+// RateLimitResetCreditDescription represents a generated Codex app-server protocol type.
 // Backend-provided display description for this credit, or `null` when
 // unavailable.
 type RateLimitResetCreditDescription *string
 
+// RateLimitResetCreditExpiresAt represents a generated Codex app-server protocol type.
 // Unix timestamp in seconds when the credit expires, or `null` if it does not
 // expire.
 type RateLimitResetCreditExpiresAt *int
 
+// RateLimitResetCreditStatus represents a generated Codex app-server protocol type.
 type RateLimitResetCreditStatus string
 
+// RateLimitResetCreditStatusAvailable is a generated Codex app-server protocol constant.
 const RateLimitResetCreditStatusAvailable RateLimitResetCreditStatus = "available"
+
+// RateLimitResetCreditStatusRedeemed is a generated Codex app-server protocol constant.
 const RateLimitResetCreditStatusRedeemed RateLimitResetCreditStatus = "redeemed"
+
+// RateLimitResetCreditStatusRedeeming is a generated Codex app-server protocol constant.
 const RateLimitResetCreditStatusRedeeming RateLimitResetCreditStatus = "redeeming"
+
+// RateLimitResetCreditStatusUnknown is a generated Codex app-server protocol constant.
 const RateLimitResetCreditStatusUnknown RateLimitResetCreditStatus = "unknown"
 
+// RateLimitResetCreditTitle represents a generated Codex app-server protocol type.
 // Backend-provided display title for this credit, or `null` when unavailable.
 type RateLimitResetCreditTitle *string
 
+// RateLimitResetCreditsSummary represents a generated Codex app-server protocol type.
 type RateLimitResetCreditsSummary struct {
 	// AvailableCount corresponds to the JSON schema field "availableCount".
 	AvailableCount int `json:"availableCount"`
@@ -2280,6 +2832,7 @@ type RateLimitResetCreditsSummary struct {
 	Credits *RateLimitResetCreditsSummaryCredits `json:"credits,omitempty,omitzero"`
 }
 
+// RateLimitResetCreditsSummaryCredits represents a generated Codex app-server protocol type.
 // Detail rows for available reset credits, when the backend provides them.
 //
 // `null` means only `availableCount` is known, while an empty array means details
@@ -2287,11 +2840,16 @@ type RateLimitResetCreditsSummary struct {
 // list, so its length can be less than `availableCount`.
 type RateLimitResetCreditsSummaryCredits []RateLimitResetCredit
 
+// RateLimitResetType represents a generated Codex app-server protocol type.
 type RateLimitResetType string
 
+// RateLimitResetTypeCodexRateLimits is a generated Codex app-server protocol constant.
 const RateLimitResetTypeCodexRateLimits RateLimitResetType = "codexRateLimits"
+
+// RateLimitResetTypeUnknown is a generated Codex app-server protocol constant.
 const RateLimitResetTypeUnknown RateLimitResetType = "unknown"
 
+// RateLimitSnapshot represents a generated Codex app-server protocol type.
 type RateLimitSnapshot struct {
 	// Credits corresponds to the JSON schema field "credits".
 	Credits interface{} `json:"credits,omitempty,omitzero"`
@@ -2319,10 +2877,13 @@ type RateLimitSnapshot struct {
 	Secondary interface{} `json:"secondary,omitempty,omitzero"`
 }
 
+// RateLimitSnapshotLimitID represents a generated Codex app-server protocol type.
 type RateLimitSnapshotLimitID *string
 
+// RateLimitSnapshotLimitName represents a generated Codex app-server protocol type.
 type RateLimitSnapshotLimitName *string
 
+// RateLimitWindow represents a generated Codex app-server protocol type.
 type RateLimitWindow struct {
 	// ResetsAt corresponds to the JSON schema field "resetsAt".
 	ResetsAt RateLimitWindowResetsAt `json:"resetsAt,omitempty,omitzero"`
@@ -2334,45 +2895,95 @@ type RateLimitWindow struct {
 	WindowDurationMins RateLimitWindowWindowDurationMins `json:"windowDurationMins,omitempty,omitzero"`
 }
 
+// RateLimitWindowResetsAt represents a generated Codex app-server protocol type.
 type RateLimitWindowResetsAt *int
 
+// RateLimitWindowWindowDurationMins represents a generated Codex app-server protocol type.
 type RateLimitWindowWindowDurationMins *int
 
+// RealtimeConversationVersion represents a generated Codex app-server protocol type.
 type RealtimeConversationVersion string
 
+// RealtimeConversationVersionV1 is a generated Codex app-server protocol constant.
 const RealtimeConversationVersionV1 RealtimeConversationVersion = "v1"
+
+// RealtimeConversationVersionV2 is a generated Codex app-server protocol constant.
 const RealtimeConversationVersionV2 RealtimeConversationVersion = "v2"
 
+// RealtimeOutputModality represents a generated Codex app-server protocol type.
 type RealtimeOutputModality string
 
+// RealtimeOutputModalityAudio is a generated Codex app-server protocol constant.
 const RealtimeOutputModalityAudio RealtimeOutputModality = "audio"
+
+// RealtimeOutputModalityText is a generated Codex app-server protocol constant.
 const RealtimeOutputModalityText RealtimeOutputModality = "text"
 
+// RealtimeVoice represents a generated Codex app-server protocol type.
 type RealtimeVoice string
 
+// RealtimeVoiceAlloy is a generated Codex app-server protocol constant.
 const RealtimeVoiceAlloy RealtimeVoice = "alloy"
+
+// RealtimeVoiceArbor is a generated Codex app-server protocol constant.
 const RealtimeVoiceArbor RealtimeVoice = "arbor"
+
+// RealtimeVoiceAsh is a generated Codex app-server protocol constant.
 const RealtimeVoiceAsh RealtimeVoice = "ash"
+
+// RealtimeVoiceBallad is a generated Codex app-server protocol constant.
 const RealtimeVoiceBallad RealtimeVoice = "ballad"
+
+// RealtimeVoiceBreeze is a generated Codex app-server protocol constant.
 const RealtimeVoiceBreeze RealtimeVoice = "breeze"
+
+// RealtimeVoiceCedar is a generated Codex app-server protocol constant.
 const RealtimeVoiceCedar RealtimeVoice = "cedar"
+
+// RealtimeVoiceCoral is a generated Codex app-server protocol constant.
 const RealtimeVoiceCoral RealtimeVoice = "coral"
+
+// RealtimeVoiceCove is a generated Codex app-server protocol constant.
 const RealtimeVoiceCove RealtimeVoice = "cove"
+
+// RealtimeVoiceEcho is a generated Codex app-server protocol constant.
 const RealtimeVoiceEcho RealtimeVoice = "echo"
+
+// RealtimeVoiceEmber is a generated Codex app-server protocol constant.
 const RealtimeVoiceEmber RealtimeVoice = "ember"
+
+// RealtimeVoiceJuniper is a generated Codex app-server protocol constant.
 const RealtimeVoiceJuniper RealtimeVoice = "juniper"
+
+// RealtimeVoiceMaple is a generated Codex app-server protocol constant.
 const RealtimeVoiceMaple RealtimeVoice = "maple"
+
+// RealtimeVoiceMarin is a generated Codex app-server protocol constant.
 const RealtimeVoiceMarin RealtimeVoice = "marin"
+
+// RealtimeVoiceSage is a generated Codex app-server protocol constant.
 const RealtimeVoiceSage RealtimeVoice = "sage"
+
+// RealtimeVoiceShimmer is a generated Codex app-server protocol constant.
 const RealtimeVoiceShimmer RealtimeVoice = "shimmer"
+
+// RealtimeVoiceSol is a generated Codex app-server protocol constant.
 const RealtimeVoiceSol RealtimeVoice = "sol"
+
+// RealtimeVoiceSpruce is a generated Codex app-server protocol constant.
 const RealtimeVoiceSpruce RealtimeVoice = "spruce"
+
+// RealtimeVoiceVale is a generated Codex app-server protocol constant.
 const RealtimeVoiceVale RealtimeVoice = "vale"
+
+// RealtimeVoiceVerse is a generated Codex app-server protocol constant.
 const RealtimeVoiceVerse RealtimeVoice = "verse"
 
+// ReasoningEffort represents a generated Codex app-server protocol type.
 // A non-empty reasoning effort value advertised by the model.
 type ReasoningEffort string
 
+// ReasoningEffortOption represents a generated Codex app-server protocol type.
 type ReasoningEffortOption struct {
 	// Description corresponds to the JSON schema field "description".
 	Description string `json:"description"`
@@ -2381,36 +2992,52 @@ type ReasoningEffortOption struct {
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort"`
 }
 
+// ReasoningItemReasoningSummary represents a generated Codex app-server protocol type.
 type ReasoningItemReasoningSummary interface{}
 
+// ReasoningSummary represents a generated Codex app-server protocol type.
 // A summary of the reasoning performed by the model. This can be useful for
 // debugging and understanding the model's reasoning process. See
 // https://platform.openai.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries
 type ReasoningSummary interface{}
 
+// RemoteControlConnectionStatus represents a generated Codex app-server protocol type.
 type RemoteControlConnectionStatus string
 
+// RemoteControlConnectionStatusConnected is a generated Codex app-server protocol constant.
 const RemoteControlConnectionStatusConnected RemoteControlConnectionStatus = "connected"
+
+// RemoteControlConnectionStatusConnecting is a generated Codex app-server protocol constant.
 const RemoteControlConnectionStatusConnecting RemoteControlConnectionStatus = "connecting"
+
+// RemoteControlConnectionStatusDisabled is a generated Codex app-server protocol constant.
 const RemoteControlConnectionStatusDisabled RemoteControlConnectionStatus = "disabled"
+
+// RemoteControlConnectionStatusErrored is a generated Codex app-server protocol constant.
 const RemoteControlConnectionStatusErrored RemoteControlConnectionStatus = "errored"
 
+// RemoteControlDisableParams represents a generated Codex app-server protocol type.
 type RemoteControlDisableParams struct {
 	// Ephemeral corresponds to the JSON schema field "ephemeral".
 	Ephemeral *bool `json:"ephemeral,omitempty,omitzero"`
 }
 
+// RemoteControlEnableParams represents a generated Codex app-server protocol type.
 type RemoteControlEnableParams struct {
 	// Ephemeral corresponds to the JSON schema field "ephemeral".
 	Ephemeral *bool `json:"ephemeral,omitempty,omitzero"`
 }
 
+// RequestID represents a generated Codex app-server protocol type.
 type RequestID interface{}
 
+// ResidencyRequirement represents a generated Codex app-server protocol type.
 type ResidencyRequirement string
 
+// ResidencyRequirementUs is a generated Codex app-server protocol constant.
 const ResidencyRequirementUs ResidencyRequirement = "us"
 
+// Resource represents a generated Codex app-server protocol type.
 // A known resource that the server is capable of reading.
 type Resource struct {
 	// Meta corresponds to the JSON schema field "_meta".
@@ -2441,17 +3068,23 @@ type Resource struct {
 	Uri string `json:"uri"`
 }
 
+// ResourceContent represents a generated Codex app-server protocol type.
 // Contents returned when reading a resource from an MCP server.
 type ResourceContent interface{}
 
+// ResourceDescription represents a generated Codex app-server protocol type.
 type ResourceDescription *string
 
+// ResourceIcons represents a generated Codex app-server protocol type.
 type ResourceIcons []interface{}
 
+// ResourceMimeType represents a generated Codex app-server protocol type.
 type ResourceMimeType *string
 
+// ResourceSize represents a generated Codex app-server protocol type.
 type ResourceSize *int
 
+// ResourceTemplate represents a generated Codex app-server protocol type.
 // A template description for resources available on the server.
 type ResourceTemplate struct {
 	// Annotations corresponds to the JSON schema field "annotations".
@@ -2473,21 +3106,30 @@ type ResourceTemplate struct {
 	UriTemplate string `json:"uriTemplate"`
 }
 
+// ResourceTemplateDescription represents a generated Codex app-server protocol type.
 type ResourceTemplateDescription *string
 
+// ResourceTemplateMimeType represents a generated Codex app-server protocol type.
 type ResourceTemplateMimeType *string
 
+// ResourceTemplateTitle represents a generated Codex app-server protocol type.
 type ResourceTemplateTitle *string
 
+// ResourceTitle represents a generated Codex app-server protocol type.
 type ResourceTitle *string
 
 // User's decision in response to an ExecApprovalRequest.
 
+// ReviewDelivery represents a generated Codex app-server protocol type.
 type ReviewDelivery string
 
+// ReviewDeliveryDetached is a generated Codex app-server protocol constant.
 const ReviewDeliveryDetached ReviewDelivery = "detached"
+
+// ReviewDeliveryInline is a generated Codex app-server protocol constant.
 const ReviewDeliveryInline ReviewDelivery = "inline"
 
+// ReviewStartParams represents a generated Codex app-server protocol type.
 type ReviewStartParams struct {
 	// Where to run the review: inline (default) on the current thread or detached on
 	// a new thread (returned in `reviewThreadId`).
@@ -2500,12 +3142,19 @@ type ReviewStartParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SandboxMode represents a generated Codex app-server protocol type.
 type SandboxMode string
 
+// SandboxModeDangerFullAccess is a generated Codex app-server protocol constant.
 const SandboxModeDangerFullAccess SandboxMode = "danger-full-access"
+
+// SandboxModeReadOnly is a generated Codex app-server protocol constant.
 const SandboxModeReadOnly SandboxMode = "read-only"
+
+// SandboxModeWorkspaceWrite is a generated Codex app-server protocol constant.
 const SandboxModeWorkspaceWrite SandboxMode = "workspace-write"
 
+// SanitizedAccountLoginCompletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use AccountLoginCompletedNotification.
 type SanitizedAccountLoginCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
@@ -2518,10 +3167,13 @@ type SanitizedAccountLoginCompletedNotificationJSON struct {
 	Success bool `json:"success"`
 }
 
+// SanitizedAccountLoginCompletedNotificationJSONError represents a generated Codex app-server protocol type.
 type SanitizedAccountLoginCompletedNotificationJSONError *string
 
+// SanitizedAccountLoginCompletedNotificationJSONLoginID represents a generated Codex app-server protocol type.
 type SanitizedAccountLoginCompletedNotificationJSONLoginID *string
 
+// SanitizedAccountRateLimitsUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Sparse rolling rate-limit update.
 //
 // Clients should merge available values into the most recent
@@ -2534,6 +3186,7 @@ type SanitizedAccountRateLimitsUpdatedNotificationJSON struct {
 	RateLimits RateLimitSnapshot `json:"rateLimits"`
 }
 
+// SanitizedAccountUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use AccountUpdatedNotification.
 type SanitizedAccountUpdatedNotificationJSON struct {
 	// AuthMode corresponds to the JSON schema field "authMode".
@@ -2543,6 +3196,7 @@ type SanitizedAccountUpdatedNotificationJSON struct {
 	PlanType interface{} `json:"planType,omitempty,omitzero"`
 }
 
+// SanitizedAgentMessageDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use AgentMessageDeltaNotification.
 type SanitizedAgentMessageDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
@@ -2558,6 +3212,7 @@ type SanitizedAgentMessageDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedAppListUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - notification emitted when the app list changes.
 // Deprecated: use AppListUpdatedNotification.
 type SanitizedAppListUpdatedNotificationJSON struct {
@@ -2565,6 +3220,7 @@ type SanitizedAppListUpdatedNotificationJSON struct {
 	Data []AppInfo `json:"data"`
 }
 
+// SanitizedApplyPatchApprovalParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedApplyPatchApprovalParamsJSON struct {
 	// Use to correlate this with [codex_protocol::protocol::PatchApplyBeginEvent] and
 	// [codex_protocol::protocol::PatchApplyEndEvent].
@@ -2584,20 +3240,25 @@ type SanitizedApplyPatchApprovalParamsJSON struct {
 	Reason SanitizedApplyPatchApprovalParamsJSONReason `json:"reason,omitempty,omitzero"`
 }
 
+// SanitizedApplyPatchApprovalParamsJSONFileChanges represents a generated Codex app-server protocol type.
 type SanitizedApplyPatchApprovalParamsJSONFileChanges map[string]FileChange
 
+// SanitizedApplyPatchApprovalParamsJSONGrantRoot represents a generated Codex app-server protocol type.
 // When set, the agent is asking the user to allow writes under this root for the
 // remainder of the session (unclear if this is honored today).
 type SanitizedApplyPatchApprovalParamsJSONGrantRoot *string
 
+// SanitizedApplyPatchApprovalParamsJSONReason represents a generated Codex app-server protocol type.
 // Optional explanatory reason (e.g. request for extra write access).
 type SanitizedApplyPatchApprovalParamsJSONReason *string
 
+// SanitizedApplyPatchApprovalResponseJSON represents a generated Codex app-server protocol type.
 type SanitizedApplyPatchApprovalResponseJSON struct {
 	// Decision corresponds to the JSON schema field "decision".
 	Decision ReviewDecision `json:"decision"`
 }
 
+// SanitizedAppsListParamsJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - list available apps/connectors.
 type SanitizedAppsListParamsJSON struct {
 	// Opaque pagination cursor returned by a previous call.
@@ -2614,16 +3275,20 @@ type SanitizedAppsListParamsJSON struct {
 	ThreadID SanitizedAppsListParamsJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedAppsListParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedAppsListParamsJSONCursor *string
 
+// SanitizedAppsListParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type SanitizedAppsListParamsJSONLimit *int
 
+// SanitizedAppsListParamsJSONThreadID represents a generated Codex app-server protocol type.
 // Optional thread id used to evaluate app feature gating from that thread's
 // config.
 type SanitizedAppsListParamsJSONThreadID *string
 
+// SanitizedAppsListResponseJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - app list response.
 // Deprecated: use AppsListResponse.
 type SanitizedAppsListResponseJSON struct {
@@ -2635,30 +3300,36 @@ type SanitizedAppsListResponseJSON struct {
 	NextCursor SanitizedAppsListResponseJSONNextCursor `json:"nextCursor,omitempty,omitzero"`
 }
 
+// SanitizedAppsListResponseJSONNextCursor represents a generated Codex app-server protocol type.
 // Opaque cursor to pass to the next call to continue after the last item. If None,
 // there are no more items to return.
 type SanitizedAppsListResponseJSONNextCursor *string
 
+// SanitizedAttestationGenerateParamsJSON represents a generated Codex app-server protocol type.
 // Deprecated: use AttestationGenerateParams.
 type SanitizedAttestationGenerateParamsJSON map[string]interface{}
 
+// SanitizedAttestationGenerateResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use AttestationGenerateResponse.
 type SanitizedAttestationGenerateResponseJSON struct {
 	// Opaque client attestation token.
 	Token string `json:"token"`
 }
 
+// SanitizedCancelLoginAccountParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedCancelLoginAccountParamsJSON struct {
 	// LoginID corresponds to the JSON schema field "loginId".
 	LoginID string `json:"loginId"`
 }
 
+// SanitizedCancelLoginAccountResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use CancelLoginAccountResponse.
 type SanitizedCancelLoginAccountResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status CancelLoginAccountStatus `json:"status"`
 }
 
+// SanitizedChatgptAuthTokensRefreshParamsJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ChatgptAuthTokensRefreshParams.
 type SanitizedChatgptAuthTokensRefreshParamsJSON struct {
 	// Workspace/account identifier that Codex was previously using.
@@ -2674,6 +3345,7 @@ type SanitizedChatgptAuthTokensRefreshParamsJSON struct {
 	Reason ChatgptAuthTokensRefreshReason `json:"reason"`
 }
 
+// SanitizedChatgptAuthTokensRefreshParamsJSONPreviousAccountID represents a generated Codex app-server protocol type.
 // Workspace/account identifier that Codex was previously using.
 //
 // Clients that manage multiple accounts/workspaces can use this as a hint to
@@ -2683,6 +3355,7 @@ type SanitizedChatgptAuthTokensRefreshParamsJSON struct {
 // identifier (`chatgpt_account_id`).
 type SanitizedChatgptAuthTokensRefreshParamsJSONPreviousAccountID *string
 
+// SanitizedChatgptAuthTokensRefreshResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ChatgptAuthTokensRefreshResponse.
 type SanitizedChatgptAuthTokensRefreshResponseJSON struct {
 	// AccessToken corresponds to the JSON schema field "accessToken".
@@ -2695,8 +3368,10 @@ type SanitizedChatgptAuthTokensRefreshResponseJSON struct {
 	ChatgptPlanType SanitizedChatgptAuthTokensRefreshResponseJSONChatgptPlanType `json:"chatgptPlanType,omitempty,omitzero"`
 }
 
+// SanitizedChatgptAuthTokensRefreshResponseJSONChatgptPlanType represents a generated Codex app-server protocol type.
 type SanitizedChatgptAuthTokensRefreshResponseJSONChatgptPlanType *string
 
+// SanitizedCommandExecOutputDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Base64-encoded output chunk emitted for a streaming `command/exec` request.
 //
 // These notifications are connection-scoped. If the originating connection closes,
@@ -2718,10 +3393,12 @@ type SanitizedCommandExecOutputDeltaNotificationJSON struct {
 	Stream interface{} `json:"stream"`
 }
 
+// SanitizedCommandExecResizeResponseJSON represents a generated Codex app-server protocol type.
 // Empty success response for `command/exec/resize`.
 // Deprecated: use CommandExecResizeResponse.
 type SanitizedCommandExecResizeResponseJSON map[string]interface{}
 
+// SanitizedCommandExecResponseJSON represents a generated Codex app-server protocol type.
 // Final buffered result for `command/exec`.
 // Deprecated: use CommandExecResponse.
 type SanitizedCommandExecResponseJSON struct {
@@ -2739,6 +3416,7 @@ type SanitizedCommandExecResponseJSON struct {
 	Stdout string `json:"stdout"`
 }
 
+// SanitizedCommandExecTerminateParamsJSON represents a generated Codex app-server protocol type.
 // Terminate a running `command/exec` session.
 type SanitizedCommandExecTerminateParamsJSON struct {
 	// Client-supplied, connection-scoped `processId` from the original `command/exec`
@@ -2746,10 +3424,12 @@ type SanitizedCommandExecTerminateParamsJSON struct {
 	ProcessID string `json:"processId"`
 }
 
+// SanitizedCommandExecTerminateResponseJSON represents a generated Codex app-server protocol type.
 // Empty success response for `command/exec/terminate`.
 // Deprecated: use CommandExecTerminateResponse.
 type SanitizedCommandExecTerminateResponseJSON map[string]interface{}
 
+// SanitizedCommandExecWriteParamsJSON represents a generated Codex app-server protocol type.
 // Write stdin bytes to a running `command/exec` session, close stdin, or both.
 type SanitizedCommandExecWriteParamsJSON struct {
 	// Close stdin after writing `deltaBase64`, if present.
@@ -2763,13 +3443,16 @@ type SanitizedCommandExecWriteParamsJSON struct {
 	ProcessID string `json:"processId"`
 }
 
+// SanitizedCommandExecWriteParamsJSONDeltaBase64 represents a generated Codex app-server protocol type.
 // Optional base64-encoded stdin bytes to write.
 type SanitizedCommandExecWriteParamsJSONDeltaBase64 *string
 
+// SanitizedCommandExecWriteResponseJSON represents a generated Codex app-server protocol type.
 // Empty success response for `command/exec/write`.
 // Deprecated: use CommandExecWriteResponse.
 type SanitizedCommandExecWriteResponseJSON map[string]interface{}
 
+// SanitizedCommandExecutionOutputDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use CommandExecutionOutputDeltaNotification.
 type SanitizedCommandExecutionOutputDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
@@ -2785,11 +3468,13 @@ type SanitizedCommandExecutionOutputDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedCommandExecutionRequestApprovalResponseJSON represents a generated Codex app-server protocol type.
 type SanitizedCommandExecutionRequestApprovalResponseJSON struct {
 	// Decision corresponds to the JSON schema field "decision".
 	Decision CommandExecutionApprovalDecision `json:"decision"`
 }
 
+// SanitizedConfigBatchWriteParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedConfigBatchWriteParamsJSON struct {
 	// Edits corresponds to the JSON schema field "edits".
 	Edits []ConfigEdit `json:"edits"`
@@ -2806,12 +3491,15 @@ type SanitizedConfigBatchWriteParamsJSON struct {
 	ReloadUserConfig *bool `json:"reloadUserConfig,omitempty,omitzero"`
 }
 
+// SanitizedConfigBatchWriteParamsJSONExpectedVersion represents a generated Codex app-server protocol type.
 type SanitizedConfigBatchWriteParamsJSONExpectedVersion *string
 
+// SanitizedConfigBatchWriteParamsJSONFilePath represents a generated Codex app-server protocol type.
 // Path to the config file to write; defaults to the user's `config.toml` when
 // omitted.
 type SanitizedConfigBatchWriteParamsJSONFilePath *string
 
+// SanitizedConfigReadParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedConfigReadParamsJSON struct {
 	// Optional working directory to resolve project config layers. If specified,
 	// return the effective config as seen from that directory (i.e., including any
@@ -2822,17 +3510,20 @@ type SanitizedConfigReadParamsJSON struct {
 	IncludeLayers *bool `json:"includeLayers,omitempty,omitzero"`
 }
 
+// SanitizedConfigReadParamsJSONCwd represents a generated Codex app-server protocol type.
 // Optional working directory to resolve project config layers. If specified,
 // return the effective config as seen from that directory (i.e., including any
 // project layers between `cwd` and the project/repo root).
 type SanitizedConfigReadParamsJSONCwd *string
 
+// SanitizedConfigRequirementsReadResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ConfigRequirementsReadResponse.
 type SanitizedConfigRequirementsReadResponseJSON struct {
 	// Null if no requirements are configured (e.g. no requirements.toml/MDM entries).
 	Requirements interface{} `json:"requirements,omitempty,omitzero"`
 }
 
+// SanitizedConfigValueWriteParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedConfigValueWriteParamsJSON struct {
 	// ExpectedVersion corresponds to the JSON schema field "expectedVersion".
 	ExpectedVersion SanitizedConfigValueWriteParamsJSONExpectedVersion `json:"expectedVersion,omitempty,omitzero"`
@@ -2851,12 +3542,15 @@ type SanitizedConfigValueWriteParamsJSON struct {
 	Value interface{} `json:"value"`
 }
 
+// SanitizedConfigValueWriteParamsJSONExpectedVersion represents a generated Codex app-server protocol type.
 type SanitizedConfigValueWriteParamsJSONExpectedVersion *string
 
+// SanitizedConfigValueWriteParamsJSONFilePath represents a generated Codex app-server protocol type.
 // Path to the config file to write; defaults to the user's `config.toml` when
 // omitted.
 type SanitizedConfigValueWriteParamsJSONFilePath *string
 
+// SanitizedConfigWarningNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ConfigWarningNotification.
 type SanitizedConfigWarningNotificationJSON struct {
 	// Optional extra guidance or error details.
@@ -2872,12 +3566,15 @@ type SanitizedConfigWarningNotificationJSON struct {
 	Summary string `json:"summary"`
 }
 
+// SanitizedConfigWarningNotificationJSONDetails represents a generated Codex app-server protocol type.
 // Optional extra guidance or error details.
 type SanitizedConfigWarningNotificationJSONDetails *string
 
+// SanitizedConfigWarningNotificationJSONPath represents a generated Codex app-server protocol type.
 // Optional path to the config file that triggered the warning.
 type SanitizedConfigWarningNotificationJSONPath *string
 
+// SanitizedConsumeAccountRateLimitResetCreditParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedConsumeAccountRateLimitResetCreditParamsJSON struct {
 	// Opaque reset-credit identifier to redeem. When omitted, the backend selects the
 	// next available credit.
@@ -2888,16 +3585,19 @@ type SanitizedConsumeAccountRateLimitResetCreditParamsJSON struct {
 	IdempotencyKey string `json:"idempotencyKey"`
 }
 
+// SanitizedConsumeAccountRateLimitResetCreditParamsJSONCreditID represents a generated Codex app-server protocol type.
 // Opaque reset-credit identifier to redeem. When omitted, the backend selects the
 // next available credit.
 type SanitizedConsumeAccountRateLimitResetCreditParamsJSONCreditID *string
 
+// SanitizedConsumeAccountRateLimitResetCreditResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ConsumeAccountRateLimitResetCreditResponse.
 type SanitizedConsumeAccountRateLimitResetCreditResponseJSON struct {
 	// Outcome corresponds to the JSON schema field "outcome".
 	Outcome ConsumeAccountRateLimitResetCreditOutcome `json:"outcome"`
 }
 
+// SanitizedContextCompactedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: Use `ContextCompaction` item type instead.
 // Deprecated: use ContextCompactedNotification.
 type SanitizedContextCompactedNotificationJSON struct {
@@ -2908,6 +3608,7 @@ type SanitizedContextCompactedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedDeprecationNoticeNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use DeprecationNoticeNotification.
 type SanitizedDeprecationNoticeNotificationJSON struct {
 	// Optional extra guidance, such as migration steps or rationale.
@@ -2917,9 +3618,11 @@ type SanitizedDeprecationNoticeNotificationJSON struct {
 	Summary string `json:"summary"`
 }
 
+// SanitizedDeprecationNoticeNotificationJSONDetails represents a generated Codex app-server protocol type.
 // Optional extra guidance, such as migration steps or rationale.
 type SanitizedDeprecationNoticeNotificationJSONDetails *string
 
+// SanitizedDynamicToolCallParamsJSON represents a generated Codex app-server protocol type.
 // Deprecated: use DynamicToolCallParams.
 type SanitizedDynamicToolCallParamsJSON struct {
 	// Arguments corresponds to the JSON schema field "arguments".
@@ -2941,8 +3644,10 @@ type SanitizedDynamicToolCallParamsJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedDynamicToolCallParamsJSONNamespace represents a generated Codex app-server protocol type.
 type SanitizedDynamicToolCallParamsJSONNamespace *string
 
+// SanitizedDynamicToolCallResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use DynamicToolCallResponse.
 type SanitizedDynamicToolCallResponseJSON struct {
 	// ContentItems corresponds to the JSON schema field "contentItems".
@@ -2952,6 +3657,7 @@ type SanitizedDynamicToolCallResponseJSON struct {
 	Success bool `json:"success"`
 }
 
+// SanitizedErrorNotificationJSON represents a generated Codex app-server protocol type.
 type SanitizedErrorNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
 	Error TurnError `json:"error"`
@@ -2966,6 +3672,7 @@ type SanitizedErrorNotificationJSON struct {
 	WillRetry bool `json:"willRetry"`
 }
 
+// SanitizedExecCommandApprovalParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedExecCommandApprovalParamsJSON struct {
 	// Identifier for this specific approval callback.
 	ApprovalID SanitizedExecCommandApprovalParamsJSONApprovalID `json:"approvalId,omitempty,omitzero"`
@@ -2990,16 +3697,20 @@ type SanitizedExecCommandApprovalParamsJSON struct {
 	Reason SanitizedExecCommandApprovalParamsJSONReason `json:"reason,omitempty,omitzero"`
 }
 
+// SanitizedExecCommandApprovalParamsJSONApprovalID represents a generated Codex app-server protocol type.
 // Identifier for this specific approval callback.
 type SanitizedExecCommandApprovalParamsJSONApprovalID *string
 
+// SanitizedExecCommandApprovalParamsJSONReason represents a generated Codex app-server protocol type.
 type SanitizedExecCommandApprovalParamsJSONReason *string
 
+// SanitizedExecCommandApprovalResponseJSON represents a generated Codex app-server protocol type.
 type SanitizedExecCommandApprovalResponseJSON struct {
 	// Decision corresponds to the JSON schema field "decision".
 	Decision ReviewDecision `json:"decision"`
 }
 
+// SanitizedExperimentalFeatureEnablementSetParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedExperimentalFeatureEnablementSetParamsJSON struct {
 	// Process-wide runtime feature enablement keyed by canonical feature name.
 	//
@@ -3008,21 +3719,25 @@ type SanitizedExperimentalFeatureEnablementSetParamsJSON struct {
 	Enablement SanitizedExperimentalFeatureEnablementSetParamsJSONEnablement `json:"enablement"`
 }
 
+// SanitizedExperimentalFeatureEnablementSetParamsJSONEnablement represents a generated Codex app-server protocol type.
 // Process-wide runtime feature enablement keyed by canonical feature name.
 //
 // Only named features are updated. Omitted features are left unchanged. Send an
 // empty map for a no-op.
 type SanitizedExperimentalFeatureEnablementSetParamsJSONEnablement map[string]bool
 
+// SanitizedExperimentalFeatureEnablementSetResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExperimentalFeatureEnablementSetResponse.
 type SanitizedExperimentalFeatureEnablementSetResponseJSON struct {
 	// Feature enablement entries updated by this request.
 	Enablement SanitizedExperimentalFeatureEnablementSetResponseJSONEnablement `json:"enablement"`
 }
 
+// SanitizedExperimentalFeatureEnablementSetResponseJSONEnablement represents a generated Codex app-server protocol type.
 // Feature enablement entries updated by this request.
 type SanitizedExperimentalFeatureEnablementSetResponseJSONEnablement map[string]bool
 
+// SanitizedExperimentalFeatureListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedExperimentalFeatureListParamsJSON struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor SanitizedExperimentalFeatureListParamsJSONCursor `json:"cursor,omitempty,omitzero"`
@@ -3036,17 +3751,21 @@ type SanitizedExperimentalFeatureListParamsJSON struct {
 	ThreadID SanitizedExperimentalFeatureListParamsJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedExperimentalFeatureListParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedExperimentalFeatureListParamsJSONCursor *string
 
+// SanitizedExperimentalFeatureListParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type SanitizedExperimentalFeatureListParamsJSONLimit *int
 
+// SanitizedExperimentalFeatureListParamsJSONThreadID represents a generated Codex app-server protocol type.
 // Optional loaded thread id. Pass this when showing feature state for an existing
 // thread so enablement is computed from that thread's refreshed config, including
 // project-local config for the thread's cwd.
 type SanitizedExperimentalFeatureListParamsJSONThreadID *string
 
+// SanitizedExperimentalFeatureListResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExperimentalFeatureListResponse.
 type SanitizedExperimentalFeatureListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
@@ -3057,10 +3776,12 @@ type SanitizedExperimentalFeatureListResponseJSON struct {
 	NextCursor SanitizedExperimentalFeatureListResponseJSONNextCursor `json:"nextCursor,omitempty,omitzero"`
 }
 
+// SanitizedExperimentalFeatureListResponseJSONNextCursor represents a generated Codex app-server protocol type.
 // Opaque cursor to pass to the next call to continue after the last item. If None,
 // there are no more items to return.
 type SanitizedExperimentalFeatureListResponseJSONNextCursor *string
 
+// SanitizedExternalAgentConfigDetectParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedExternalAgentConfigDetectParamsJSON struct {
 	// Zero or more working directories to include for repo-scoped detection.
 	Cwds *SanitizedExternalAgentConfigDetectParamsJSONCwds `json:"cwds,omitempty,omitzero"`
@@ -3069,15 +3790,18 @@ type SanitizedExternalAgentConfigDetectParamsJSON struct {
 	IncludeHome *bool `json:"includeHome,omitempty,omitzero"`
 }
 
+// SanitizedExternalAgentConfigDetectParamsJSONCwds represents a generated Codex app-server protocol type.
 // Zero or more working directories to include for repo-scoped detection.
 type SanitizedExternalAgentConfigDetectParamsJSONCwds []string
 
+// SanitizedExternalAgentConfigDetectResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExternalAgentConfigDetectResponse.
 type SanitizedExternalAgentConfigDetectResponseJSON struct {
 	// Items corresponds to the JSON schema field "items".
 	Items []ExternalAgentConfigMigrationItem `json:"items"`
 }
 
+// SanitizedExternalAgentConfigImportCompletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExternalAgentConfigImportCompletedNotification.
 type SanitizedExternalAgentConfigImportCompletedNotificationJSON struct {
 	// ImportID corresponds to the JSON schema field "importId".
@@ -3087,12 +3811,14 @@ type SanitizedExternalAgentConfigImportCompletedNotificationJSON struct {
 	ItemTypeResults []ExternalAgentConfigImportTypeResult `json:"itemTypeResults"`
 }
 
+// SanitizedExternalAgentConfigImportHistoriesReadResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExternalAgentConfigImportHistoriesReadResponse.
 type SanitizedExternalAgentConfigImportHistoriesReadResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []ExternalAgentConfigImportHistory `json:"data"`
 }
 
+// SanitizedExternalAgentConfigImportParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedExternalAgentConfigImportParamsJSON struct {
 	// MigrationItems corresponds to the JSON schema field "migrationItems".
 	MigrationItems []ExternalAgentConfigMigrationItem `json:"migrationItems"`
@@ -3101,9 +3827,11 @@ type SanitizedExternalAgentConfigImportParamsJSON struct {
 	Source SanitizedExternalAgentConfigImportParamsJSONSource `json:"source,omitempty,omitzero"`
 }
 
+// SanitizedExternalAgentConfigImportParamsJSONSource represents a generated Codex app-server protocol type.
 // Source product that produced the migration items. Missing means unspecified.
 type SanitizedExternalAgentConfigImportParamsJSONSource *string
 
+// SanitizedExternalAgentConfigImportProgressNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExternalAgentConfigImportProgressNotification.
 type SanitizedExternalAgentConfigImportProgressNotificationJSON struct {
 	// ImportID corresponds to the JSON schema field "importId".
@@ -3113,12 +3841,14 @@ type SanitizedExternalAgentConfigImportProgressNotificationJSON struct {
 	ItemTypeResults []ExternalAgentConfigImportTypeResult `json:"itemTypeResults"`
 }
 
+// SanitizedExternalAgentConfigImportResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ExternalAgentConfigImportResponse.
 type SanitizedExternalAgentConfigImportResponseJSON struct {
 	// ImportID corresponds to the JSON schema field "importId".
 	ImportID string `json:"importId"`
 }
 
+// SanitizedFeedbackUploadParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedFeedbackUploadParamsJSON struct {
 	// Classification corresponds to the JSON schema field "classification".
 	Classification string `json:"classification"`
@@ -3139,20 +3869,26 @@ type SanitizedFeedbackUploadParamsJSON struct {
 	ThreadID SanitizedFeedbackUploadParamsJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedFeedbackUploadParamsJSONExtraLogFiles represents a generated Codex app-server protocol type.
 type SanitizedFeedbackUploadParamsJSONExtraLogFiles []string
 
+// SanitizedFeedbackUploadParamsJSONReason represents a generated Codex app-server protocol type.
 type SanitizedFeedbackUploadParamsJSONReason *string
 
+// SanitizedFeedbackUploadParamsJSONTags represents a generated Codex app-server protocol type.
 type SanitizedFeedbackUploadParamsJSONTags map[string]string
 
+// SanitizedFeedbackUploadParamsJSONThreadID represents a generated Codex app-server protocol type.
 type SanitizedFeedbackUploadParamsJSONThreadID *string
 
+// SanitizedFeedbackUploadResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use FeedbackUploadResponse.
 type SanitizedFeedbackUploadResponseJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedFileChangeOutputDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated legacy notification for `apply_patch` textual output.
 //
 // The server no longer emits this notification.
@@ -3171,6 +3907,7 @@ type SanitizedFileChangeOutputDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedFileChangePatchUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use FileChangePatchUpdatedNotification.
 type SanitizedFileChangePatchUpdatedNotificationJSON struct {
 	// Changes corresponds to the JSON schema field "changes".
@@ -3186,6 +3923,7 @@ type SanitizedFileChangePatchUpdatedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedFileChangeRequestApprovalParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedFileChangeRequestApprovalParamsJSON struct {
 	// [UNSTABLE] When set, the agent is asking the user to allow writes under this
 	// root for the remainder of the session (unclear if this is honored today).
@@ -3207,26 +3945,32 @@ type SanitizedFileChangeRequestApprovalParamsJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedFileChangeRequestApprovalParamsJSONGrantRoot represents a generated Codex app-server protocol type.
 // [UNSTABLE] When set, the agent is asking the user to allow writes under this
 // root for the remainder of the session (unclear if this is honored today).
 type SanitizedFileChangeRequestApprovalParamsJSONGrantRoot *string
 
+// SanitizedFileChangeRequestApprovalParamsJSONReason represents a generated Codex app-server protocol type.
 // Optional explanatory reason (e.g. request for extra write access).
 type SanitizedFileChangeRequestApprovalParamsJSONReason *string
 
+// SanitizedFileChangeRequestApprovalResponseJSON represents a generated Codex app-server protocol type.
 type SanitizedFileChangeRequestApprovalResponseJSON struct {
 	// Decision corresponds to the JSON schema field "decision".
 	Decision FileChangeApprovalDecision `json:"decision"`
 }
 
+// SanitizedFsCopyResponseJSON represents a generated Codex app-server protocol type.
 // Successful response for `fs/copy`.
 // Deprecated: use FsCopyResponse.
 type SanitizedFsCopyResponseJSON map[string]interface{}
 
+// SanitizedFsCreateDirectoryResponseJSON represents a generated Codex app-server protocol type.
 // Successful response for `fs/createDirectory`.
 // Deprecated: use FsCreateDirectoryResponse.
 type SanitizedFsCreateDirectoryResponseJSON map[string]interface{}
 
+// SanitizedFsGetMetadataResponseJSON represents a generated Codex app-server protocol type.
 // Metadata returned by `fs/getMetadata`.
 // Deprecated: use FsGetMetadataResponse.
 type SanitizedFsGetMetadataResponseJSON struct {
@@ -3246,6 +3990,7 @@ type SanitizedFsGetMetadataResponseJSON struct {
 	ModifiedAtMs int `json:"modifiedAtMs"`
 }
 
+// SanitizedFsReadDirectoryResponseJSON represents a generated Codex app-server protocol type.
 // Directory entries returned by `fs/readDirectory`.
 // Deprecated: use FsReadDirectoryResponse.
 type SanitizedFsReadDirectoryResponseJSON struct {
@@ -3253,6 +3998,7 @@ type SanitizedFsReadDirectoryResponseJSON struct {
 	Entries []FsReadDirectoryEntry `json:"entries"`
 }
 
+// SanitizedFsReadFileResponseJSON represents a generated Codex app-server protocol type.
 // Base64-encoded file contents returned by `fs/readFile`.
 // Deprecated: use FsReadFileResponse.
 type SanitizedFsReadFileResponseJSON struct {
@@ -3260,24 +4006,29 @@ type SanitizedFsReadFileResponseJSON struct {
 	DataBase64 string `json:"dataBase64"`
 }
 
+// SanitizedFsRemoveResponseJSON represents a generated Codex app-server protocol type.
 // Successful response for `fs/remove`.
 // Deprecated: use FsRemoveResponse.
 type SanitizedFsRemoveResponseJSON map[string]interface{}
 
+// SanitizedFsUnwatchParamsJSON represents a generated Codex app-server protocol type.
 // Stop filesystem watch notifications for a prior `fs/watch`.
 type SanitizedFsUnwatchParamsJSON struct {
 	// Watch identifier previously provided to `fs/watch`.
 	WatchID string `json:"watchId"`
 }
 
+// SanitizedFsUnwatchResponseJSON represents a generated Codex app-server protocol type.
 // Successful response for `fs/unwatch`.
 // Deprecated: use FsUnwatchResponse.
 type SanitizedFsUnwatchResponseJSON map[string]interface{}
 
+// SanitizedFsWriteFileResponseJSON represents a generated Codex app-server protocol type.
 // Successful response for `fs/writeFile`.
 // Deprecated: use FsWriteFileResponse.
 type SanitizedFsWriteFileResponseJSON map[string]interface{}
 
+// SanitizedFuzzyFileSearchParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedFuzzyFileSearchParamsJSON struct {
 	// CancellationToken corresponds to the JSON schema field "cancellationToken".
 	CancellationToken SanitizedFuzzyFileSearchParamsJSONCancellationToken `json:"cancellationToken,omitempty,omitzero"`
@@ -3289,20 +4040,24 @@ type SanitizedFuzzyFileSearchParamsJSON struct {
 	Roots []string `json:"roots"`
 }
 
+// SanitizedFuzzyFileSearchParamsJSONCancellationToken represents a generated Codex app-server protocol type.
 type SanitizedFuzzyFileSearchParamsJSONCancellationToken *string
 
+// SanitizedFuzzyFileSearchResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use FuzzyFileSearchResponse.
 type SanitizedFuzzyFileSearchResponseJSON struct {
 	// Files corresponds to the JSON schema field "files".
 	Files []FuzzyFileSearchResult `json:"files"`
 }
 
+// SanitizedFuzzyFileSearchSessionCompletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use FuzzyFileSearchSessionCompletedNotification.
 type SanitizedFuzzyFileSearchSessionCompletedNotificationJSON struct {
 	// SessionID corresponds to the JSON schema field "sessionId".
 	SessionID string `json:"sessionId"`
 }
 
+// SanitizedFuzzyFileSearchSessionUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use FuzzyFileSearchSessionUpdatedNotification.
 type SanitizedFuzzyFileSearchSessionUpdatedNotificationJSON struct {
 	// Files corresponds to the JSON schema field "files".
@@ -3315,6 +4070,7 @@ type SanitizedFuzzyFileSearchSessionUpdatedNotificationJSON struct {
 	SessionID string `json:"sessionId"`
 }
 
+// SanitizedGetAccountParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedGetAccountParamsJSON struct {
 	// When `true`, requests a proactive token refresh before returning.
 	//
@@ -3324,6 +4080,7 @@ type SanitizedGetAccountParamsJSON struct {
 	RefreshToken *bool `json:"refreshToken,omitempty,omitzero"`
 }
 
+// SanitizedGetAccountRateLimitsResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use GetAccountRateLimitsResponse.
 type SanitizedGetAccountRateLimitsResponseJSON struct {
 	// RateLimitResetCredits corresponds to the JSON schema field
@@ -3337,6 +4094,7 @@ type SanitizedGetAccountRateLimitsResponseJSON struct {
 	RateLimitsByLimitID *SanitizedGetAccountRateLimitsResponseJSONRateLimitsByLimitID `json:"rateLimitsByLimitId,omitempty,omitzero"`
 }
 
+// SanitizedGetAccountRateLimitsResponseJSONRateLimits represents a generated Codex app-server protocol type.
 // Backward-compatible single-bucket view; mirrors the historical payload.
 type SanitizedGetAccountRateLimitsResponseJSONRateLimits struct {
 	// Credits corresponds to the JSON schema field "credits".
@@ -3365,9 +4123,11 @@ type SanitizedGetAccountRateLimitsResponseJSONRateLimits struct {
 	Secondary interface{} `json:"secondary,omitempty,omitzero"`
 }
 
+// SanitizedGetAccountRateLimitsResponseJSONRateLimitsByLimitID represents a generated Codex app-server protocol type.
 // Multi-bucket view keyed by metered `limit_id` (for example, `codex`).
 type SanitizedGetAccountRateLimitsResponseJSONRateLimitsByLimitID map[string]RateLimitSnapshot
 
+// SanitizedGetAccountResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use GetAccountResponse.
 type SanitizedGetAccountResponseJSON struct {
 	// Account corresponds to the JSON schema field "account".
@@ -3377,6 +4137,7 @@ type SanitizedGetAccountResponseJSON struct {
 	RequiresOpenaiAuth bool `json:"requiresOpenaiAuth"`
 }
 
+// SanitizedGetAccountTokenUsageResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use GetAccountTokenUsageResponse.
 type SanitizedGetAccountTokenUsageResponseJSON struct {
 	// DailyUsageBuckets corresponds to the JSON schema field "dailyUsageBuckets".
@@ -3386,8 +4147,10 @@ type SanitizedGetAccountTokenUsageResponseJSON struct {
 	Summary AccountTokenUsageSummary `json:"summary"`
 }
 
+// SanitizedGetAccountTokenUsageResponseJSONDailyUsageBuckets represents a generated Codex app-server protocol type.
 type SanitizedGetAccountTokenUsageResponseJSONDailyUsageBuckets []AccountTokenUsageDailyBucket
 
+// SanitizedGetWorkspaceMessagesResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use GetWorkspaceMessagesResponse.
 type SanitizedGetWorkspaceMessagesResponseJSON struct {
 	// Whether the workspace-message backend route is available for this client.
@@ -3397,6 +4160,7 @@ type SanitizedGetWorkspaceMessagesResponseJSON struct {
 	Messages []WorkspaceMessage `json:"messages"`
 }
 
+// SanitizedGuardianWarningNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use GuardianWarningNotification.
 type SanitizedGuardianWarningNotificationJSON struct {
 	// Concise guardian warning message for the user.
@@ -3406,11 +4170,13 @@ type SanitizedGuardianWarningNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedHooksListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedHooksListParamsJSON struct {
 	// When empty, defaults to the current session working directory.
 	Cwds []string `json:"cwds,omitempty,omitzero"`
 }
 
+// SanitizedInitializeParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedInitializeParamsJSON struct {
 	// Capabilities corresponds to the JSON schema field "capabilities".
 	Capabilities interface{} `json:"capabilities,omitempty,omitzero"`
@@ -3419,6 +4185,7 @@ type SanitizedInitializeParamsJSON struct {
 	ClientInfo ClientInfo `json:"clientInfo"`
 }
 
+// SanitizedListMCPServerStatusParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedListMCPServerStatusParamsJSON struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor SanitizedListMCPServerStatusParamsJSONCursor `json:"cursor,omitempty,omitzero"`
@@ -3434,14 +4201,18 @@ type SanitizedListMCPServerStatusParamsJSON struct {
 	ThreadID SanitizedListMCPServerStatusParamsJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedListMCPServerStatusParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedListMCPServerStatusParamsJSONCursor *string
 
+// SanitizedListMCPServerStatusParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a server-defined value.
 type SanitizedListMCPServerStatusParamsJSONLimit *int
 
+// SanitizedListMCPServerStatusParamsJSONThreadID represents a generated Codex app-server protocol type.
 type SanitizedListMCPServerStatusParamsJSONThreadID *string
 
+// SanitizedListMCPServerStatusResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ListMCPServerStatusResponse.
 type SanitizedListMCPServerStatusResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
@@ -3452,13 +4223,16 @@ type SanitizedListMCPServerStatusResponseJSON struct {
 	NextCursor SanitizedListMCPServerStatusResponseJSONNextCursor `json:"nextCursor,omitempty,omitzero"`
 }
 
+// SanitizedListMCPServerStatusResponseJSONNextCursor represents a generated Codex app-server protocol type.
 // Opaque cursor to pass to the next call to continue after the last item. If None,
 // there are no more items to return.
 type SanitizedListMCPServerStatusResponseJSONNextCursor *string
 
+// SanitizedLogoutAccountResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use LogoutAccountResponse.
 type SanitizedLogoutAccountResponseJSON map[string]interface{}
 
+// SanitizedMCPResourceReadParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedMCPResourceReadParamsJSON struct {
 	// Server corresponds to the JSON schema field "server".
 	Server string `json:"server"`
@@ -3470,14 +4244,17 @@ type SanitizedMCPResourceReadParamsJSON struct {
 	Uri string `json:"uri"`
 }
 
+// SanitizedMCPResourceReadParamsJSONThreadID represents a generated Codex app-server protocol type.
 type SanitizedMCPResourceReadParamsJSONThreadID *string
 
+// SanitizedMCPResourceReadResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPResourceReadResponse.
 type SanitizedMCPResourceReadResponseJSON struct {
 	// Contents corresponds to the JSON schema field "contents".
 	Contents []ResourceContent `json:"contents"`
 }
 
+// SanitizedMCPServerElicitationRequestResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPServerElicitationRequestResponse.
 type SanitizedMCPServerElicitationRequestResponseJSON struct {
 	// Optional client metadata for form-mode action handling.
@@ -3493,6 +4270,7 @@ type SanitizedMCPServerElicitationRequestResponseJSON struct {
 	Content interface{} `json:"content,omitempty,omitzero"`
 }
 
+// SanitizedMCPServerOAuthLoginCompletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPServerOAuthLoginCompletedNotification.
 type SanitizedMCPServerOAuthLoginCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
@@ -3508,10 +4286,13 @@ type SanitizedMCPServerOAuthLoginCompletedNotificationJSON struct {
 	ThreadID SanitizedMCPServerOAuthLoginCompletedNotificationJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedMCPServerOAuthLoginCompletedNotificationJSONError represents a generated Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginCompletedNotificationJSONError *string
 
+// SanitizedMCPServerOAuthLoginCompletedNotificationJSONThreadID represents a generated Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginCompletedNotificationJSONThreadID *string
 
+// SanitizedMCPServerOAuthLoginParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginParamsJSON struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -3526,21 +4307,27 @@ type SanitizedMCPServerOAuthLoginParamsJSON struct {
 	TimeoutSecs SanitizedMCPServerOAuthLoginParamsJSONTimeoutSecs `json:"timeoutSecs,omitempty,omitzero"`
 }
 
+// SanitizedMCPServerOAuthLoginParamsJSONScopes represents a generated Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginParamsJSONScopes []string
 
+// SanitizedMCPServerOAuthLoginParamsJSONThreadID represents a generated Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginParamsJSONThreadID *string
 
+// SanitizedMCPServerOAuthLoginParamsJSONTimeoutSecs represents a generated Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginParamsJSONTimeoutSecs *int
 
+// SanitizedMCPServerOAuthLoginResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPServerOAuthLoginResponse.
 type SanitizedMCPServerOAuthLoginResponseJSON struct {
 	// AuthorizationURL corresponds to the JSON schema field "authorizationUrl".
 	AuthorizationURL string `json:"authorizationUrl"`
 }
 
+// SanitizedMCPServerRefreshResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPServerRefreshResponse.
 type SanitizedMCPServerRefreshResponseJSON map[string]interface{}
 
+// SanitizedMCPServerStatusUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPServerStatusUpdatedNotification.
 type SanitizedMCPServerStatusUpdatedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
@@ -3559,10 +4346,13 @@ type SanitizedMCPServerStatusUpdatedNotificationJSON struct {
 	ThreadID SanitizedMCPServerStatusUpdatedNotificationJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedMCPServerStatusUpdatedNotificationJSONError represents a generated Codex app-server protocol type.
 type SanitizedMCPServerStatusUpdatedNotificationJSONError *string
 
+// SanitizedMCPServerStatusUpdatedNotificationJSONThreadID represents a generated Codex app-server protocol type.
 type SanitizedMCPServerStatusUpdatedNotificationJSONThreadID *string
 
+// SanitizedMCPServerToolCallParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedMCPServerToolCallParamsJSON struct {
 	// Meta corresponds to the JSON schema field "_meta".
 	Meta interface{} `json:"_meta,omitempty,omitzero"`
@@ -3580,6 +4370,7 @@ type SanitizedMCPServerToolCallParamsJSON struct {
 	Tool string `json:"tool"`
 }
 
+// SanitizedMCPServerToolCallResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPServerToolCallResponse.
 type SanitizedMCPServerToolCallResponseJSON struct {
 	// Meta corresponds to the JSON schema field "_meta".
@@ -3595,8 +4386,10 @@ type SanitizedMCPServerToolCallResponseJSON struct {
 	StructuredContent interface{} `json:"structuredContent,omitempty,omitzero"`
 }
 
+// SanitizedMCPServerToolCallResponseJSONIsError represents a generated Codex app-server protocol type.
 type SanitizedMCPServerToolCallResponseJSONIsError *bool
 
+// SanitizedMCPToolCallProgressNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use MCPToolCallProgressNotification.
 type SanitizedMCPToolCallProgressNotificationJSON struct {
 	// ItemID corresponds to the JSON schema field "itemId".
@@ -3612,6 +4405,7 @@ type SanitizedMCPToolCallProgressNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedMarketplaceAddParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedMarketplaceAddParamsJSON struct {
 	// RefName corresponds to the JSON schema field "refName".
 	RefName SanitizedMarketplaceAddParamsJSONRefName `json:"refName,omitempty,omitzero"`
@@ -3623,22 +4417,28 @@ type SanitizedMarketplaceAddParamsJSON struct {
 	SparsePaths *SanitizedMarketplaceAddParamsJSONSparsePaths `json:"sparsePaths,omitempty,omitzero"`
 }
 
+// SanitizedMarketplaceAddParamsJSONRefName represents a generated Codex app-server protocol type.
 type SanitizedMarketplaceAddParamsJSONRefName *string
 
+// SanitizedMarketplaceAddParamsJSONSparsePaths represents a generated Codex app-server protocol type.
 type SanitizedMarketplaceAddParamsJSONSparsePaths []string
 
+// SanitizedMarketplaceRemoveParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedMarketplaceRemoveParamsJSON struct {
 	// MarketplaceName corresponds to the JSON schema field "marketplaceName".
 	MarketplaceName string `json:"marketplaceName"`
 }
 
+// SanitizedMarketplaceUpgradeParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedMarketplaceUpgradeParamsJSON struct {
 	// MarketplaceName corresponds to the JSON schema field "marketplaceName".
 	MarketplaceName SanitizedMarketplaceUpgradeParamsJSONMarketplaceName `json:"marketplaceName,omitempty,omitzero"`
 }
 
+// SanitizedMarketplaceUpgradeParamsJSONMarketplaceName represents a generated Codex app-server protocol type.
 type SanitizedMarketplaceUpgradeParamsJSONMarketplaceName *string
 
+// SanitizedModelListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedModelListParamsJSON struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor SanitizedModelListParamsJSONCursor `json:"cursor,omitempty,omitzero"`
@@ -3650,15 +4450,19 @@ type SanitizedModelListParamsJSON struct {
 	Limit SanitizedModelListParamsJSONLimit `json:"limit,omitempty,omitzero"`
 }
 
+// SanitizedModelListParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedModelListParamsJSONCursor *string
 
+// SanitizedModelListParamsJSONIncludeHidden represents a generated Codex app-server protocol type.
 // When true, include models that are hidden from the default picker list.
 type SanitizedModelListParamsJSONIncludeHidden *bool
 
+// SanitizedModelListParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type SanitizedModelListParamsJSONLimit *int
 
+// SanitizedModelListResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ModelListResponse.
 type SanitizedModelListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
@@ -3669,12 +4473,15 @@ type SanitizedModelListResponseJSON struct {
 	NextCursor SanitizedModelListResponseJSONNextCursor `json:"nextCursor,omitempty,omitzero"`
 }
 
+// SanitizedModelListResponseJSONNextCursor represents a generated Codex app-server protocol type.
 // Opaque cursor to pass to the next call to continue after the last item. If None,
 // there are no more items to return.
 type SanitizedModelListResponseJSONNextCursor *string
 
+// SanitizedModelProviderCapabilitiesReadParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedModelProviderCapabilitiesReadParamsJSON map[string]interface{}
 
+// SanitizedModelProviderCapabilitiesReadResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ModelProviderCapabilitiesReadResponse.
 type SanitizedModelProviderCapabilitiesReadResponseJSON struct {
 	// ImageGeneration corresponds to the JSON schema field "imageGeneration".
@@ -3687,6 +4494,7 @@ type SanitizedModelProviderCapabilitiesReadResponseJSON struct {
 	WebSearch bool `json:"webSearch"`
 }
 
+// SanitizedModelReroutedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ModelReroutedNotification.
 type SanitizedModelReroutedNotificationJSON struct {
 	// FromModel corresponds to the JSON schema field "fromModel".
@@ -3705,6 +4513,7 @@ type SanitizedModelReroutedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedModelSafetyBufferingUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ModelSafetyBufferingUpdatedNotification.
 type SanitizedModelSafetyBufferingUpdatedNotificationJSON struct {
 	// FasterModel corresponds to the JSON schema field "fasterModel".
@@ -3729,8 +4538,10 @@ type SanitizedModelSafetyBufferingUpdatedNotificationJSON struct {
 	UseCases []string `json:"useCases"`
 }
 
+// SanitizedModelSafetyBufferingUpdatedNotificationJSONFasterModel represents a generated Codex app-server protocol type.
 type SanitizedModelSafetyBufferingUpdatedNotificationJSONFasterModel *string
 
+// SanitizedModelVerificationNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ModelVerificationNotification.
 type SanitizedModelVerificationNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
@@ -3743,6 +4554,7 @@ type SanitizedModelVerificationNotificationJSON struct {
 	Verifications []ModelVerification `json:"verifications"`
 }
 
+// SanitizedPermissionProfileListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPermissionProfileListParamsJSON struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor SanitizedPermissionProfileListParamsJSONCursor `json:"cursor,omitempty,omitzero"`
@@ -3754,15 +4566,19 @@ type SanitizedPermissionProfileListParamsJSON struct {
 	Limit SanitizedPermissionProfileListParamsJSONLimit `json:"limit,omitempty,omitzero"`
 }
 
+// SanitizedPermissionProfileListParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedPermissionProfileListParamsJSONCursor *string
 
+// SanitizedPermissionProfileListParamsJSONCwd represents a generated Codex app-server protocol type.
 // Optional working directory to resolve project config layers.
 type SanitizedPermissionProfileListParamsJSONCwd *string
 
+// SanitizedPermissionProfileListParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to the full result set.
 type SanitizedPermissionProfileListParamsJSONLimit *int
 
+// SanitizedPermissionProfileListResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PermissionProfileListResponse.
 type SanitizedPermissionProfileListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
@@ -3773,10 +4589,12 @@ type SanitizedPermissionProfileListResponseJSON struct {
 	NextCursor SanitizedPermissionProfileListResponseJSONNextCursor `json:"nextCursor,omitempty,omitzero"`
 }
 
+// SanitizedPermissionProfileListResponseJSONNextCursor represents a generated Codex app-server protocol type.
 // Opaque cursor to pass to the next call to continue after the last item. If None,
 // there are no more items to return.
 type SanitizedPermissionProfileListResponseJSONNextCursor *string
 
+// SanitizedPermissionsRequestApprovalResponseJSON represents a generated Codex app-server protocol type.
 type SanitizedPermissionsRequestApprovalResponseJSON struct {
 	// Permissions corresponds to the JSON schema field "permissions".
 	Permissions GrantedPermissionProfile `json:"permissions"`
@@ -3788,9 +4606,11 @@ type SanitizedPermissionsRequestApprovalResponseJSON struct {
 	StrictAutoReview SanitizedPermissionsRequestApprovalResponseJSONStrictAutoReview `json:"strictAutoReview,omitempty,omitzero"`
 }
 
+// SanitizedPermissionsRequestApprovalResponseJSONStrictAutoReview represents a generated Codex app-server protocol type.
 // Review every subsequent command in this turn before normal sandboxed execution.
 type SanitizedPermissionsRequestApprovalResponseJSONStrictAutoReview *bool
 
+// SanitizedPlanDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - proposed plan streaming deltas for plan items. Clients should not
 // assume concatenated deltas match the completed plan item content.
 // Deprecated: use PlanDeltaNotification.
@@ -3808,6 +4628,7 @@ type SanitizedPlanDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedPluginInstallResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PluginInstallResponse.
 type SanitizedPluginInstallResponseJSON struct {
 	// AppsNeedingAuth corresponds to the JSON schema field "appsNeedingAuth".
@@ -3817,21 +4638,26 @@ type SanitizedPluginInstallResponseJSON struct {
 	AuthPolicy PluginAuthPolicy `json:"authPolicy"`
 }
 
+// SanitizedPluginShareCheckoutParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPluginShareCheckoutParamsJSON struct {
 	// RemotePluginID corresponds to the JSON schema field "remotePluginId".
 	RemotePluginID string `json:"remotePluginId"`
 }
 
+// SanitizedPluginShareDeleteParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPluginShareDeleteParamsJSON struct {
 	// RemotePluginID corresponds to the JSON schema field "remotePluginId".
 	RemotePluginID string `json:"remotePluginId"`
 }
 
+// SanitizedPluginShareDeleteResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PluginShareDeleteResponse.
 type SanitizedPluginShareDeleteResponseJSON map[string]interface{}
 
+// SanitizedPluginShareListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPluginShareListParamsJSON map[string]interface{}
 
+// SanitizedPluginShareSaveResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PluginShareSaveResponse.
 type SanitizedPluginShareSaveResponseJSON struct {
 	// RemotePluginID corresponds to the JSON schema field "remotePluginId".
@@ -3841,6 +4667,7 @@ type SanitizedPluginShareSaveResponseJSON struct {
 	ShareURL string `json:"shareUrl"`
 }
 
+// SanitizedPluginShareUpdateTargetsParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPluginShareUpdateTargetsParamsJSON struct {
 	// Discoverability corresponds to the JSON schema field "discoverability".
 	Discoverability PluginShareUpdateDiscoverability `json:"discoverability"`
@@ -3852,6 +4679,7 @@ type SanitizedPluginShareUpdateTargetsParamsJSON struct {
 	ShareTargets []PluginShareTarget `json:"shareTargets"`
 }
 
+// SanitizedPluginShareUpdateTargetsResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PluginShareUpdateTargetsResponse.
 type SanitizedPluginShareUpdateTargetsResponseJSON struct {
 	// Discoverability corresponds to the JSON schema field "discoverability".
@@ -3861,6 +4689,7 @@ type SanitizedPluginShareUpdateTargetsResponseJSON struct {
 	Principals []PluginSharePrincipal `json:"principals"`
 }
 
+// SanitizedPluginSkillReadParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPluginSkillReadParamsJSON struct {
 	// RemoteMarketplaceName corresponds to the JSON schema field
 	// "remoteMarketplaceName".
@@ -3873,22 +4702,27 @@ type SanitizedPluginSkillReadParamsJSON struct {
 	SkillName string `json:"skillName"`
 }
 
+// SanitizedPluginSkillReadResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PluginSkillReadResponse.
 type SanitizedPluginSkillReadResponseJSON struct {
 	// Contents corresponds to the JSON schema field "contents".
 	Contents SanitizedPluginSkillReadResponseJSONContents `json:"contents,omitempty,omitzero"`
 }
 
+// SanitizedPluginSkillReadResponseJSONContents represents a generated Codex app-server protocol type.
 type SanitizedPluginSkillReadResponseJSONContents *string
 
+// SanitizedPluginUninstallParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedPluginUninstallParamsJSON struct {
 	// PluginID corresponds to the JSON schema field "pluginId".
 	PluginID string `json:"pluginId"`
 }
 
+// SanitizedPluginUninstallResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use PluginUninstallResponse.
 type SanitizedPluginUninstallResponseJSON map[string]interface{}
 
+// SanitizedProcessExitedNotificationJSON represents a generated Codex app-server protocol type.
 // Final process exit notification for `process/spawn`.
 // Deprecated: use ProcessExitedNotification.
 type SanitizedProcessExitedNotificationJSON struct {
@@ -3921,6 +4755,7 @@ type SanitizedProcessExitedNotificationJSON struct {
 	StdoutCapReached bool `json:"stdoutCapReached"`
 }
 
+// SanitizedProcessOutputDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Base64-encoded output chunk emitted for a streaming `process/spawn` request.
 // Deprecated: use ProcessOutputDeltaNotification.
 type SanitizedProcessOutputDeltaNotificationJSON struct {
@@ -3938,6 +4773,7 @@ type SanitizedProcessOutputDeltaNotificationJSON struct {
 	Stream interface{} `json:"stream"`
 }
 
+// SanitizedRawResponseItemCompletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use RawResponseItemCompletedNotification.
 type SanitizedRawResponseItemCompletedNotificationJSON struct {
 	// Item corresponds to the JSON schema field "item".
@@ -3950,6 +4786,7 @@ type SanitizedRawResponseItemCompletedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedReasoningSummaryPartAddedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ReasoningSummaryPartAddedNotification.
 type SanitizedReasoningSummaryPartAddedNotificationJSON struct {
 	// ItemID corresponds to the JSON schema field "itemId".
@@ -3965,6 +4802,7 @@ type SanitizedReasoningSummaryPartAddedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedReasoningSummaryTextDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ReasoningSummaryTextDeltaNotification.
 type SanitizedReasoningSummaryTextDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
@@ -3983,6 +4821,7 @@ type SanitizedReasoningSummaryTextDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedReasoningTextDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ReasoningTextDeltaNotification.
 type SanitizedReasoningTextDeltaNotificationJSON struct {
 	// ContentIndex corresponds to the JSON schema field "contentIndex".
@@ -4001,6 +4840,7 @@ type SanitizedReasoningTextDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedRemoteControlStatusChangedNotificationJSON represents a generated Codex app-server protocol type.
 // Current remote-control connection status and remote identity exposed to clients.
 // Deprecated: use RemoteControlStatusChangedNotification.
 type SanitizedRemoteControlStatusChangedNotificationJSON struct {
@@ -4017,8 +4857,10 @@ type SanitizedRemoteControlStatusChangedNotificationJSON struct {
 	Status RemoteControlConnectionStatus `json:"status"`
 }
 
+// SanitizedRemoteControlStatusChangedNotificationJSONEnvironmentID represents a generated Codex app-server protocol type.
 type SanitizedRemoteControlStatusChangedNotificationJSONEnvironmentID *string
 
+// SanitizedReviewStartParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedReviewStartParamsJSON struct {
 	// Where to run the review: inline (default) on the current thread or detached on
 	// a new thread (returned in `reviewThreadId`).
@@ -4031,17 +4873,20 @@ type SanitizedReviewStartParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedSendAddCreditsNudgeEmailParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedSendAddCreditsNudgeEmailParamsJSON struct {
 	// CreditType corresponds to the JSON schema field "creditType".
 	CreditType AddCreditsNudgeCreditType `json:"creditType"`
 }
 
+// SanitizedSendAddCreditsNudgeEmailResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use SendAddCreditsNudgeEmailResponse.
 type SanitizedSendAddCreditsNudgeEmailResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status AddCreditsNudgeEmailStatus `json:"status"`
 }
 
+// SanitizedServerRequestResolvedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ServerRequestResolvedNotification.
 type SanitizedServerRequestResolvedNotificationJSON struct {
 	// RequestID corresponds to the JSON schema field "requestId".
@@ -4051,6 +4896,7 @@ type SanitizedServerRequestResolvedNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedSkillsChangedNotificationJSON represents a generated Codex app-server protocol type.
 // Notification emitted when watched local skill files change.
 //
 // Treat this as an invalidation signal and re-run `skills/list` with the client's
@@ -4058,15 +4904,18 @@ type SanitizedServerRequestResolvedNotificationJSON struct {
 // Deprecated: use SkillsChangedNotification.
 type SanitizedSkillsChangedNotificationJSON map[string]interface{}
 
+// SanitizedSkillsConfigWriteResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use SkillsConfigWriteResponse.
 type SanitizedSkillsConfigWriteResponseJSON struct {
 	// EffectiveEnabled corresponds to the JSON schema field "effectiveEnabled".
 	EffectiveEnabled bool `json:"effectiveEnabled"`
 }
 
+// SanitizedSkillsExtraRootsSetResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use SkillsExtraRootsSetResponse.
 type SanitizedSkillsExtraRootsSetResponseJSON map[string]interface{}
 
+// SanitizedSkillsListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedSkillsListParamsJSON struct {
 	// When empty, defaults to the current session working directory.
 	Cwds []string `json:"cwds,omitempty,omitzero"`
@@ -4075,6 +4924,7 @@ type SanitizedSkillsListParamsJSON struct {
 	ForceReload *bool `json:"forceReload,omitempty,omitzero"`
 }
 
+// SanitizedTerminalInteractionNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use TerminalInteractionNotification.
 type SanitizedTerminalInteractionNotificationJSON struct {
 	// ItemID corresponds to the JSON schema field "itemId".
@@ -4093,6 +4943,7 @@ type SanitizedTerminalInteractionNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedThreadApproveGuardianDeniedActionParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadApproveGuardianDeniedActionParamsJSON struct {
 	// Serialized `codex_protocol::protocol::GuardianAssessmentEvent`.
 	Event interface{} `json:"event"`
@@ -4101,73 +4952,88 @@ type SanitizedThreadApproveGuardianDeniedActionParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadApproveGuardianDeniedActionResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadApproveGuardianDeniedActionResponse.
 type SanitizedThreadApproveGuardianDeniedActionResponseJSON map[string]interface{}
 
+// SanitizedThreadArchiveParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadArchiveParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadArchiveResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadArchiveResponse.
 type SanitizedThreadArchiveResponseJSON map[string]interface{}
 
+// SanitizedThreadArchivedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadArchivedNotification.
 type SanitizedThreadArchivedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadClosedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadClosedNotification.
 type SanitizedThreadClosedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadCompactStartParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadCompactStartParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadCompactStartResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadCompactStartResponse.
 type SanitizedThreadCompactStartResponseJSON map[string]interface{}
 
+// SanitizedThreadDeleteParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadDeleteParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadDeleteResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadDeleteResponse.
 type SanitizedThreadDeleteResponseJSON map[string]interface{}
 
+// SanitizedThreadDeletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadDeletedNotification.
 type SanitizedThreadDeletedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadGoalClearParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadGoalClearParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadGoalClearResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadGoalClearResponse.
 type SanitizedThreadGoalClearResponseJSON struct {
 	// Cleared corresponds to the JSON schema field "cleared".
 	Cleared bool `json:"cleared"`
 }
 
+// SanitizedThreadGoalClearedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadGoalClearedNotification.
 type SanitizedThreadGoalClearedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadGoalGetParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadGoalGetParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadGoalSetParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadGoalSetParamsJSON struct {
 	// Objective corresponds to the JSON schema field "objective".
 	Objective SanitizedThreadGoalSetParamsJSONObjective `json:"objective,omitempty,omitzero"`
@@ -4182,10 +5048,13 @@ type SanitizedThreadGoalSetParamsJSON struct {
 	TokenBudget SanitizedThreadGoalSetParamsJSONTokenBudget `json:"tokenBudget,omitempty,omitzero"`
 }
 
+// SanitizedThreadGoalSetParamsJSONObjective represents a generated Codex app-server protocol type.
 type SanitizedThreadGoalSetParamsJSONObjective *string
 
+// SanitizedThreadGoalSetParamsJSONTokenBudget represents a generated Codex app-server protocol type.
 type SanitizedThreadGoalSetParamsJSONTokenBudget *int
 
+// SanitizedThreadInjectItemsParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadInjectItemsParamsJSON struct {
 	// Raw Responses API items to append to the thread's model-visible history.
 	Items []interface{} `json:"items"`
@@ -4194,9 +5063,11 @@ type SanitizedThreadInjectItemsParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadInjectItemsResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadInjectItemsResponse.
 type SanitizedThreadInjectItemsResponseJSON map[string]interface{}
 
+// SanitizedThreadListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadListParamsJSON struct {
 	// Optional archived filter; when set to true, only archived threads are returned.
 	// If false or null, only non-archived threads are returned.
@@ -4234,27 +5105,34 @@ type SanitizedThreadListParamsJSON struct {
 	UseStateDbOnly *bool `json:"useStateDbOnly,omitempty,omitzero"`
 }
 
+// SanitizedThreadListParamsJSONArchived represents a generated Codex app-server protocol type.
 // Optional archived filter; when set to true, only archived threads are returned.
 // If false or null, only non-archived threads are returned.
 type SanitizedThreadListParamsJSONArchived *bool
 
+// SanitizedThreadListParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedThreadListParamsJSONCursor *string
 
+// SanitizedThreadListParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type SanitizedThreadListParamsJSONLimit *int
 
+// SanitizedThreadListParamsJSONModelProviders represents a generated Codex app-server protocol type.
 // Optional provider filter; when set, only sessions recorded under these providers
 // are returned. When present but empty, includes all providers.
 type SanitizedThreadListParamsJSONModelProviders []string
 
+// SanitizedThreadListParamsJSONSearchTerm represents a generated Codex app-server protocol type.
 // Optional substring filter for the extracted thread title.
 type SanitizedThreadListParamsJSONSearchTerm *string
 
+// SanitizedThreadListParamsJSONSourceKinds represents a generated Codex app-server protocol type.
 // Optional source filter; when set, only sessions from these source kinds are
 // returned. When omitted or empty, defaults to interactive sources.
 type SanitizedThreadListParamsJSONSourceKinds []ThreadSourceKind
 
+// SanitizedThreadLoadedListParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadLoadedListParamsJSON struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor SanitizedThreadLoadedListParamsJSONCursor `json:"cursor,omitempty,omitzero"`
@@ -4263,12 +5141,15 @@ type SanitizedThreadLoadedListParamsJSON struct {
 	Limit SanitizedThreadLoadedListParamsJSONLimit `json:"limit,omitempty,omitzero"`
 }
 
+// SanitizedThreadLoadedListParamsJSONCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type SanitizedThreadLoadedListParamsJSONCursor *string
 
+// SanitizedThreadLoadedListParamsJSONLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to no limit.
 type SanitizedThreadLoadedListParamsJSONLimit *int
 
+// SanitizedThreadLoadedListResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadLoadedListResponse.
 type SanitizedThreadLoadedListResponseJSON struct {
 	// Thread ids for sessions currently loaded in memory.
@@ -4279,10 +5160,12 @@ type SanitizedThreadLoadedListResponseJSON struct {
 	NextCursor SanitizedThreadLoadedListResponseJSONNextCursor `json:"nextCursor,omitempty,omitzero"`
 }
 
+// SanitizedThreadLoadedListResponseJSONNextCursor represents a generated Codex app-server protocol type.
 // Opaque cursor to pass to the next call to continue after the last item. if None,
 // there are no more items to return.
 type SanitizedThreadLoadedListResponseJSONNextCursor *string
 
+// SanitizedThreadMetadataUpdateParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadMetadataUpdateParamsJSON struct {
 	// Patch the stored Git metadata for this thread. Omit a field to leave it
 	// unchanged, set it to `null` to clear it, or provide a string to replace the
@@ -4293,6 +5176,7 @@ type SanitizedThreadMetadataUpdateParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadNameUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadNameUpdatedNotification.
 type SanitizedThreadNameUpdatedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
@@ -4302,8 +5186,10 @@ type SanitizedThreadNameUpdatedNotificationJSON struct {
 	ThreadName SanitizedThreadNameUpdatedNotificationJSONThreadName `json:"threadName,omitempty,omitzero"`
 }
 
+// SanitizedThreadNameUpdatedNotificationJSONThreadName represents a generated Codex app-server protocol type.
 type SanitizedThreadNameUpdatedNotificationJSONThreadName *string
 
+// SanitizedThreadReadParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadReadParamsJSON struct {
 	// When true, include turns and their items from rollout history.
 	IncludeTurns *bool `json:"includeTurns,omitempty,omitzero"`
@@ -4312,6 +5198,7 @@ type SanitizedThreadReadParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeClosedNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - emitted when thread realtime transport closes.
 // Deprecated: use ThreadRealtimeClosedNotification.
 type SanitizedThreadRealtimeClosedNotificationJSON struct {
@@ -4322,8 +5209,10 @@ type SanitizedThreadRealtimeClosedNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeClosedNotificationJSONReason represents a generated Codex app-server protocol type.
 type SanitizedThreadRealtimeClosedNotificationJSONReason *string
 
+// SanitizedThreadRealtimeErrorNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - emitted when thread realtime encounters an error.
 // Deprecated: use ThreadRealtimeErrorNotification.
 type SanitizedThreadRealtimeErrorNotificationJSON struct {
@@ -4334,6 +5223,7 @@ type SanitizedThreadRealtimeErrorNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeItemAddedNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - raw non-audio thread realtime item emitted by the backend.
 // Deprecated: use ThreadRealtimeItemAddedNotification.
 type SanitizedThreadRealtimeItemAddedNotificationJSON struct {
@@ -4344,6 +5234,7 @@ type SanitizedThreadRealtimeItemAddedNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - streamed output audio emitted by thread realtime.
 // Deprecated: use ThreadRealtimeOutputAudioDeltaNotification.
 type SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON struct {
@@ -4354,6 +5245,7 @@ type SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeSdpNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - emitted with the remote SDP for a WebRTC realtime session.
 // Deprecated: use ThreadRealtimeSdpNotification.
 type SanitizedThreadRealtimeSdpNotificationJSON struct {
@@ -4364,6 +5256,7 @@ type SanitizedThreadRealtimeSdpNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeStartedNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - emitted when thread realtime startup is accepted.
 // Deprecated: use ThreadRealtimeStartedNotification.
 type SanitizedThreadRealtimeStartedNotificationJSON struct {
@@ -4377,8 +5270,10 @@ type SanitizedThreadRealtimeStartedNotificationJSON struct {
 	Version RealtimeConversationVersion `json:"version"`
 }
 
+// SanitizedThreadRealtimeStartedNotificationJSONRealtimeSessionID represents a generated Codex app-server protocol type.
 type SanitizedThreadRealtimeStartedNotificationJSONRealtimeSessionID *string
 
+// SanitizedThreadRealtimeTranscriptDeltaNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - flat transcript delta emitted whenever realtime transcript text
 // changes.
 // Deprecated: use ThreadRealtimeTranscriptDeltaNotification.
@@ -4393,6 +5288,7 @@ type SanitizedThreadRealtimeTranscriptDeltaNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRealtimeTranscriptDoneNotificationJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - final transcript text emitted when realtime completes a
 // transcript part.
 // Deprecated: use ThreadRealtimeTranscriptDoneNotification.
@@ -4407,6 +5303,7 @@ type SanitizedThreadRealtimeTranscriptDoneNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadRollbackParamsJSON represents a generated Codex app-server protocol type.
 // DEPRECATED: `thread/rollback` will be removed soon.
 type SanitizedThreadRollbackParamsJSON struct {
 	// The number of turns to drop from the end of the thread. Must be >= 1.
@@ -4420,6 +5317,7 @@ type SanitizedThreadRollbackParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadSetNameParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadSetNameParamsJSON struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -4428,9 +5326,11 @@ type SanitizedThreadSetNameParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadSetNameResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadSetNameResponse.
 type SanitizedThreadSetNameResponseJSON map[string]interface{}
 
+// SanitizedThreadShellCommandParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadShellCommandParamsJSON struct {
 	// Shell command string evaluated by the thread's configured shell. Unlike
 	// `command/exec`, this intentionally preserves shell syntax such as pipes,
@@ -4442,9 +5342,11 @@ type SanitizedThreadShellCommandParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadShellCommandResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadShellCommandResponse.
 type SanitizedThreadShellCommandResponseJSON map[string]interface{}
 
+// SanitizedThreadStatusChangedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadStatusChangedNotification.
 type SanitizedThreadStatusChangedNotificationJSON struct {
 	// Status corresponds to the JSON schema field "status".
@@ -4454,6 +5356,7 @@ type SanitizedThreadStatusChangedNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadTokenUsageUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadTokenUsageUpdatedNotification.
 type SanitizedThreadTokenUsageUpdatedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
@@ -4466,28 +5369,33 @@ type SanitizedThreadTokenUsageUpdatedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedThreadUnarchiveParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadUnarchiveParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadUnarchivedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadUnarchivedNotification.
 type SanitizedThreadUnarchivedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadUnsubscribeParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedThreadUnsubscribeParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// SanitizedThreadUnsubscribeResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use ThreadUnsubscribeResponse.
 type SanitizedThreadUnsubscribeResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status ThreadUnsubscribeStatus `json:"status"`
 }
 
+// SanitizedToolRequestUserInputParamsJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL. Params sent with a request_user_input event.
 type SanitizedToolRequestUserInputParamsJSON struct {
 	// AutoResolutionMs corresponds to the JSON schema field "autoResolutionMs".
@@ -4506,16 +5414,20 @@ type SanitizedToolRequestUserInputParamsJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedToolRequestUserInputParamsJSONAutoResolutionMs represents a generated Codex app-server protocol type.
 type SanitizedToolRequestUserInputParamsJSONAutoResolutionMs *int
 
+// SanitizedToolRequestUserInputResponseJSON represents a generated Codex app-server protocol type.
 // EXPERIMENTAL. Response payload mapping question ids to answers.
 type SanitizedToolRequestUserInputResponseJSON struct {
 	// Answers corresponds to the JSON schema field "answers".
 	Answers SanitizedToolRequestUserInputResponseJSONAnswers `json:"answers"`
 }
 
+// SanitizedToolRequestUserInputResponseJSONAnswers represents a generated Codex app-server protocol type.
 type SanitizedToolRequestUserInputResponseJSONAnswers map[string]ToolRequestUserInputAnswer
 
+// SanitizedTurnDiffUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Notification that the turn-level unified diff has changed. Contains the latest
 // aggregated diff across all file changes in the turn.
 // Deprecated: use TurnDiffUpdatedNotification.
@@ -4530,6 +5442,7 @@ type SanitizedTurnDiffUpdatedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedTurnInterruptParamsJSON represents a generated Codex app-server protocol type.
 type SanitizedTurnInterruptParamsJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4538,9 +5451,11 @@ type SanitizedTurnInterruptParamsJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedTurnInterruptResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use TurnInterruptResponse.
 type SanitizedTurnInterruptResponseJSON map[string]interface{}
 
+// SanitizedTurnModerationMetadataNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use TurnModerationMetadataNotification.
 type SanitizedTurnModerationMetadataNotificationJSON struct {
 	// Metadata corresponds to the JSON schema field "metadata".
@@ -4553,6 +5468,7 @@ type SanitizedTurnModerationMetadataNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedTurnPlanUpdatedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use TurnPlanUpdatedNotification.
 type SanitizedTurnPlanUpdatedNotificationJSON struct {
 	// Explanation corresponds to the JSON schema field "explanation".
@@ -4568,14 +5484,17 @@ type SanitizedTurnPlanUpdatedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedTurnPlanUpdatedNotificationJSONExplanation represents a generated Codex app-server protocol type.
 type SanitizedTurnPlanUpdatedNotificationJSONExplanation *string
 
+// SanitizedTurnSteerResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use TurnSteerResponse.
 type SanitizedTurnSteerResponseJSON struct {
 	// TurnID corresponds to the JSON schema field "turnId".
 	TurnID string `json:"turnId"`
 }
 
+// SanitizedWarningNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use WarningNotification.
 type SanitizedWarningNotificationJSON struct {
 	// Concise warning message for the user.
@@ -4585,15 +5504,18 @@ type SanitizedWarningNotificationJSON struct {
 	ThreadID SanitizedWarningNotificationJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
+// SanitizedWarningNotificationJSONThreadID represents a generated Codex app-server protocol type.
 // Optional thread target when the warning applies to a specific thread.
 type SanitizedWarningNotificationJSONThreadID *string
 
+// SanitizedWindowsSandboxReadinessResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use WindowsSandboxReadinessResponse.
 type SanitizedWindowsSandboxReadinessResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status WindowsSandboxReadiness `json:"status"`
 }
 
+// SanitizedWindowsSandboxSetupCompletedNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use WindowsSandboxSetupCompletedNotification.
 type SanitizedWindowsSandboxSetupCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
@@ -4606,14 +5528,17 @@ type SanitizedWindowsSandboxSetupCompletedNotificationJSON struct {
 	Success bool `json:"success"`
 }
 
+// SanitizedWindowsSandboxSetupCompletedNotificationJSONError represents a generated Codex app-server protocol type.
 type SanitizedWindowsSandboxSetupCompletedNotificationJSONError *string
 
+// SanitizedWindowsSandboxSetupStartResponseJSON represents a generated Codex app-server protocol type.
 // Deprecated: use WindowsSandboxSetupStartResponse.
 type SanitizedWindowsSandboxSetupStartResponseJSON struct {
 	// Started corresponds to the JSON schema field "started".
 	Started bool `json:"started"`
 }
 
+// SanitizedWindowsWorldWritableWarningNotificationJSON represents a generated Codex app-server protocol type.
 // Deprecated: use WindowsWorldWritableWarningNotification.
 type SanitizedWindowsWorldWritableWarningNotificationJSON struct {
 	// ExtraCount corresponds to the JSON schema field "extraCount".
@@ -4626,6 +5551,7 @@ type SanitizedWindowsWorldWritableWarningNotificationJSON struct {
 	SamplePaths []string `json:"samplePaths"`
 }
 
+// SelectedCapabilityRoot represents a generated Codex app-server protocol type.
 // A user-selected root that can expose one or more runtime capabilities.
 type SelectedCapabilityRoot struct {
 	// Stable identifier supplied by the capability selection platform.
@@ -4635,11 +5561,13 @@ type SelectedCapabilityRoot struct {
 	Location interface{} `json:"location"`
 }
 
+// SendAddCreditsNudgeEmailParams represents a generated Codex app-server protocol type.
 type SendAddCreditsNudgeEmailParams struct {
 	// CreditType corresponds to the JSON schema field "creditType".
 	CreditType AddCreditsNudgeCreditType `json:"creditType"`
 }
 
+// SessionMigration represents a generated Codex app-server protocol type.
 type SessionMigration struct {
 	// Cwd corresponds to the JSON schema field "cwd".
 	Cwd string `json:"cwd"`
@@ -4651,6 +5579,7 @@ type SessionMigration struct {
 	Title SessionMigrationTitle `json:"title,omitempty,omitzero"`
 }
 
+// SessionMigrationTitle represents a generated Codex app-server protocol type.
 type SessionMigrationTitle *string
 
 // Settings for a collaboration mode.
@@ -4666,13 +5595,16 @@ type Settings struct {
 	ReasoningEffort interface{} `json:"reasoning_effort,omitempty,omitzero"`
 }
 
+// SettingsDeveloperInstructions represents a generated Codex app-server protocol type.
 type SettingsDeveloperInstructions *string
 
+// SkillMigration represents a generated Codex app-server protocol type.
 type SkillMigration struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 }
 
+// SkillsConfigWriteParams represents a generated Codex app-server protocol type.
 type SkillsConfigWriteParams struct {
 	// Enabled corresponds to the JSON schema field "enabled".
 	Enabled bool `json:"enabled"`
@@ -4684,14 +5616,17 @@ type SkillsConfigWriteParams struct {
 	Path interface{} `json:"path,omitempty,omitzero"`
 }
 
+// SkillsConfigWriteParamsName represents a generated Codex app-server protocol type.
 // Name-based selector.
 type SkillsConfigWriteParamsName *string
 
+// SkillsExtraRootsSetParams represents a generated Codex app-server protocol type.
 type SkillsExtraRootsSetParams struct {
 	// ExtraRoots corresponds to the JSON schema field "extraRoots".
 	ExtraRoots []AbsolutePathBuf `json:"extraRoots"`
 }
 
+// SkillsListParams represents a generated Codex app-server protocol type.
 type SkillsListParams struct {
 	// When empty, defaults to the current session working directory.
 	Cwds []string `json:"cwds,omitempty,omitzero"`
@@ -4700,11 +5635,16 @@ type SkillsListParams struct {
 	ForceReload *bool `json:"forceReload,omitempty,omitzero"`
 }
 
+// SortDirection represents a generated Codex app-server protocol type.
 type SortDirection string
 
+// SortDirectionAsc is a generated Codex app-server protocol constant.
 const SortDirectionAsc SortDirection = "asc"
+
+// SortDirectionDesc is a generated Codex app-server protocol constant.
 const SortDirectionDesc SortDirection = "desc"
 
+// SpendControlLimitSnapshot represents a generated Codex app-server protocol type.
 type SpendControlLimitSnapshot struct {
 	// Limit corresponds to the JSON schema field "limit".
 	Limit string `json:"limit"`
@@ -4719,11 +5659,13 @@ type SpendControlLimitSnapshot struct {
 	Used string `json:"used"`
 }
 
+// SubagentMigration represents a generated Codex app-server protocol type.
 type SubagentMigration struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 }
 
+// TextElement represents a generated Codex app-server protocol type.
 type TextElement struct {
 	// Byte range in the parent `text` buffer that this element occupies.
 	ByteRange TextElementByteRange `json:"byteRange"`
@@ -4732,6 +5674,7 @@ type TextElement struct {
 	Placeholder TextElementPlaceholder `json:"placeholder,omitempty,omitzero"`
 }
 
+// TextElementByteRange represents a generated Codex app-server protocol type.
 // Byte range in the parent `text` buffer that this element occupies.
 type TextElementByteRange struct {
 	// End corresponds to the JSON schema field "end".
@@ -4741,9 +5684,11 @@ type TextElementByteRange struct {
 	Start int `json:"start"`
 }
 
+// TextElementPlaceholder represents a generated Codex app-server protocol type.
 // Optional human-readable placeholder for the element, displayed in the UI.
 type TextElementPlaceholder *string
 
+// TextPosition represents a generated Codex app-server protocol type.
 type TextPosition struct {
 	// 1-based column number (in Unicode scalar values).
 	Column int `json:"column"`
@@ -4752,6 +5697,7 @@ type TextPosition struct {
 	Line int `json:"line"`
 }
 
+// TextRange represents a generated Codex app-server protocol type.
 type TextRange struct {
 	// End corresponds to the JSON schema field "end".
 	End TextPosition `json:"end"`
@@ -4760,11 +5706,16 @@ type TextRange struct {
 	Start TextPosition `json:"start"`
 }
 
+// ThreadActiveFlag represents a generated Codex app-server protocol type.
 type ThreadActiveFlag string
 
+// ThreadActiveFlagWaitingOnApproval is a generated Codex app-server protocol constant.
 const ThreadActiveFlagWaitingOnApproval ThreadActiveFlag = "waitingOnApproval"
+
+// ThreadActiveFlagWaitingOnUserInput is a generated Codex app-server protocol constant.
 const ThreadActiveFlagWaitingOnUserInput ThreadActiveFlag = "waitingOnUserInput"
 
+// ThreadApproveGuardianDeniedActionParams represents a generated Codex app-server protocol type.
 type ThreadApproveGuardianDeniedActionParams struct {
 	// Serialized `codex_protocol::protocol::GuardianAssessmentEvent`.
 	Event interface{} `json:"event"`
@@ -4773,16 +5724,19 @@ type ThreadApproveGuardianDeniedActionParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadArchiveParams represents a generated Codex app-server protocol type.
 type ThreadArchiveParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadCompactStartParams represents a generated Codex app-server protocol type.
 type ThreadCompactStartParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadDeleteParams represents a generated Codex app-server protocol type.
 type ThreadDeleteParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4797,37 +5751,48 @@ type ThreadDeleteParams struct {
 //
 // Prefer using thread_id whenever possible.
 
+// ThreadForkParamsBaseInstructions represents a generated Codex app-server protocol type.
 type ThreadForkParamsBaseInstructions *string
 
+// ThreadForkParamsConfig represents a generated Codex app-server protocol type.
 type ThreadForkParamsConfig map[string]interface{}
 
+// ThreadForkParamsCwd represents a generated Codex app-server protocol type.
 type ThreadForkParamsCwd *string
 
+// ThreadForkParamsDeveloperInstructions represents a generated Codex app-server protocol type.
 type ThreadForkParamsDeveloperInstructions *string
 
+// ThreadForkParamsLastTurnID represents a generated Codex app-server protocol type.
 // Optional last turn id to fork through, inclusive.
 //
 // When specified, turns after `last_turn_id` are omitted from the fork. The
 // referenced turn cannot be in progress.
 type ThreadForkParamsLastTurnID *string
 
+// ThreadForkParamsModel represents a generated Codex app-server protocol type.
 // Configuration overrides for the forked thread, if any.
 type ThreadForkParamsModel *string
 
+// ThreadForkParamsModelProvider represents a generated Codex app-server protocol type.
 type ThreadForkParamsModelProvider *string
 
+// ThreadForkParamsServiceTier represents a generated Codex app-server protocol type.
 type ThreadForkParamsServiceTier *string
 
+// ThreadGoalClearParams represents a generated Codex app-server protocol type.
 type ThreadGoalClearParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadGoalGetParams represents a generated Codex app-server protocol type.
 type ThreadGoalGetParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadGoalSetParams represents a generated Codex app-server protocol type.
 type ThreadGoalSetParams struct {
 	// Objective corresponds to the JSON schema field "objective".
 	Objective ThreadGoalSetParamsObjective `json:"objective,omitempty,omitzero"`
@@ -4842,26 +5807,46 @@ type ThreadGoalSetParams struct {
 	TokenBudget ThreadGoalSetParamsTokenBudget `json:"tokenBudget,omitempty,omitzero"`
 }
 
+// ThreadGoalSetParamsObjective represents a generated Codex app-server protocol type.
 type ThreadGoalSetParamsObjective *string
 
+// ThreadGoalSetParamsTokenBudget represents a generated Codex app-server protocol type.
 type ThreadGoalSetParamsTokenBudget *int
 
+// ThreadGoalStatus represents a generated Codex app-server protocol type.
 type ThreadGoalStatus string
 
+// ThreadGoalStatusActive is a generated Codex app-server protocol constant.
 const ThreadGoalStatusActive ThreadGoalStatus = "active"
+
+// ThreadGoalStatusBlocked is a generated Codex app-server protocol constant.
 const ThreadGoalStatusBlocked ThreadGoalStatus = "blocked"
+
+// ThreadGoalStatusBudgetLimited is a generated Codex app-server protocol constant.
 const ThreadGoalStatusBudgetLimited ThreadGoalStatus = "budgetLimited"
+
+// ThreadGoalStatusComplete is a generated Codex app-server protocol constant.
 const ThreadGoalStatusComplete ThreadGoalStatus = "complete"
+
+// ThreadGoalStatusPaused is a generated Codex app-server protocol constant.
 const ThreadGoalStatusPaused ThreadGoalStatus = "paused"
+
+// ThreadGoalStatusUsageLimited is a generated Codex app-server protocol constant.
 const ThreadGoalStatusUsageLimited ThreadGoalStatus = "usageLimited"
 
+// ThreadHistoryMode represents a generated Codex app-server protocol type.
 type ThreadHistoryMode string
 
+// ThreadHistoryModeLegacy is a generated Codex app-server protocol constant.
 const ThreadHistoryModeLegacy ThreadHistoryMode = "legacy"
+
+// ThreadHistoryModePaginated is a generated Codex app-server protocol constant.
 const ThreadHistoryModePaginated ThreadHistoryMode = "paginated"
 
+// ThreadID represents a generated Codex app-server protocol type.
 type ThreadID string
 
+// ThreadInjectItemsParams represents a generated Codex app-server protocol type.
 type ThreadInjectItemsParams struct {
 	// Raw Responses API items to append to the thread's model-visible history.
 	Items []interface{} `json:"items"`
@@ -4870,29 +5855,37 @@ type ThreadInjectItemsParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadListCwdFilter represents a generated Codex app-server protocol type.
 type ThreadListCwdFilter interface{}
 
+// ThreadListParamsArchived represents a generated Codex app-server protocol type.
 // Optional archived filter; when set to true, only archived threads are returned.
 // If false or null, only non-archived threads are returned.
 type ThreadListParamsArchived *bool
 
+// ThreadListParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type ThreadListParamsCursor *string
 
+// ThreadListParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to a reasonable server-side value.
 type ThreadListParamsLimit *int
 
+// ThreadListParamsModelProviders represents a generated Codex app-server protocol type.
 // Optional provider filter; when set, only sessions recorded under these providers
 // are returned. When present but empty, includes all providers.
 type ThreadListParamsModelProviders []string
 
+// ThreadListParamsSearchTerm represents a generated Codex app-server protocol type.
 // Optional substring filter for the extracted thread title.
 type ThreadListParamsSearchTerm *string
 
+// ThreadListParamsSourceKinds represents a generated Codex app-server protocol type.
 // Optional source filter; when set, only sessions from these source kinds are
 // returned. When omitted or empty, defaults to interactive sources.
 type ThreadListParamsSourceKinds []ThreadSourceKind
 
+// ThreadLoadedListParams represents a generated Codex app-server protocol type.
 type ThreadLoadedListParams struct {
 	// Opaque pagination cursor returned by a previous call.
 	Cursor ThreadLoadedListParamsCursor `json:"cursor,omitempty,omitzero"`
@@ -4901,17 +5894,24 @@ type ThreadLoadedListParams struct {
 	Limit ThreadLoadedListParamsLimit `json:"limit,omitempty,omitzero"`
 }
 
+// ThreadLoadedListParamsCursor represents a generated Codex app-server protocol type.
 // Opaque pagination cursor returned by a previous call.
 type ThreadLoadedListParamsCursor *string
 
+// ThreadLoadedListParamsLimit represents a generated Codex app-server protocol type.
 // Optional page size; defaults to no limit.
 type ThreadLoadedListParamsLimit *int
 
+// ThreadMemoryMode represents a generated Codex app-server protocol type.
 type ThreadMemoryMode string
 
+// ThreadMemoryModeDisabled is a generated Codex app-server protocol constant.
 const ThreadMemoryModeDisabled ThreadMemoryMode = "disabled"
+
+// ThreadMemoryModeEnabled is a generated Codex app-server protocol constant.
 const ThreadMemoryModeEnabled ThreadMemoryMode = "enabled"
 
+// ThreadMetadataGitInfoUpdateParams represents a generated Codex app-server protocol type.
 type ThreadMetadataGitInfoUpdateParams struct {
 	// Omit to leave the stored branch unchanged, set to `null` to clear it, or
 	// provide a non-empty string to replace it.
@@ -4926,18 +5926,22 @@ type ThreadMetadataGitInfoUpdateParams struct {
 	Sha ThreadMetadataGitInfoUpdateParamsSha `json:"sha,omitempty,omitzero"`
 }
 
+// ThreadMetadataGitInfoUpdateParamsBranch represents a generated Codex app-server protocol type.
 // Omit to leave the stored branch unchanged, set to `null` to clear it, or provide
 // a non-empty string to replace it.
 type ThreadMetadataGitInfoUpdateParamsBranch *string
 
+// ThreadMetadataGitInfoUpdateParamsOriginURL represents a generated Codex app-server protocol type.
 // Omit to leave the stored origin URL unchanged, set to `null` to clear it, or
 // provide a non-empty string to replace it.
 type ThreadMetadataGitInfoUpdateParamsOriginURL *string
 
+// ThreadMetadataGitInfoUpdateParamsSha represents a generated Codex app-server protocol type.
 // Omit to leave the stored commit unchanged, set to `null` to clear it, or provide
 // a non-empty string to replace it.
 type ThreadMetadataGitInfoUpdateParamsSha *string
 
+// ThreadMetadataUpdateParams represents a generated Codex app-server protocol type.
 type ThreadMetadataUpdateParams struct {
 	// Patch the stored Git metadata for this thread. Omit a field to leave it
 	// unchanged, set it to `null` to clear it, or provide a string to replace the
@@ -4948,6 +5952,7 @@ type ThreadMetadataUpdateParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadReadParams represents a generated Codex app-server protocol type.
 type ThreadReadParams struct {
 	// When true, include turns and their items from rollout history.
 	IncludeTurns *bool `json:"includeTurns,omitempty,omitzero"`
@@ -4956,6 +5961,7 @@ type ThreadReadParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadRealtimeAudioChunk represents a generated Codex app-server protocol type.
 // EXPERIMENTAL - thread realtime audio chunk.
 type ThreadRealtimeAudioChunk struct {
 	// Data corresponds to the JSON schema field "data".
@@ -4974,12 +5980,15 @@ type ThreadRealtimeAudioChunk struct {
 	SamplesPerChannel ThreadRealtimeAudioChunkSamplesPerChannel `json:"samplesPerChannel,omitempty,omitzero"`
 }
 
+// ThreadRealtimeAudioChunkItemID represents a generated Codex app-server protocol type.
 type ThreadRealtimeAudioChunkItemID *string
 
+// ThreadRealtimeAudioChunkSamplesPerChannel represents a generated Codex app-server protocol type.
 type ThreadRealtimeAudioChunkSamplesPerChannel *int
 
 // EXPERIMENTAL - transport used by thread realtime.
 
+// ThreadResumeInitialTurnsPageParams represents a generated Codex app-server protocol type.
 type ThreadResumeInitialTurnsPageParams struct {
 	// How much item detail to include for each returned turn; defaults to summary.
 	ItemsView interface{} `json:"itemsView,omitempty,omitzero"`
@@ -4991,6 +6000,7 @@ type ThreadResumeInitialTurnsPageParams struct {
 	SortDirection interface{} `json:"sortDirection,omitempty,omitzero"`
 }
 
+// ThreadResumeInitialTurnsPageParamsLimit represents a generated Codex app-server protocol type.
 // Optional turn page size.
 type ThreadResumeInitialTurnsPageParamsLimit *int
 
@@ -5009,21 +6019,29 @@ type ThreadResumeInitialTurnsPageParamsLimit *int
 //
 // Prefer using thread_id whenever possible.
 
+// ThreadResumeParamsBaseInstructions represents a generated Codex app-server protocol type.
 type ThreadResumeParamsBaseInstructions *string
 
+// ThreadResumeParamsConfig represents a generated Codex app-server protocol type.
 type ThreadResumeParamsConfig map[string]interface{}
 
+// ThreadResumeParamsCwd represents a generated Codex app-server protocol type.
 type ThreadResumeParamsCwd *string
 
+// ThreadResumeParamsDeveloperInstructions represents a generated Codex app-server protocol type.
 type ThreadResumeParamsDeveloperInstructions *string
 
+// ThreadResumeParamsModel represents a generated Codex app-server protocol type.
 // Configuration overrides for the resumed thread, if any.
 type ThreadResumeParamsModel *string
 
+// ThreadResumeParamsModelProvider represents a generated Codex app-server protocol type.
 type ThreadResumeParamsModelProvider *string
 
+// ThreadResumeParamsServiceTier represents a generated Codex app-server protocol type.
 type ThreadResumeParamsServiceTier *string
 
+// ThreadRollbackParams represents a generated Codex app-server protocol type.
 // DEPRECATED: `thread/rollback` will be removed soon.
 type ThreadRollbackParams struct {
 	// The number of turns to drop from the end of the thread. Must be >= 1.
@@ -5037,6 +6055,7 @@ type ThreadRollbackParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadSetNameParams represents a generated Codex app-server protocol type.
 type ThreadSetNameParams struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -5045,6 +6064,7 @@ type ThreadSetNameParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadShellCommandParams represents a generated Codex app-server protocol type.
 type ThreadShellCommandParams struct {
 	// Shell command string evaluated by the thread's configured shell. Unlike
 	// `command/exec`, this intentionally preserves shell syntax such as pipes,
@@ -5056,50 +6076,91 @@ type ThreadShellCommandParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadSortKey represents a generated Codex app-server protocol type.
 type ThreadSortKey string
 
+// ThreadSortKeyCreatedAt is a generated Codex app-server protocol constant.
 const ThreadSortKeyCreatedAt ThreadSortKey = "created_at"
+
+// ThreadSortKeyRecencyAt is a generated Codex app-server protocol constant.
 const ThreadSortKeyRecencyAt ThreadSortKey = "recency_at"
+
+// ThreadSortKeyUpdatedAt is a generated Codex app-server protocol constant.
 const ThreadSortKeyUpdatedAt ThreadSortKey = "updated_at"
 
+// ThreadSource represents a generated Codex app-server protocol type.
 type ThreadSource string
 
+// ThreadSourceKind represents a generated Codex app-server protocol type.
 type ThreadSourceKind string
 
+// ThreadSourceKindAppServer is a generated Codex app-server protocol constant.
 const ThreadSourceKindAppServer ThreadSourceKind = "appServer"
+
+// ThreadSourceKindCli is a generated Codex app-server protocol constant.
 const ThreadSourceKindCli ThreadSourceKind = "cli"
+
+// ThreadSourceKindExec is a generated Codex app-server protocol constant.
 const ThreadSourceKindExec ThreadSourceKind = "exec"
+
+// ThreadSourceKindSubAgent is a generated Codex app-server protocol constant.
 const ThreadSourceKindSubAgent ThreadSourceKind = "subAgent"
+
+// ThreadSourceKindSubAgentCompact is a generated Codex app-server protocol constant.
 const ThreadSourceKindSubAgentCompact ThreadSourceKind = "subAgentCompact"
+
+// ThreadSourceKindSubAgentOther is a generated Codex app-server protocol constant.
 const ThreadSourceKindSubAgentOther ThreadSourceKind = "subAgentOther"
+
+// ThreadSourceKindSubAgentReview is a generated Codex app-server protocol constant.
 const ThreadSourceKindSubAgentReview ThreadSourceKind = "subAgentReview"
+
+// ThreadSourceKindSubAgentThreadSpawn is a generated Codex app-server protocol constant.
 const ThreadSourceKindSubAgentThreadSpawn ThreadSourceKind = "subAgentThreadSpawn"
+
+// ThreadSourceKindUnknown is a generated Codex app-server protocol constant.
 const ThreadSourceKindUnknown ThreadSourceKind = "unknown"
+
+// ThreadSourceKindVscode is a generated Codex app-server protocol constant.
 const ThreadSourceKindVscode ThreadSourceKind = "vscode"
 
+// ThreadStartParamsBaseInstructions represents a generated Codex app-server protocol type.
 type ThreadStartParamsBaseInstructions *string
 
+// ThreadStartParamsConfig represents a generated Codex app-server protocol type.
 type ThreadStartParamsConfig map[string]interface{}
 
+// ThreadStartParamsCwd represents a generated Codex app-server protocol type.
 type ThreadStartParamsCwd *string
 
+// ThreadStartParamsDeveloperInstructions represents a generated Codex app-server protocol type.
 type ThreadStartParamsDeveloperInstructions *string
 
+// ThreadStartParamsEphemeral represents a generated Codex app-server protocol type.
 type ThreadStartParamsEphemeral *bool
 
+// ThreadStartParamsModel represents a generated Codex app-server protocol type.
 type ThreadStartParamsModel *string
 
+// ThreadStartParamsModelProvider represents a generated Codex app-server protocol type.
 type ThreadStartParamsModelProvider *string
 
+// ThreadStartParamsServiceName represents a generated Codex app-server protocol type.
 type ThreadStartParamsServiceName *string
 
+// ThreadStartParamsServiceTier represents a generated Codex app-server protocol type.
 type ThreadStartParamsServiceTier *string
 
+// ThreadStartSource represents a generated Codex app-server protocol type.
 type ThreadStartSource string
 
+// ThreadStartSourceClear is a generated Codex app-server protocol constant.
 const ThreadStartSourceClear ThreadStartSource = "clear"
+
+// ThreadStartSourceStartup is a generated Codex app-server protocol constant.
 const ThreadStartSourceStartup ThreadStartSource = "startup"
 
+// ThreadTokenUsage represents a generated Codex app-server protocol type.
 type ThreadTokenUsage struct {
 	// Last corresponds to the JSON schema field "last".
 	Last TokenUsageBreakdown `json:"last"`
@@ -5111,24 +6172,34 @@ type ThreadTokenUsage struct {
 	Total TokenUsageBreakdown `json:"total"`
 }
 
+// ThreadTokenUsageModelContextWindow represents a generated Codex app-server protocol type.
 type ThreadTokenUsageModelContextWindow *int
 
+// ThreadUnarchiveParams represents a generated Codex app-server protocol type.
 type ThreadUnarchiveParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadUnsubscribeParams represents a generated Codex app-server protocol type.
 type ThreadUnsubscribeParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// ThreadUnsubscribeStatus represents a generated Codex app-server protocol type.
 type ThreadUnsubscribeStatus string
 
+// ThreadUnsubscribeStatusNotLoaded is a generated Codex app-server protocol constant.
 const ThreadUnsubscribeStatusNotLoaded ThreadUnsubscribeStatus = "notLoaded"
+
+// ThreadUnsubscribeStatusNotSubscribed is a generated Codex app-server protocol constant.
 const ThreadUnsubscribeStatusNotSubscribed ThreadUnsubscribeStatus = "notSubscribed"
+
+// ThreadUnsubscribeStatusUnsubscribed is a generated Codex app-server protocol constant.
 const ThreadUnsubscribeStatusUnsubscribed ThreadUnsubscribeStatus = "unsubscribed"
 
+// TokenUsageBreakdown represents a generated Codex app-server protocol type.
 type TokenUsageBreakdown struct {
 	// CachedInputTokens corresponds to the JSON schema field "cachedInputTokens".
 	CachedInputTokens int `json:"cachedInputTokens"`
@@ -5147,6 +6218,7 @@ type TokenUsageBreakdown struct {
 	TotalTokens int `json:"totalTokens"`
 }
 
+// Tool represents a generated Codex app-server protocol type.
 // Definition for a tool the client can call.
 type Tool struct {
 	// Meta corresponds to the JSON schema field "_meta".
@@ -5174,16 +6246,20 @@ type Tool struct {
 	Title ToolTitle `json:"title,omitempty,omitzero"`
 }
 
+// ToolDescription represents a generated Codex app-server protocol type.
 type ToolDescription *string
 
+// ToolIcons represents a generated Codex app-server protocol type.
 type ToolIcons []interface{}
 
+// ToolRequestUserInputAnswer represents a generated Codex app-server protocol type.
 // EXPERIMENTAL. Captures a user's answer to a request_user_input question.
 type ToolRequestUserInputAnswer struct {
 	// Answers corresponds to the JSON schema field "answers".
 	Answers []string `json:"answers"`
 }
 
+// ToolRequestUserInputOption represents a generated Codex app-server protocol type.
 // EXPERIMENTAL. Defines a single selectable option for request_user_input.
 type ToolRequestUserInputOption struct {
 	// Description corresponds to the JSON schema field "description".
@@ -5193,6 +6269,7 @@ type ToolRequestUserInputOption struct {
 	Label string `json:"label"`
 }
 
+// ToolRequestUserInputQuestion represents a generated Codex app-server protocol type.
 // EXPERIMENTAL. Represents one request_user_input question and its required
 // options.
 type ToolRequestUserInputQuestion struct {
@@ -5215,10 +6292,13 @@ type ToolRequestUserInputQuestion struct {
 	Question string `json:"question"`
 }
 
+// ToolRequestUserInputQuestionOptions represents a generated Codex app-server protocol type.
 type ToolRequestUserInputQuestionOptions []ToolRequestUserInputOption
 
+// ToolTitle represents a generated Codex app-server protocol type.
 type ToolTitle *string
 
+// TurnEnvironmentParams represents a generated Codex app-server protocol type.
 type TurnEnvironmentParams struct {
 	// Cwd corresponds to the JSON schema field "cwd".
 	Cwd LegacyAppPathString `json:"cwd"`
@@ -5227,6 +6307,7 @@ type TurnEnvironmentParams struct {
 	EnvironmentID string `json:"environmentId"`
 }
 
+// TurnError represents a generated Codex app-server protocol type.
 type TurnError struct {
 	// AdditionalDetails corresponds to the JSON schema field "additionalDetails".
 	AdditionalDetails TurnErrorAdditionalDetails `json:"additionalDetails,omitempty,omitzero"`
@@ -5238,8 +6319,10 @@ type TurnError struct {
 	Message string `json:"message"`
 }
 
+// TurnErrorAdditionalDetails represents a generated Codex app-server protocol type.
 type TurnErrorAdditionalDetails *string
 
+// TurnInterruptParams represents a generated Codex app-server protocol type.
 type TurnInterruptParams struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -5248,6 +6331,7 @@ type TurnInterruptParams struct {
 	TurnID string `json:"turnId"`
 }
 
+// TurnPlanStep represents a generated Codex app-server protocol type.
 type TurnPlanStep struct {
 	// Status corresponds to the JSON schema field "status".
 	Status TurnPlanStepStatus `json:"status"`
@@ -5256,23 +6340,34 @@ type TurnPlanStep struct {
 	Step string `json:"step"`
 }
 
+// TurnPlanStepStatus represents a generated Codex app-server protocol type.
 type TurnPlanStepStatus string
 
+// TurnPlanStepStatusCompleted is a generated Codex app-server protocol constant.
 const TurnPlanStepStatusCompleted TurnPlanStepStatus = "completed"
+
+// TurnPlanStepStatusInProgress is a generated Codex app-server protocol constant.
 const TurnPlanStepStatusInProgress TurnPlanStepStatus = "inProgress"
+
+// TurnPlanStepStatusPending is a generated Codex app-server protocol constant.
 const TurnPlanStepStatusPending TurnPlanStepStatus = "pending"
 
+// TurnStartParamsClientUserMessageID represents a generated Codex app-server protocol type.
 type TurnStartParamsClientUserMessageID *string
 
+// TurnStartParamsCwd represents a generated Codex app-server protocol type.
 // Override the working directory for this turn and subsequent turns.
 type TurnStartParamsCwd *string
 
+// TurnStartParamsModel represents a generated Codex app-server protocol type.
 // Override the model for this turn and subsequent turns.
 type TurnStartParamsModel *string
 
+// TurnStartParamsServiceTier represents a generated Codex app-server protocol type.
 // Override the service tier for this turn and subsequent turns.
 type TurnStartParamsServiceTier *string
 
+// TurnSteerParams represents a generated Codex app-server protocol type.
 type TurnSteerParams struct {
 	// ClientUserMessageID corresponds to the JSON schema field "clientUserMessageId".
 	ClientUserMessageID TurnSteerParamsClientUserMessageID `json:"clientUserMessageId,omitempty,omitzero"`
@@ -5288,26 +6383,46 @@ type TurnSteerParams struct {
 	ThreadID string `json:"threadId"`
 }
 
+// TurnSteerParamsClientUserMessageID represents a generated Codex app-server protocol type.
 type TurnSteerParamsClientUserMessageID *string
 
+// WebSearchMode represents a generated Codex app-server protocol type.
 type WebSearchMode string
 
+// WebSearchModeCached is a generated Codex app-server protocol constant.
 const WebSearchModeCached WebSearchMode = "cached"
+
+// WebSearchModeDisabled is a generated Codex app-server protocol constant.
 const WebSearchModeDisabled WebSearchMode = "disabled"
+
+// WebSearchModeIndexed is a generated Codex app-server protocol constant.
 const WebSearchModeIndexed WebSearchMode = "indexed"
+
+// WebSearchModeLive is a generated Codex app-server protocol constant.
 const WebSearchModeLive WebSearchMode = "live"
 
+// WindowsSandboxReadiness represents a generated Codex app-server protocol type.
 type WindowsSandboxReadiness string
 
+// WindowsSandboxReadinessNotConfigured is a generated Codex app-server protocol constant.
 const WindowsSandboxReadinessNotConfigured WindowsSandboxReadiness = "notConfigured"
+
+// WindowsSandboxReadinessReady is a generated Codex app-server protocol constant.
 const WindowsSandboxReadinessReady WindowsSandboxReadiness = "ready"
+
+// WindowsSandboxReadinessUpdateRequired is a generated Codex app-server protocol constant.
 const WindowsSandboxReadinessUpdateRequired WindowsSandboxReadiness = "updateRequired"
 
+// WindowsSandboxSetupMode represents a generated Codex app-server protocol type.
 type WindowsSandboxSetupMode string
 
+// WindowsSandboxSetupModeElevated is a generated Codex app-server protocol constant.
 const WindowsSandboxSetupModeElevated WindowsSandboxSetupMode = "elevated"
+
+// WindowsSandboxSetupModeUnelevated is a generated Codex app-server protocol constant.
 const WindowsSandboxSetupModeUnelevated WindowsSandboxSetupMode = "unelevated"
 
+// WindowsSandboxSetupStartParams represents a generated Codex app-server protocol type.
 type WindowsSandboxSetupStartParams struct {
 	// Cwd corresponds to the JSON schema field "cwd".
 	Cwd interface{} `json:"cwd,omitempty,omitzero"`
@@ -5316,6 +6431,7 @@ type WindowsSandboxSetupStartParams struct {
 	Mode WindowsSandboxSetupMode `json:"mode"`
 }
 
+// WorkspaceMessage represents a generated Codex app-server protocol type.
 type WorkspaceMessage struct {
 	// Unix timestamp (in seconds) when the message was archived.
 	ArchivedAt WorkspaceMessageArchivedAt `json:"archivedAt,omitempty,omitzero"`
@@ -5333,14 +6449,22 @@ type WorkspaceMessage struct {
 	MessageType WorkspaceMessageType `json:"messageType"`
 }
 
+// WorkspaceMessageArchivedAt represents a generated Codex app-server protocol type.
 // Unix timestamp (in seconds) when the message was archived.
 type WorkspaceMessageArchivedAt *int
 
+// WorkspaceMessageCreatedAt represents a generated Codex app-server protocol type.
 // Unix timestamp (in seconds) when the message was created.
 type WorkspaceMessageCreatedAt *int
 
+// WorkspaceMessageType represents a generated Codex app-server protocol type.
 type WorkspaceMessageType string
 
+// WorkspaceMessageTypeAnnouncement is a generated Codex app-server protocol constant.
 const WorkspaceMessageTypeAnnouncement WorkspaceMessageType = "announcement"
+
+// WorkspaceMessageTypeHeadline is a generated Codex app-server protocol constant.
 const WorkspaceMessageTypeHeadline WorkspaceMessageType = "headline"
+
+// WorkspaceMessageTypeUnknown is a generated Codex app-server protocol constant.
 const WorkspaceMessageTypeUnknown WorkspaceMessageType = "unknown"

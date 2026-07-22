@@ -52,7 +52,22 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test ./...
+        shell: bash
+        run: |
+          if [[ "${{ matrix.go-version }}" == "1.25.12" ]]; then
+            go test -covermode=atomic -coverprofile=coverage.out ./...
+          else
+            go test ./...
+          fi
+
+      - name: Preserve coverage profile
+        if: matrix.go-version == '1.25.12'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage
+          path: coverage.out
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Test with race detector
         run: go test -race ./...
@@ -67,3 +82,31 @@ jobs:
 
       - name: Vulnerability scan
         run: govulncheck ./...
+
+  coverage:
+    name: Coverage report
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download coverage profile
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: coverage
+
+      - name: Publish coverage report
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: ./coverage.out
+          disable_search: true
+          fail_ci_if_error: true
+          flags: unit
+          use_oidc: true
+          version: v11.3.1

@@ -45,9 +45,12 @@ func requireDiscriminatedUnionFields(data json.RawMessage, union, kind string, f
 type AccountKind string
 
 const (
+	// AccountKindAmazonBedrock is a generated Codex app-server protocol constant.
 	AccountKindAmazonBedrock AccountKind = "amazonBedrock"
-	AccountKindApiKey        AccountKind = "apiKey"
-	AccountKindChatgpt       AccountKind = "chatgpt"
+	// AccountKindApiKey is a generated Codex app-server protocol constant.
+	AccountKindApiKey AccountKind = "apiKey"
+	// AccountKindChatgpt is a generated Codex app-server protocol constant.
+	AccountKindChatgpt AccountKind = "chatgpt"
 )
 
 // Account preserves the complete JSON payload for a discriminated union.
@@ -67,6 +70,7 @@ func NewAccount(value any) (Account, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *Account) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -91,6 +95,7 @@ func (value *Account) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value Account) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -122,8 +127,10 @@ func (value Account) IsKnown() bool {
 type AgentMessageInputContentKind string
 
 const (
+	// AgentMessageInputContentKindEncryptedContent is a generated Codex app-server protocol constant.
 	AgentMessageInputContentKindEncryptedContent AgentMessageInputContentKind = "encrypted_content"
-	AgentMessageInputContentKindInputText        AgentMessageInputContentKind = "input_text"
+	// AgentMessageInputContentKindInputText is a generated Codex app-server protocol constant.
+	AgentMessageInputContentKindInputText AgentMessageInputContentKind = "input_text"
 )
 
 // AgentMessageInputContent preserves the complete JSON payload for a discriminated union.
@@ -143,6 +150,7 @@ func NewAgentMessageInputContent(value any) (AgentMessageInputContent, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *AgentMessageInputContent) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -163,6 +171,7 @@ func (value *AgentMessageInputContent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value AgentMessageInputContent) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -194,93 +203,180 @@ func (value AgentMessageInputContent) IsKnown() bool {
 type ClientRequestKind string
 
 const (
-	ClientRequestKindAccountLoginCancel                     ClientRequestKind = "account/login/cancel"
-	ClientRequestKindAccountLoginStart                      ClientRequestKind = "account/login/start"
-	ClientRequestKindAccountLogout                          ClientRequestKind = "account/logout"
-	ClientRequestKindAccountRateLimitResetCreditConsume     ClientRequestKind = "account/rateLimitResetCredit/consume"
-	ClientRequestKindAccountRateLimitsRead                  ClientRequestKind = "account/rateLimits/read"
-	ClientRequestKindAccountRead                            ClientRequestKind = "account/read"
-	ClientRequestKindAccountSendAddCreditsNudgeEmail        ClientRequestKind = "account/sendAddCreditsNudgeEmail"
-	ClientRequestKindAccountUsageRead                       ClientRequestKind = "account/usage/read"
-	ClientRequestKindAccountWorkspaceMessagesRead           ClientRequestKind = "account/workspaceMessages/read"
-	ClientRequestKindAppList                                ClientRequestKind = "app/list"
-	ClientRequestKindCommandExec                            ClientRequestKind = "command/exec"
-	ClientRequestKindCommandExecResize                      ClientRequestKind = "command/exec/resize"
-	ClientRequestKindCommandExecTerminate                   ClientRequestKind = "command/exec/terminate"
-	ClientRequestKindCommandExecWrite                       ClientRequestKind = "command/exec/write"
-	ClientRequestKindConfigBatchWrite                       ClientRequestKind = "config/batchWrite"
-	ClientRequestKindConfigMCPServerReload                  ClientRequestKind = "config/mcpServer/reload"
-	ClientRequestKindConfigRead                             ClientRequestKind = "config/read"
-	ClientRequestKindConfigValueWrite                       ClientRequestKind = "config/value/write"
-	ClientRequestKindConfigRequirementsRead                 ClientRequestKind = "configRequirements/read"
-	ClientRequestKindExperimentalFeatureEnablementSet       ClientRequestKind = "experimentalFeature/enablement/set"
-	ClientRequestKindExperimentalFeatureList                ClientRequestKind = "experimentalFeature/list"
-	ClientRequestKindExternalAgentConfigDetect              ClientRequestKind = "externalAgentConfig/detect"
-	ClientRequestKindExternalAgentConfigImport              ClientRequestKind = "externalAgentConfig/import"
+	// ClientRequestKindAccountLoginCancel is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountLoginCancel ClientRequestKind = "account/login/cancel"
+	// ClientRequestKindAccountLoginStart is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountLoginStart ClientRequestKind = "account/login/start"
+	// ClientRequestKindAccountLogout is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountLogout ClientRequestKind = "account/logout"
+	// ClientRequestKindAccountRateLimitResetCreditConsume is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountRateLimitResetCreditConsume ClientRequestKind = "account/rateLimitResetCredit/consume"
+	// ClientRequestKindAccountRateLimitsRead is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountRateLimitsRead ClientRequestKind = "account/rateLimits/read"
+	// ClientRequestKindAccountRead is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountRead ClientRequestKind = "account/read"
+	// ClientRequestKindAccountSendAddCreditsNudgeEmail is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountSendAddCreditsNudgeEmail ClientRequestKind = "account/sendAddCreditsNudgeEmail"
+	// ClientRequestKindAccountUsageRead is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountUsageRead ClientRequestKind = "account/usage/read"
+	// ClientRequestKindAccountWorkspaceMessagesRead is a generated Codex app-server protocol constant.
+	ClientRequestKindAccountWorkspaceMessagesRead ClientRequestKind = "account/workspaceMessages/read"
+	// ClientRequestKindAppList is a generated Codex app-server protocol constant.
+	ClientRequestKindAppList ClientRequestKind = "app/list"
+	// ClientRequestKindCommandExec is a generated Codex app-server protocol constant.
+	ClientRequestKindCommandExec ClientRequestKind = "command/exec"
+	// ClientRequestKindCommandExecResize is a generated Codex app-server protocol constant.
+	ClientRequestKindCommandExecResize ClientRequestKind = "command/exec/resize"
+	// ClientRequestKindCommandExecTerminate is a generated Codex app-server protocol constant.
+	ClientRequestKindCommandExecTerminate ClientRequestKind = "command/exec/terminate"
+	// ClientRequestKindCommandExecWrite is a generated Codex app-server protocol constant.
+	ClientRequestKindCommandExecWrite ClientRequestKind = "command/exec/write"
+	// ClientRequestKindConfigBatchWrite is a generated Codex app-server protocol constant.
+	ClientRequestKindConfigBatchWrite ClientRequestKind = "config/batchWrite"
+	// ClientRequestKindConfigMCPServerReload is a generated Codex app-server protocol constant.
+	ClientRequestKindConfigMCPServerReload ClientRequestKind = "config/mcpServer/reload"
+	// ClientRequestKindConfigRead is a generated Codex app-server protocol constant.
+	ClientRequestKindConfigRead ClientRequestKind = "config/read"
+	// ClientRequestKindConfigValueWrite is a generated Codex app-server protocol constant.
+	ClientRequestKindConfigValueWrite ClientRequestKind = "config/value/write"
+	// ClientRequestKindConfigRequirementsRead is a generated Codex app-server protocol constant.
+	ClientRequestKindConfigRequirementsRead ClientRequestKind = "configRequirements/read"
+	// ClientRequestKindExperimentalFeatureEnablementSet is a generated Codex app-server protocol constant.
+	ClientRequestKindExperimentalFeatureEnablementSet ClientRequestKind = "experimentalFeature/enablement/set"
+	// ClientRequestKindExperimentalFeatureList is a generated Codex app-server protocol constant.
+	ClientRequestKindExperimentalFeatureList ClientRequestKind = "experimentalFeature/list"
+	// ClientRequestKindExternalAgentConfigDetect is a generated Codex app-server protocol constant.
+	ClientRequestKindExternalAgentConfigDetect ClientRequestKind = "externalAgentConfig/detect"
+	// ClientRequestKindExternalAgentConfigImport is a generated Codex app-server protocol constant.
+	ClientRequestKindExternalAgentConfigImport ClientRequestKind = "externalAgentConfig/import"
+	// ClientRequestKindExternalAgentConfigImportReadHistories is a generated Codex app-server protocol constant.
 	ClientRequestKindExternalAgentConfigImportReadHistories ClientRequestKind = "externalAgentConfig/import/readHistories"
-	ClientRequestKindFeedbackUpload                         ClientRequestKind = "feedback/upload"
-	ClientRequestKindFsCopy                                 ClientRequestKind = "fs/copy"
-	ClientRequestKindFsCreateDirectory                      ClientRequestKind = "fs/createDirectory"
-	ClientRequestKindFsGetMetadata                          ClientRequestKind = "fs/getMetadata"
-	ClientRequestKindFsReadDirectory                        ClientRequestKind = "fs/readDirectory"
-	ClientRequestKindFsReadFile                             ClientRequestKind = "fs/readFile"
-	ClientRequestKindFsRemove                               ClientRequestKind = "fs/remove"
-	ClientRequestKindFsUnwatch                              ClientRequestKind = "fs/unwatch"
-	ClientRequestKindFsWatch                                ClientRequestKind = "fs/watch"
-	ClientRequestKindFsWriteFile                            ClientRequestKind = "fs/writeFile"
-	ClientRequestKindFuzzyFileSearch                        ClientRequestKind = "fuzzyFileSearch"
-	ClientRequestKindHooksList                              ClientRequestKind = "hooks/list"
-	ClientRequestKindInitialize                             ClientRequestKind = "initialize"
-	ClientRequestKindMarketplaceAdd                         ClientRequestKind = "marketplace/add"
-	ClientRequestKindMarketplaceRemove                      ClientRequestKind = "marketplace/remove"
-	ClientRequestKindMarketplaceUpgrade                     ClientRequestKind = "marketplace/upgrade"
-	ClientRequestKindMCPServerOAuthLogin                    ClientRequestKind = "mcpServer/oauth/login"
-	ClientRequestKindMCPServerResourceRead                  ClientRequestKind = "mcpServer/resource/read"
-	ClientRequestKindMCPServerToolCall                      ClientRequestKind = "mcpServer/tool/call"
-	ClientRequestKindMCPServerStatusList                    ClientRequestKind = "mcpServerStatus/list"
-	ClientRequestKindModelList                              ClientRequestKind = "model/list"
-	ClientRequestKindModelProviderCapabilitiesRead          ClientRequestKind = "modelProvider/capabilities/read"
-	ClientRequestKindPermissionProfileList                  ClientRequestKind = "permissionProfile/list"
-	ClientRequestKindPluginInstall                          ClientRequestKind = "plugin/install"
-	ClientRequestKindPluginInstalled                        ClientRequestKind = "plugin/installed"
-	ClientRequestKindPluginList                             ClientRequestKind = "plugin/list"
-	ClientRequestKindPluginRead                             ClientRequestKind = "plugin/read"
-	ClientRequestKindPluginShareCheckout                    ClientRequestKind = "plugin/share/checkout"
-	ClientRequestKindPluginShareDelete                      ClientRequestKind = "plugin/share/delete"
-	ClientRequestKindPluginShareList                        ClientRequestKind = "plugin/share/list"
-	ClientRequestKindPluginShareSave                        ClientRequestKind = "plugin/share/save"
-	ClientRequestKindPluginShareUpdateTargets               ClientRequestKind = "plugin/share/updateTargets"
-	ClientRequestKindPluginSkillRead                        ClientRequestKind = "plugin/skill/read"
-	ClientRequestKindPluginUninstall                        ClientRequestKind = "plugin/uninstall"
-	ClientRequestKindReviewStart                            ClientRequestKind = "review/start"
-	ClientRequestKindSkillsConfigWrite                      ClientRequestKind = "skills/config/write"
-	ClientRequestKindSkillsExtraRootsSet                    ClientRequestKind = "skills/extraRoots/set"
-	ClientRequestKindSkillsList                             ClientRequestKind = "skills/list"
-	ClientRequestKindThreadApproveGuardianDeniedAction      ClientRequestKind = "thread/approveGuardianDeniedAction"
-	ClientRequestKindThreadArchive                          ClientRequestKind = "thread/archive"
-	ClientRequestKindThreadCompactStart                     ClientRequestKind = "thread/compact/start"
-	ClientRequestKindThreadDelete                           ClientRequestKind = "thread/delete"
-	ClientRequestKindThreadFork                             ClientRequestKind = "thread/fork"
-	ClientRequestKindThreadGoalClear                        ClientRequestKind = "thread/goal/clear"
-	ClientRequestKindThreadGoalGet                          ClientRequestKind = "thread/goal/get"
-	ClientRequestKindThreadGoalSet                          ClientRequestKind = "thread/goal/set"
-	ClientRequestKindThreadInjectItems                      ClientRequestKind = "thread/inject_items"
-	ClientRequestKindThreadList                             ClientRequestKind = "thread/list"
-	ClientRequestKindThreadLoadedList                       ClientRequestKind = "thread/loaded/list"
-	ClientRequestKindThreadMetadataUpdate                   ClientRequestKind = "thread/metadata/update"
-	ClientRequestKindThreadNameSet                          ClientRequestKind = "thread/name/set"
-	ClientRequestKindThreadRead                             ClientRequestKind = "thread/read"
-	ClientRequestKindThreadResume                           ClientRequestKind = "thread/resume"
-	ClientRequestKindThreadRollback                         ClientRequestKind = "thread/rollback"
-	ClientRequestKindThreadShellCommand                     ClientRequestKind = "thread/shellCommand"
-	ClientRequestKindThreadStart                            ClientRequestKind = "thread/start"
-	ClientRequestKindThreadUnarchive                        ClientRequestKind = "thread/unarchive"
-	ClientRequestKindThreadUnsubscribe                      ClientRequestKind = "thread/unsubscribe"
-	ClientRequestKindTurnInterrupt                          ClientRequestKind = "turn/interrupt"
-	ClientRequestKindTurnStart                              ClientRequestKind = "turn/start"
-	ClientRequestKindTurnSteer                              ClientRequestKind = "turn/steer"
-	ClientRequestKindWindowsSandboxReadiness                ClientRequestKind = "windowsSandbox/readiness"
-	ClientRequestKindWindowsSandboxSetupStart               ClientRequestKind = "windowsSandbox/setupStart"
+	// ClientRequestKindFeedbackUpload is a generated Codex app-server protocol constant.
+	ClientRequestKindFeedbackUpload ClientRequestKind = "feedback/upload"
+	// ClientRequestKindFsCopy is a generated Codex app-server protocol constant.
+	ClientRequestKindFsCopy ClientRequestKind = "fs/copy"
+	// ClientRequestKindFsCreateDirectory is a generated Codex app-server protocol constant.
+	ClientRequestKindFsCreateDirectory ClientRequestKind = "fs/createDirectory"
+	// ClientRequestKindFsGetMetadata is a generated Codex app-server protocol constant.
+	ClientRequestKindFsGetMetadata ClientRequestKind = "fs/getMetadata"
+	// ClientRequestKindFsReadDirectory is a generated Codex app-server protocol constant.
+	ClientRequestKindFsReadDirectory ClientRequestKind = "fs/readDirectory"
+	// ClientRequestKindFsReadFile is a generated Codex app-server protocol constant.
+	ClientRequestKindFsReadFile ClientRequestKind = "fs/readFile"
+	// ClientRequestKindFsRemove is a generated Codex app-server protocol constant.
+	ClientRequestKindFsRemove ClientRequestKind = "fs/remove"
+	// ClientRequestKindFsUnwatch is a generated Codex app-server protocol constant.
+	ClientRequestKindFsUnwatch ClientRequestKind = "fs/unwatch"
+	// ClientRequestKindFsWatch is a generated Codex app-server protocol constant.
+	ClientRequestKindFsWatch ClientRequestKind = "fs/watch"
+	// ClientRequestKindFsWriteFile is a generated Codex app-server protocol constant.
+	ClientRequestKindFsWriteFile ClientRequestKind = "fs/writeFile"
+	// ClientRequestKindFuzzyFileSearch is a generated Codex app-server protocol constant.
+	ClientRequestKindFuzzyFileSearch ClientRequestKind = "fuzzyFileSearch"
+	// ClientRequestKindHooksList is a generated Codex app-server protocol constant.
+	ClientRequestKindHooksList ClientRequestKind = "hooks/list"
+	// ClientRequestKindInitialize is a generated Codex app-server protocol constant.
+	ClientRequestKindInitialize ClientRequestKind = "initialize"
+	// ClientRequestKindMarketplaceAdd is a generated Codex app-server protocol constant.
+	ClientRequestKindMarketplaceAdd ClientRequestKind = "marketplace/add"
+	// ClientRequestKindMarketplaceRemove is a generated Codex app-server protocol constant.
+	ClientRequestKindMarketplaceRemove ClientRequestKind = "marketplace/remove"
+	// ClientRequestKindMarketplaceUpgrade is a generated Codex app-server protocol constant.
+	ClientRequestKindMarketplaceUpgrade ClientRequestKind = "marketplace/upgrade"
+	// ClientRequestKindMCPServerOAuthLogin is a generated Codex app-server protocol constant.
+	ClientRequestKindMCPServerOAuthLogin ClientRequestKind = "mcpServer/oauth/login"
+	// ClientRequestKindMCPServerResourceRead is a generated Codex app-server protocol constant.
+	ClientRequestKindMCPServerResourceRead ClientRequestKind = "mcpServer/resource/read"
+	// ClientRequestKindMCPServerToolCall is a generated Codex app-server protocol constant.
+	ClientRequestKindMCPServerToolCall ClientRequestKind = "mcpServer/tool/call"
+	// ClientRequestKindMCPServerStatusList is a generated Codex app-server protocol constant.
+	ClientRequestKindMCPServerStatusList ClientRequestKind = "mcpServerStatus/list"
+	// ClientRequestKindModelList is a generated Codex app-server protocol constant.
+	ClientRequestKindModelList ClientRequestKind = "model/list"
+	// ClientRequestKindModelProviderCapabilitiesRead is a generated Codex app-server protocol constant.
+	ClientRequestKindModelProviderCapabilitiesRead ClientRequestKind = "modelProvider/capabilities/read"
+	// ClientRequestKindPermissionProfileList is a generated Codex app-server protocol constant.
+	ClientRequestKindPermissionProfileList ClientRequestKind = "permissionProfile/list"
+	// ClientRequestKindPluginInstall is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginInstall ClientRequestKind = "plugin/install"
+	// ClientRequestKindPluginInstalled is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginInstalled ClientRequestKind = "plugin/installed"
+	// ClientRequestKindPluginList is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginList ClientRequestKind = "plugin/list"
+	// ClientRequestKindPluginRead is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginRead ClientRequestKind = "plugin/read"
+	// ClientRequestKindPluginShareCheckout is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginShareCheckout ClientRequestKind = "plugin/share/checkout"
+	// ClientRequestKindPluginShareDelete is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginShareDelete ClientRequestKind = "plugin/share/delete"
+	// ClientRequestKindPluginShareList is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginShareList ClientRequestKind = "plugin/share/list"
+	// ClientRequestKindPluginShareSave is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginShareSave ClientRequestKind = "plugin/share/save"
+	// ClientRequestKindPluginShareUpdateTargets is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginShareUpdateTargets ClientRequestKind = "plugin/share/updateTargets"
+	// ClientRequestKindPluginSkillRead is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginSkillRead ClientRequestKind = "plugin/skill/read"
+	// ClientRequestKindPluginUninstall is a generated Codex app-server protocol constant.
+	ClientRequestKindPluginUninstall ClientRequestKind = "plugin/uninstall"
+	// ClientRequestKindReviewStart is a generated Codex app-server protocol constant.
+	ClientRequestKindReviewStart ClientRequestKind = "review/start"
+	// ClientRequestKindSkillsConfigWrite is a generated Codex app-server protocol constant.
+	ClientRequestKindSkillsConfigWrite ClientRequestKind = "skills/config/write"
+	// ClientRequestKindSkillsExtraRootsSet is a generated Codex app-server protocol constant.
+	ClientRequestKindSkillsExtraRootsSet ClientRequestKind = "skills/extraRoots/set"
+	// ClientRequestKindSkillsList is a generated Codex app-server protocol constant.
+	ClientRequestKindSkillsList ClientRequestKind = "skills/list"
+	// ClientRequestKindThreadApproveGuardianDeniedAction is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadApproveGuardianDeniedAction ClientRequestKind = "thread/approveGuardianDeniedAction"
+	// ClientRequestKindThreadArchive is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadArchive ClientRequestKind = "thread/archive"
+	// ClientRequestKindThreadCompactStart is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadCompactStart ClientRequestKind = "thread/compact/start"
+	// ClientRequestKindThreadDelete is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadDelete ClientRequestKind = "thread/delete"
+	// ClientRequestKindThreadFork is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadFork ClientRequestKind = "thread/fork"
+	// ClientRequestKindThreadGoalClear is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadGoalClear ClientRequestKind = "thread/goal/clear"
+	// ClientRequestKindThreadGoalGet is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadGoalGet ClientRequestKind = "thread/goal/get"
+	// ClientRequestKindThreadGoalSet is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadGoalSet ClientRequestKind = "thread/goal/set"
+	// ClientRequestKindThreadInjectItems is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadInjectItems ClientRequestKind = "thread/inject_items"
+	// ClientRequestKindThreadList is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadList ClientRequestKind = "thread/list"
+	// ClientRequestKindThreadLoadedList is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadLoadedList ClientRequestKind = "thread/loaded/list"
+	// ClientRequestKindThreadMetadataUpdate is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadMetadataUpdate ClientRequestKind = "thread/metadata/update"
+	// ClientRequestKindThreadNameSet is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadNameSet ClientRequestKind = "thread/name/set"
+	// ClientRequestKindThreadRead is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadRead ClientRequestKind = "thread/read"
+	// ClientRequestKindThreadResume is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadResume ClientRequestKind = "thread/resume"
+	// ClientRequestKindThreadRollback is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadRollback ClientRequestKind = "thread/rollback"
+	// ClientRequestKindThreadShellCommand is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadShellCommand ClientRequestKind = "thread/shellCommand"
+	// ClientRequestKindThreadStart is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadStart ClientRequestKind = "thread/start"
+	// ClientRequestKindThreadUnarchive is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadUnarchive ClientRequestKind = "thread/unarchive"
+	// ClientRequestKindThreadUnsubscribe is a generated Codex app-server protocol constant.
+	ClientRequestKindThreadUnsubscribe ClientRequestKind = "thread/unsubscribe"
+	// ClientRequestKindTurnInterrupt is a generated Codex app-server protocol constant.
+	ClientRequestKindTurnInterrupt ClientRequestKind = "turn/interrupt"
+	// ClientRequestKindTurnStart is a generated Codex app-server protocol constant.
+	ClientRequestKindTurnStart ClientRequestKind = "turn/start"
+	// ClientRequestKindTurnSteer is a generated Codex app-server protocol constant.
+	ClientRequestKindTurnSteer ClientRequestKind = "turn/steer"
+	// ClientRequestKindWindowsSandboxReadiness is a generated Codex app-server protocol constant.
+	ClientRequestKindWindowsSandboxReadiness ClientRequestKind = "windowsSandbox/readiness"
+	// ClientRequestKindWindowsSandboxSetupStart is a generated Codex app-server protocol constant.
+	ClientRequestKindWindowsSandboxSetupStart ClientRequestKind = "windowsSandbox/setupStart"
 )
 
 // ClientRequest preserves the complete JSON payload for a discriminated union.
@@ -300,6 +396,7 @@ func NewClientRequest(value any) (ClientRequest, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ClientRequest) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "method")
 	if err != nil {
@@ -660,6 +757,7 @@ func (value *ClientRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ClientRequest) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -861,10 +959,14 @@ func (value ClientRequest) IsKnown() bool {
 type CommandActionKind string
 
 const (
+	// CommandActionKindListFiles is a generated Codex app-server protocol constant.
 	CommandActionKindListFiles CommandActionKind = "listFiles"
-	CommandActionKindRead      CommandActionKind = "read"
-	CommandActionKindSearch    CommandActionKind = "search"
-	CommandActionKindUnknown   CommandActionKind = "unknown"
+	// CommandActionKindRead is a generated Codex app-server protocol constant.
+	CommandActionKindRead CommandActionKind = "read"
+	// CommandActionKindSearch is a generated Codex app-server protocol constant.
+	CommandActionKindSearch CommandActionKind = "search"
+	// CommandActionKindUnknown is a generated Codex app-server protocol constant.
+	CommandActionKindUnknown CommandActionKind = "unknown"
 )
 
 // CommandAction preserves the complete JSON payload for a discriminated union.
@@ -884,6 +986,7 @@ func NewCommandAction(value any) (CommandAction, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *CommandAction) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -912,6 +1015,7 @@ func (value *CommandAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value CommandAction) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -947,14 +1051,22 @@ func (value CommandAction) IsKnown() bool {
 type ConfigLayerSourceKind string
 
 const (
-	ConfigLayerSourceKindEnterpriseManaged               ConfigLayerSourceKind = "enterpriseManaged"
+	// ConfigLayerSourceKindEnterpriseManaged is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindEnterpriseManaged ConfigLayerSourceKind = "enterpriseManaged"
+	// ConfigLayerSourceKindLegacyManagedConfigTomlFromFile is a generated Codex app-server protocol constant.
 	ConfigLayerSourceKindLegacyManagedConfigTomlFromFile ConfigLayerSourceKind = "legacyManagedConfigTomlFromFile"
-	ConfigLayerSourceKindLegacyManagedConfigTomlFromMdm  ConfigLayerSourceKind = "legacyManagedConfigTomlFromMdm"
-	ConfigLayerSourceKindMdm                             ConfigLayerSourceKind = "mdm"
-	ConfigLayerSourceKindProject                         ConfigLayerSourceKind = "project"
-	ConfigLayerSourceKindSessionFlags                    ConfigLayerSourceKind = "sessionFlags"
-	ConfigLayerSourceKindSystem                          ConfigLayerSourceKind = "system"
-	ConfigLayerSourceKindUser                            ConfigLayerSourceKind = "user"
+	// ConfigLayerSourceKindLegacyManagedConfigTomlFromMdm is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindLegacyManagedConfigTomlFromMdm ConfigLayerSourceKind = "legacyManagedConfigTomlFromMdm"
+	// ConfigLayerSourceKindMdm is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindMdm ConfigLayerSourceKind = "mdm"
+	// ConfigLayerSourceKindProject is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindProject ConfigLayerSourceKind = "project"
+	// ConfigLayerSourceKindSessionFlags is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindSessionFlags ConfigLayerSourceKind = "sessionFlags"
+	// ConfigLayerSourceKindSystem is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindSystem ConfigLayerSourceKind = "system"
+	// ConfigLayerSourceKindUser is a generated Codex app-server protocol constant.
+	ConfigLayerSourceKindUser ConfigLayerSourceKind = "user"
 )
 
 // ConfigLayerSource preserves the complete JSON payload for a discriminated union.
@@ -974,6 +1086,7 @@ func NewConfigLayerSource(value any) (ConfigLayerSource, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ConfigLayerSource) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1018,6 +1131,7 @@ func (value *ConfigLayerSource) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ConfigLayerSource) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1061,9 +1175,12 @@ func (value ConfigLayerSource) IsKnown() bool {
 type ConfiguredHookHandlerKind string
 
 const (
-	ConfiguredHookHandlerKindAgent   ConfiguredHookHandlerKind = "agent"
+	// ConfiguredHookHandlerKindAgent is a generated Codex app-server protocol constant.
+	ConfiguredHookHandlerKindAgent ConfiguredHookHandlerKind = "agent"
+	// ConfiguredHookHandlerKindCommand is a generated Codex app-server protocol constant.
 	ConfiguredHookHandlerKindCommand ConfiguredHookHandlerKind = "command"
-	ConfiguredHookHandlerKindPrompt  ConfiguredHookHandlerKind = "prompt"
+	// ConfiguredHookHandlerKindPrompt is a generated Codex app-server protocol constant.
+	ConfiguredHookHandlerKindPrompt ConfiguredHookHandlerKind = "prompt"
 )
 
 // ConfiguredHookHandler preserves the complete JSON payload for a discriminated union.
@@ -1083,6 +1200,7 @@ func NewConfiguredHookHandler(value any) (ConfiguredHookHandler, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ConfiguredHookHandler) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1107,6 +1225,7 @@ func (value *ConfiguredHookHandler) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ConfiguredHookHandler) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1140,8 +1259,11 @@ func (value ConfiguredHookHandler) IsKnown() bool {
 type ContentItemKind string
 
 const (
+	// ContentItemKindInputImage is a generated Codex app-server protocol constant.
 	ContentItemKindInputImage ContentItemKind = "input_image"
-	ContentItemKindInputText  ContentItemKind = "input_text"
+	// ContentItemKindInputText is a generated Codex app-server protocol constant.
+	ContentItemKindInputText ContentItemKind = "input_text"
+	// ContentItemKindOutputText is a generated Codex app-server protocol constant.
 	ContentItemKindOutputText ContentItemKind = "output_text"
 )
 
@@ -1162,6 +1284,7 @@ func NewContentItem(value any) (ContentItem, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ContentItem) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1186,6 +1309,7 @@ func (value *ContentItem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ContentItem) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1217,8 +1341,10 @@ func (value ContentItem) IsKnown() bool {
 type DynamicToolCallOutputContentItemKind string
 
 const (
+	// DynamicToolCallOutputContentItemKindInputImage is a generated Codex app-server protocol constant.
 	DynamicToolCallOutputContentItemKindInputImage DynamicToolCallOutputContentItemKind = "inputImage"
-	DynamicToolCallOutputContentItemKindInputText  DynamicToolCallOutputContentItemKind = "inputText"
+	// DynamicToolCallOutputContentItemKindInputText is a generated Codex app-server protocol constant.
+	DynamicToolCallOutputContentItemKindInputText DynamicToolCallOutputContentItemKind = "inputText"
 )
 
 // DynamicToolCallOutputContentItem preserves the complete JSON payload for a discriminated union.
@@ -1238,6 +1364,7 @@ func NewDynamicToolCallOutputContentItem(value any) (DynamicToolCallOutputConten
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *DynamicToolCallOutputContentItem) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1258,6 +1385,7 @@ func (value *DynamicToolCallOutputContentItem) UnmarshalJSON(data []byte) error 
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value DynamicToolCallOutputContentItem) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1291,7 +1419,9 @@ func (value DynamicToolCallOutputContentItem) IsKnown() bool {
 type DynamicToolSpecKind string
 
 const (
-	DynamicToolSpecKindFunction  DynamicToolSpecKind = "function"
+	// DynamicToolSpecKindFunction is a generated Codex app-server protocol constant.
+	DynamicToolSpecKindFunction DynamicToolSpecKind = "function"
+	// DynamicToolSpecKindNamespace is a generated Codex app-server protocol constant.
 	DynamicToolSpecKindNamespace DynamicToolSpecKind = "namespace"
 )
 
@@ -1312,6 +1442,7 @@ func NewDynamicToolSpec(value any) (DynamicToolSpec, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *DynamicToolSpec) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1332,6 +1463,7 @@ func (value *DynamicToolSpec) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value DynamicToolSpec) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1363,8 +1495,11 @@ func (value DynamicToolSpec) IsKnown() bool {
 type FileChangeKind string
 
 const (
-	FileChangeKindAdd    FileChangeKind = "add"
+	// FileChangeKindAdd is a generated Codex app-server protocol constant.
+	FileChangeKindAdd FileChangeKind = "add"
+	// FileChangeKindDelete is a generated Codex app-server protocol constant.
 	FileChangeKindDelete FileChangeKind = "delete"
+	// FileChangeKindUpdate is a generated Codex app-server protocol constant.
 	FileChangeKindUpdate FileChangeKind = "update"
 )
 
@@ -1385,6 +1520,7 @@ func NewFileChange(value any) (FileChange, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *FileChange) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1409,6 +1545,7 @@ func (value *FileChange) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value FileChange) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1440,9 +1577,12 @@ func (value FileChange) IsKnown() bool {
 type FileSystemPathKind string
 
 const (
+	// FileSystemPathKindGlobPattern is a generated Codex app-server protocol constant.
 	FileSystemPathKindGlobPattern FileSystemPathKind = "glob_pattern"
-	FileSystemPathKindPath        FileSystemPathKind = "path"
-	FileSystemPathKindSpecial     FileSystemPathKind = "special"
+	// FileSystemPathKindPath is a generated Codex app-server protocol constant.
+	FileSystemPathKindPath FileSystemPathKind = "path"
+	// FileSystemPathKindSpecial is a generated Codex app-server protocol constant.
+	FileSystemPathKindSpecial FileSystemPathKind = "special"
 )
 
 // FileSystemPath preserves the complete JSON payload for a discriminated union.
@@ -1462,6 +1602,7 @@ func NewFileSystemPath(value any) (FileSystemPath, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *FileSystemPath) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1486,6 +1627,7 @@ func (value *FileSystemPath) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value FileSystemPath) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1519,12 +1661,18 @@ func (value FileSystemPath) IsKnown() bool {
 type FileSystemSpecialPathKind string
 
 const (
-	FileSystemSpecialPathKindMinimal      FileSystemSpecialPathKind = "minimal"
+	// FileSystemSpecialPathKindMinimal is a generated Codex app-server protocol constant.
+	FileSystemSpecialPathKindMinimal FileSystemSpecialPathKind = "minimal"
+	// FileSystemSpecialPathKindProjectRoots is a generated Codex app-server protocol constant.
 	FileSystemSpecialPathKindProjectRoots FileSystemSpecialPathKind = "project_roots"
-	FileSystemSpecialPathKindRoot         FileSystemSpecialPathKind = "root"
-	FileSystemSpecialPathKindSlashTmp     FileSystemSpecialPathKind = "slash_tmp"
-	FileSystemSpecialPathKindTmpdir       FileSystemSpecialPathKind = "tmpdir"
-	FileSystemSpecialPathKindUnknown      FileSystemSpecialPathKind = "unknown"
+	// FileSystemSpecialPathKindRoot is a generated Codex app-server protocol constant.
+	FileSystemSpecialPathKindRoot FileSystemSpecialPathKind = "root"
+	// FileSystemSpecialPathKindSlashTmp is a generated Codex app-server protocol constant.
+	FileSystemSpecialPathKindSlashTmp FileSystemSpecialPathKind = "slash_tmp"
+	// FileSystemSpecialPathKindTmpdir is a generated Codex app-server protocol constant.
+	FileSystemSpecialPathKindTmpdir FileSystemSpecialPathKind = "tmpdir"
+	// FileSystemSpecialPathKindUnknown is a generated Codex app-server protocol constant.
+	FileSystemSpecialPathKindUnknown FileSystemSpecialPathKind = "unknown"
 )
 
 // FileSystemSpecialPath preserves the complete JSON payload for a discriminated union.
@@ -1544,6 +1692,7 @@ func NewFileSystemSpecialPath(value any) (FileSystemSpecialPath, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *FileSystemSpecialPath) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "kind")
 	if err != nil {
@@ -1580,6 +1729,7 @@ func (value *FileSystemSpecialPath) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value FileSystemSpecialPath) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1619,9 +1769,12 @@ func (value FileSystemSpecialPath) IsKnown() bool {
 type FunctionCallOutputContentItemKind string
 
 const (
+	// FunctionCallOutputContentItemKindEncryptedContent is a generated Codex app-server protocol constant.
 	FunctionCallOutputContentItemKindEncryptedContent FunctionCallOutputContentItemKind = "encrypted_content"
-	FunctionCallOutputContentItemKindInputImage       FunctionCallOutputContentItemKind = "input_image"
-	FunctionCallOutputContentItemKindInputText        FunctionCallOutputContentItemKind = "input_text"
+	// FunctionCallOutputContentItemKindInputImage is a generated Codex app-server protocol constant.
+	FunctionCallOutputContentItemKindInputImage FunctionCallOutputContentItemKind = "input_image"
+	// FunctionCallOutputContentItemKindInputText is a generated Codex app-server protocol constant.
+	FunctionCallOutputContentItemKindInputText FunctionCallOutputContentItemKind = "input_text"
 )
 
 // FunctionCallOutputContentItem preserves the complete JSON payload for a discriminated union.
@@ -1641,6 +1794,7 @@ func NewFunctionCallOutputContentItem(value any) (FunctionCallOutputContentItem,
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *FunctionCallOutputContentItem) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1665,6 +1819,7 @@ func (value *FunctionCallOutputContentItem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value FunctionCallOutputContentItem) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1700,11 +1855,17 @@ func (value FunctionCallOutputContentItem) IsKnown() bool {
 type GuardianApprovalReviewActionKind string
 
 const (
-	GuardianApprovalReviewActionKindApplyPatch         GuardianApprovalReviewActionKind = "applyPatch"
-	GuardianApprovalReviewActionKindCommand            GuardianApprovalReviewActionKind = "command"
-	GuardianApprovalReviewActionKindExecve             GuardianApprovalReviewActionKind = "execve"
-	GuardianApprovalReviewActionKindMCPToolCall        GuardianApprovalReviewActionKind = "mcpToolCall"
-	GuardianApprovalReviewActionKindNetworkAccess      GuardianApprovalReviewActionKind = "networkAccess"
+	// GuardianApprovalReviewActionKindApplyPatch is a generated Codex app-server protocol constant.
+	GuardianApprovalReviewActionKindApplyPatch GuardianApprovalReviewActionKind = "applyPatch"
+	// GuardianApprovalReviewActionKindCommand is a generated Codex app-server protocol constant.
+	GuardianApprovalReviewActionKindCommand GuardianApprovalReviewActionKind = "command"
+	// GuardianApprovalReviewActionKindExecve is a generated Codex app-server protocol constant.
+	GuardianApprovalReviewActionKindExecve GuardianApprovalReviewActionKind = "execve"
+	// GuardianApprovalReviewActionKindMCPToolCall is a generated Codex app-server protocol constant.
+	GuardianApprovalReviewActionKindMCPToolCall GuardianApprovalReviewActionKind = "mcpToolCall"
+	// GuardianApprovalReviewActionKindNetworkAccess is a generated Codex app-server protocol constant.
+	GuardianApprovalReviewActionKindNetworkAccess GuardianApprovalReviewActionKind = "networkAccess"
+	// GuardianApprovalReviewActionKindRequestPermissions is a generated Codex app-server protocol constant.
 	GuardianApprovalReviewActionKindRequestPermissions GuardianApprovalReviewActionKind = "requestPermissions"
 )
 
@@ -1725,6 +1886,7 @@ func NewGuardianApprovalReviewAction(value any) (GuardianApprovalReviewAction, e
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *GuardianApprovalReviewAction) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1761,6 +1923,7 @@ func (value *GuardianApprovalReviewAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value GuardianApprovalReviewAction) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1800,9 +1963,13 @@ func (value GuardianApprovalReviewAction) IsKnown() bool {
 type LoginAccountParamsKind string
 
 const (
-	LoginAccountParamsKindApiKey            LoginAccountParamsKind = "apiKey"
-	LoginAccountParamsKindChatgpt           LoginAccountParamsKind = "chatgpt"
+	// LoginAccountParamsKindApiKey is a generated Codex app-server protocol constant.
+	LoginAccountParamsKindApiKey LoginAccountParamsKind = "apiKey"
+	// LoginAccountParamsKindChatgpt is a generated Codex app-server protocol constant.
+	LoginAccountParamsKindChatgpt LoginAccountParamsKind = "chatgpt"
+	// LoginAccountParamsKindChatgptAuthTokens is a generated Codex app-server protocol constant.
 	LoginAccountParamsKindChatgptAuthTokens LoginAccountParamsKind = "chatgptAuthTokens"
+	// LoginAccountParamsKindChatgptDeviceCode is a generated Codex app-server protocol constant.
 	LoginAccountParamsKindChatgptDeviceCode LoginAccountParamsKind = "chatgptDeviceCode"
 )
 
@@ -1823,6 +1990,7 @@ func NewLoginAccountParams(value any) (LoginAccountParams, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *LoginAccountParams) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1851,6 +2019,7 @@ func (value *LoginAccountParams) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value LoginAccountParams) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1886,9 +2055,13 @@ func (value LoginAccountParams) IsKnown() bool {
 type LoginAccountResponseKind string
 
 const (
-	LoginAccountResponseKindApiKey            LoginAccountResponseKind = "apiKey"
-	LoginAccountResponseKindChatgpt           LoginAccountResponseKind = "chatgpt"
+	// LoginAccountResponseKindApiKey is a generated Codex app-server protocol constant.
+	LoginAccountResponseKindApiKey LoginAccountResponseKind = "apiKey"
+	// LoginAccountResponseKindChatgpt is a generated Codex app-server protocol constant.
+	LoginAccountResponseKindChatgpt LoginAccountResponseKind = "chatgpt"
+	// LoginAccountResponseKindChatgptAuthTokens is a generated Codex app-server protocol constant.
 	LoginAccountResponseKindChatgptAuthTokens LoginAccountResponseKind = "chatgptAuthTokens"
+	// LoginAccountResponseKindChatgptDeviceCode is a generated Codex app-server protocol constant.
 	LoginAccountResponseKindChatgptDeviceCode LoginAccountResponseKind = "chatgptDeviceCode"
 )
 
@@ -1909,6 +2082,7 @@ func NewLoginAccountResponse(value any) (LoginAccountResponse, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *LoginAccountResponse) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -1937,6 +2111,7 @@ func (value *LoginAccountResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value LoginAccountResponse) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -1972,10 +2147,14 @@ func (value LoginAccountResponse) IsKnown() bool {
 type ParsedCommandKind string
 
 const (
+	// ParsedCommandKindListFiles is a generated Codex app-server protocol constant.
 	ParsedCommandKindListFiles ParsedCommandKind = "list_files"
-	ParsedCommandKindRead      ParsedCommandKind = "read"
-	ParsedCommandKindSearch    ParsedCommandKind = "search"
-	ParsedCommandKindUnknown   ParsedCommandKind = "unknown"
+	// ParsedCommandKindRead is a generated Codex app-server protocol constant.
+	ParsedCommandKindRead ParsedCommandKind = "read"
+	// ParsedCommandKindSearch is a generated Codex app-server protocol constant.
+	ParsedCommandKindSearch ParsedCommandKind = "search"
+	// ParsedCommandKindUnknown is a generated Codex app-server protocol constant.
+	ParsedCommandKindUnknown ParsedCommandKind = "unknown"
 )
 
 // ParsedCommand preserves the complete JSON payload for a discriminated union.
@@ -1995,6 +2174,7 @@ func NewParsedCommand(value any) (ParsedCommand, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ParsedCommand) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2023,6 +2203,7 @@ func (value *ParsedCommand) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ParsedCommand) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2058,8 +2239,11 @@ func (value ParsedCommand) IsKnown() bool {
 type PatchChangeKindKind string
 
 const (
-	PatchChangeKindKindAdd    PatchChangeKindKind = "add"
+	// PatchChangeKindKindAdd is a generated Codex app-server protocol constant.
+	PatchChangeKindKindAdd PatchChangeKindKind = "add"
+	// PatchChangeKindKindDelete is a generated Codex app-server protocol constant.
 	PatchChangeKindKindDelete PatchChangeKindKind = "delete"
+	// PatchChangeKindKindUpdate is a generated Codex app-server protocol constant.
 	PatchChangeKindKindUpdate PatchChangeKindKind = "update"
 )
 
@@ -2080,6 +2264,7 @@ func NewPatchChangeKind(value any) (PatchChangeKind, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *PatchChangeKind) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2104,6 +2289,7 @@ func (value *PatchChangeKind) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value PatchChangeKind) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2137,9 +2323,13 @@ func (value PatchChangeKind) IsKnown() bool {
 type PluginSourceKind string
 
 const (
-	PluginSourceKindGit    PluginSourceKind = "git"
-	PluginSourceKindLocal  PluginSourceKind = "local"
-	PluginSourceKindNpm    PluginSourceKind = "npm"
+	// PluginSourceKindGit is a generated Codex app-server protocol constant.
+	PluginSourceKindGit PluginSourceKind = "git"
+	// PluginSourceKindLocal is a generated Codex app-server protocol constant.
+	PluginSourceKindLocal PluginSourceKind = "local"
+	// PluginSourceKindNpm is a generated Codex app-server protocol constant.
+	PluginSourceKindNpm PluginSourceKind = "npm"
+	// PluginSourceKindRemote is a generated Codex app-server protocol constant.
 	PluginSourceKindRemote PluginSourceKind = "remote"
 )
 
@@ -2160,6 +2350,7 @@ func NewPluginSource(value any) (PluginSource, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *PluginSource) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2188,6 +2379,7 @@ func (value *PluginSource) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value PluginSource) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2223,8 +2415,10 @@ func (value PluginSource) IsKnown() bool {
 type ReasoningItemContentKind string
 
 const (
+	// ReasoningItemContentKindReasoningText is a generated Codex app-server protocol constant.
 	ReasoningItemContentKindReasoningText ReasoningItemContentKind = "reasoning_text"
-	ReasoningItemContentKindText          ReasoningItemContentKind = "text"
+	// ReasoningItemContentKindText is a generated Codex app-server protocol constant.
+	ReasoningItemContentKindText ReasoningItemContentKind = "text"
 )
 
 // ReasoningItemContent preserves the complete JSON payload for a discriminated union.
@@ -2244,6 +2438,7 @@ func NewReasoningItemContent(value any) (ReasoningItemContent, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ReasoningItemContent) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2264,6 +2459,7 @@ func (value *ReasoningItemContent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ReasoningItemContent) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2295,22 +2491,38 @@ func (value ReasoningItemContent) IsKnown() bool {
 type ResponseItemKind string
 
 const (
-	ResponseItemKindAgentMessage         ResponseItemKind = "agent_message"
-	ResponseItemKindCompaction           ResponseItemKind = "compaction"
-	ResponseItemKindCompactionTrigger    ResponseItemKind = "compaction_trigger"
-	ResponseItemKindContextCompaction    ResponseItemKind = "context_compaction"
-	ResponseItemKindCustomToolCall       ResponseItemKind = "custom_tool_call"
+	// ResponseItemKindAgentMessage is a generated Codex app-server protocol constant.
+	ResponseItemKindAgentMessage ResponseItemKind = "agent_message"
+	// ResponseItemKindCompaction is a generated Codex app-server protocol constant.
+	ResponseItemKindCompaction ResponseItemKind = "compaction"
+	// ResponseItemKindCompactionTrigger is a generated Codex app-server protocol constant.
+	ResponseItemKindCompactionTrigger ResponseItemKind = "compaction_trigger"
+	// ResponseItemKindContextCompaction is a generated Codex app-server protocol constant.
+	ResponseItemKindContextCompaction ResponseItemKind = "context_compaction"
+	// ResponseItemKindCustomToolCall is a generated Codex app-server protocol constant.
+	ResponseItemKindCustomToolCall ResponseItemKind = "custom_tool_call"
+	// ResponseItemKindCustomToolCallOutput is a generated Codex app-server protocol constant.
 	ResponseItemKindCustomToolCallOutput ResponseItemKind = "custom_tool_call_output"
-	ResponseItemKindFunctionCall         ResponseItemKind = "function_call"
-	ResponseItemKindFunctionCallOutput   ResponseItemKind = "function_call_output"
-	ResponseItemKindImageGenerationCall  ResponseItemKind = "image_generation_call"
-	ResponseItemKindLocalShellCall       ResponseItemKind = "local_shell_call"
-	ResponseItemKindMessage              ResponseItemKind = "message"
-	ResponseItemKindOther                ResponseItemKind = "other"
-	ResponseItemKindReasoning            ResponseItemKind = "reasoning"
-	ResponseItemKindToolSearchCall       ResponseItemKind = "tool_search_call"
-	ResponseItemKindToolSearchOutput     ResponseItemKind = "tool_search_output"
-	ResponseItemKindWebSearchCall        ResponseItemKind = "web_search_call"
+	// ResponseItemKindFunctionCall is a generated Codex app-server protocol constant.
+	ResponseItemKindFunctionCall ResponseItemKind = "function_call"
+	// ResponseItemKindFunctionCallOutput is a generated Codex app-server protocol constant.
+	ResponseItemKindFunctionCallOutput ResponseItemKind = "function_call_output"
+	// ResponseItemKindImageGenerationCall is a generated Codex app-server protocol constant.
+	ResponseItemKindImageGenerationCall ResponseItemKind = "image_generation_call"
+	// ResponseItemKindLocalShellCall is a generated Codex app-server protocol constant.
+	ResponseItemKindLocalShellCall ResponseItemKind = "local_shell_call"
+	// ResponseItemKindMessage is a generated Codex app-server protocol constant.
+	ResponseItemKindMessage ResponseItemKind = "message"
+	// ResponseItemKindOther is a generated Codex app-server protocol constant.
+	ResponseItemKindOther ResponseItemKind = "other"
+	// ResponseItemKindReasoning is a generated Codex app-server protocol constant.
+	ResponseItemKindReasoning ResponseItemKind = "reasoning"
+	// ResponseItemKindToolSearchCall is a generated Codex app-server protocol constant.
+	ResponseItemKindToolSearchCall ResponseItemKind = "tool_search_call"
+	// ResponseItemKindToolSearchOutput is a generated Codex app-server protocol constant.
+	ResponseItemKindToolSearchOutput ResponseItemKind = "tool_search_output"
+	// ResponseItemKindWebSearchCall is a generated Codex app-server protocol constant.
+	ResponseItemKindWebSearchCall ResponseItemKind = "web_search_call"
 )
 
 // ResponseItem preserves the complete JSON payload for a discriminated union.
@@ -2330,6 +2542,7 @@ func NewResponseItem(value any) (ResponseItem, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ResponseItem) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2406,6 +2619,7 @@ func (value *ResponseItem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ResponseItem) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2465,10 +2679,14 @@ func (value ResponseItem) IsKnown() bool {
 type ResponsesApiWebSearchActionKind string
 
 const (
+	// ResponsesApiWebSearchActionKindFindInPage is a generated Codex app-server protocol constant.
 	ResponsesApiWebSearchActionKindFindInPage ResponsesApiWebSearchActionKind = "find_in_page"
-	ResponsesApiWebSearchActionKindOpenPage   ResponsesApiWebSearchActionKind = "open_page"
-	ResponsesApiWebSearchActionKindOther      ResponsesApiWebSearchActionKind = "other"
-	ResponsesApiWebSearchActionKindSearch     ResponsesApiWebSearchActionKind = "search"
+	// ResponsesApiWebSearchActionKindOpenPage is a generated Codex app-server protocol constant.
+	ResponsesApiWebSearchActionKindOpenPage ResponsesApiWebSearchActionKind = "open_page"
+	// ResponsesApiWebSearchActionKindOther is a generated Codex app-server protocol constant.
+	ResponsesApiWebSearchActionKindOther ResponsesApiWebSearchActionKind = "other"
+	// ResponsesApiWebSearchActionKindSearch is a generated Codex app-server protocol constant.
+	ResponsesApiWebSearchActionKindSearch ResponsesApiWebSearchActionKind = "search"
 )
 
 // ResponsesApiWebSearchAction preserves the complete JSON payload for a discriminated union.
@@ -2488,6 +2706,7 @@ func NewResponsesApiWebSearchAction(value any) (ResponsesApiWebSearchAction, err
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ResponsesApiWebSearchAction) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2516,6 +2735,7 @@ func (value *ResponsesApiWebSearchAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ResponsesApiWebSearchAction) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2551,9 +2771,13 @@ func (value ResponsesApiWebSearchAction) IsKnown() bool {
 type ReviewTargetKind string
 
 const (
-	ReviewTargetKindBaseBranch         ReviewTargetKind = "baseBranch"
-	ReviewTargetKindCommit             ReviewTargetKind = "commit"
-	ReviewTargetKindCustom             ReviewTargetKind = "custom"
+	// ReviewTargetKindBaseBranch is a generated Codex app-server protocol constant.
+	ReviewTargetKindBaseBranch ReviewTargetKind = "baseBranch"
+	// ReviewTargetKindCommit is a generated Codex app-server protocol constant.
+	ReviewTargetKindCommit ReviewTargetKind = "commit"
+	// ReviewTargetKindCustom is a generated Codex app-server protocol constant.
+	ReviewTargetKindCustom ReviewTargetKind = "custom"
+	// ReviewTargetKindUncommittedChanges is a generated Codex app-server protocol constant.
 	ReviewTargetKindUncommittedChanges ReviewTargetKind = "uncommittedChanges"
 )
 
@@ -2574,6 +2798,7 @@ func NewReviewTarget(value any) (ReviewTarget, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ReviewTarget) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2602,6 +2827,7 @@ func (value *ReviewTarget) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ReviewTarget) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2637,10 +2863,14 @@ func (value ReviewTarget) IsKnown() bool {
 type SandboxPolicyKind string
 
 const (
+	// SandboxPolicyKindDangerFullAccess is a generated Codex app-server protocol constant.
 	SandboxPolicyKindDangerFullAccess SandboxPolicyKind = "dangerFullAccess"
-	SandboxPolicyKindExternalSandbox  SandboxPolicyKind = "externalSandbox"
-	SandboxPolicyKindReadOnly         SandboxPolicyKind = "readOnly"
-	SandboxPolicyKindWorkspaceWrite   SandboxPolicyKind = "workspaceWrite"
+	// SandboxPolicyKindExternalSandbox is a generated Codex app-server protocol constant.
+	SandboxPolicyKindExternalSandbox SandboxPolicyKind = "externalSandbox"
+	// SandboxPolicyKindReadOnly is a generated Codex app-server protocol constant.
+	SandboxPolicyKindReadOnly SandboxPolicyKind = "readOnly"
+	// SandboxPolicyKindWorkspaceWrite is a generated Codex app-server protocol constant.
+	SandboxPolicyKindWorkspaceWrite SandboxPolicyKind = "workspaceWrite"
 )
 
 // SandboxPolicy preserves the complete JSON payload for a discriminated union.
@@ -2660,6 +2890,7 @@ func NewSandboxPolicy(value any) (SandboxPolicy, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *SandboxPolicy) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -2688,6 +2919,7 @@ func (value *SandboxPolicy) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value SandboxPolicy) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -2723,74 +2955,142 @@ func (value SandboxPolicy) IsKnown() bool {
 type ServerNotificationKind string
 
 const (
-	ServerNotificationKindAccountLoginCompleted                   ServerNotificationKind = "account/login/completed"
-	ServerNotificationKindAccountRateLimitsUpdated                ServerNotificationKind = "account/rateLimits/updated"
-	ServerNotificationKindAccountUpdated                          ServerNotificationKind = "account/updated"
-	ServerNotificationKindAppListUpdated                          ServerNotificationKind = "app/list/updated"
-	ServerNotificationKindCommandExecOutputDelta                  ServerNotificationKind = "command/exec/outputDelta"
-	ServerNotificationKindConfigWarning                           ServerNotificationKind = "configWarning"
-	ServerNotificationKindDeprecationNotice                       ServerNotificationKind = "deprecationNotice"
-	ServerNotificationKindError                                   ServerNotificationKind = "error"
-	ServerNotificationKindExternalAgentConfigImportCompleted      ServerNotificationKind = "externalAgentConfig/import/completed"
-	ServerNotificationKindExternalAgentConfigImportProgress       ServerNotificationKind = "externalAgentConfig/import/progress"
-	ServerNotificationKindFsChanged                               ServerNotificationKind = "fs/changed"
-	ServerNotificationKindFuzzyFileSearchSessionCompleted         ServerNotificationKind = "fuzzyFileSearch/sessionCompleted"
-	ServerNotificationKindFuzzyFileSearchSessionUpdated           ServerNotificationKind = "fuzzyFileSearch/sessionUpdated"
-	ServerNotificationKindGuardianWarning                         ServerNotificationKind = "guardianWarning"
-	ServerNotificationKindHookCompleted                           ServerNotificationKind = "hook/completed"
-	ServerNotificationKindHookStarted                             ServerNotificationKind = "hook/started"
-	ServerNotificationKindItemAgentMessageDelta                   ServerNotificationKind = "item/agentMessage/delta"
-	ServerNotificationKindItemAutoApprovalReviewCompleted         ServerNotificationKind = "item/autoApprovalReview/completed"
-	ServerNotificationKindItemAutoApprovalReviewStarted           ServerNotificationKind = "item/autoApprovalReview/started"
-	ServerNotificationKindItemCommandExecutionOutputDelta         ServerNotificationKind = "item/commandExecution/outputDelta"
+	// ServerNotificationKindAccountLoginCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindAccountLoginCompleted ServerNotificationKind = "account/login/completed"
+	// ServerNotificationKindAccountRateLimitsUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindAccountRateLimitsUpdated ServerNotificationKind = "account/rateLimits/updated"
+	// ServerNotificationKindAccountUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindAccountUpdated ServerNotificationKind = "account/updated"
+	// ServerNotificationKindAppListUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindAppListUpdated ServerNotificationKind = "app/list/updated"
+	// ServerNotificationKindCommandExecOutputDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindCommandExecOutputDelta ServerNotificationKind = "command/exec/outputDelta"
+	// ServerNotificationKindConfigWarning is a generated Codex app-server protocol constant.
+	ServerNotificationKindConfigWarning ServerNotificationKind = "configWarning"
+	// ServerNotificationKindDeprecationNotice is a generated Codex app-server protocol constant.
+	ServerNotificationKindDeprecationNotice ServerNotificationKind = "deprecationNotice"
+	// ServerNotificationKindError is a generated Codex app-server protocol constant.
+	ServerNotificationKindError ServerNotificationKind = "error"
+	// ServerNotificationKindExternalAgentConfigImportCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindExternalAgentConfigImportCompleted ServerNotificationKind = "externalAgentConfig/import/completed"
+	// ServerNotificationKindExternalAgentConfigImportProgress is a generated Codex app-server protocol constant.
+	ServerNotificationKindExternalAgentConfigImportProgress ServerNotificationKind = "externalAgentConfig/import/progress"
+	// ServerNotificationKindFsChanged is a generated Codex app-server protocol constant.
+	ServerNotificationKindFsChanged ServerNotificationKind = "fs/changed"
+	// ServerNotificationKindFuzzyFileSearchSessionCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindFuzzyFileSearchSessionCompleted ServerNotificationKind = "fuzzyFileSearch/sessionCompleted"
+	// ServerNotificationKindFuzzyFileSearchSessionUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindFuzzyFileSearchSessionUpdated ServerNotificationKind = "fuzzyFileSearch/sessionUpdated"
+	// ServerNotificationKindGuardianWarning is a generated Codex app-server protocol constant.
+	ServerNotificationKindGuardianWarning ServerNotificationKind = "guardianWarning"
+	// ServerNotificationKindHookCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindHookCompleted ServerNotificationKind = "hook/completed"
+	// ServerNotificationKindHookStarted is a generated Codex app-server protocol constant.
+	ServerNotificationKindHookStarted ServerNotificationKind = "hook/started"
+	// ServerNotificationKindItemAgentMessageDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemAgentMessageDelta ServerNotificationKind = "item/agentMessage/delta"
+	// ServerNotificationKindItemAutoApprovalReviewCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemAutoApprovalReviewCompleted ServerNotificationKind = "item/autoApprovalReview/completed"
+	// ServerNotificationKindItemAutoApprovalReviewStarted is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemAutoApprovalReviewStarted ServerNotificationKind = "item/autoApprovalReview/started"
+	// ServerNotificationKindItemCommandExecutionOutputDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemCommandExecutionOutputDelta ServerNotificationKind = "item/commandExecution/outputDelta"
+	// ServerNotificationKindItemCommandExecutionTerminalInteraction is a generated Codex app-server protocol constant.
 	ServerNotificationKindItemCommandExecutionTerminalInteraction ServerNotificationKind = "item/commandExecution/terminalInteraction"
-	ServerNotificationKindItemCompleted                           ServerNotificationKind = "item/completed"
-	ServerNotificationKindItemFileChangeOutputDelta               ServerNotificationKind = "item/fileChange/outputDelta"
-	ServerNotificationKindItemFileChangePatchUpdated              ServerNotificationKind = "item/fileChange/patchUpdated"
-	ServerNotificationKindItemMCPToolCallProgress                 ServerNotificationKind = "item/mcpToolCall/progress"
-	ServerNotificationKindItemPlanDelta                           ServerNotificationKind = "item/plan/delta"
-	ServerNotificationKindItemReasoningSummaryPartAdded           ServerNotificationKind = "item/reasoning/summaryPartAdded"
-	ServerNotificationKindItemReasoningSummaryTextDelta           ServerNotificationKind = "item/reasoning/summaryTextDelta"
-	ServerNotificationKindItemReasoningTextDelta                  ServerNotificationKind = "item/reasoning/textDelta"
-	ServerNotificationKindItemStarted                             ServerNotificationKind = "item/started"
-	ServerNotificationKindMCPServerOAuthLoginCompleted            ServerNotificationKind = "mcpServer/oauthLogin/completed"
-	ServerNotificationKindMCPServerStartupStatusUpdated           ServerNotificationKind = "mcpServer/startupStatus/updated"
-	ServerNotificationKindModelRerouted                           ServerNotificationKind = "model/rerouted"
-	ServerNotificationKindModelSafetyBufferingUpdated             ServerNotificationKind = "model/safetyBuffering/updated"
-	ServerNotificationKindModelVerification                       ServerNotificationKind = "model/verification"
-	ServerNotificationKindProcessExited                           ServerNotificationKind = "process/exited"
-	ServerNotificationKindProcessOutputDelta                      ServerNotificationKind = "process/outputDelta"
-	ServerNotificationKindRemoteControlStatusChanged              ServerNotificationKind = "remoteControl/status/changed"
-	ServerNotificationKindServerRequestResolved                   ServerNotificationKind = "serverRequest/resolved"
-	ServerNotificationKindSkillsChanged                           ServerNotificationKind = "skills/changed"
-	ServerNotificationKindThreadArchived                          ServerNotificationKind = "thread/archived"
-	ServerNotificationKindThreadClosed                            ServerNotificationKind = "thread/closed"
-	ServerNotificationKindThreadCompacted                         ServerNotificationKind = "thread/compacted"
-	ServerNotificationKindThreadDeleted                           ServerNotificationKind = "thread/deleted"
-	ServerNotificationKindThreadGoalCleared                       ServerNotificationKind = "thread/goal/cleared"
-	ServerNotificationKindThreadGoalUpdated                       ServerNotificationKind = "thread/goal/updated"
-	ServerNotificationKindThreadNameUpdated                       ServerNotificationKind = "thread/name/updated"
-	ServerNotificationKindThreadRealtimeClosed                    ServerNotificationKind = "thread/realtime/closed"
-	ServerNotificationKindThreadRealtimeError                     ServerNotificationKind = "thread/realtime/error"
-	ServerNotificationKindThreadRealtimeItemAdded                 ServerNotificationKind = "thread/realtime/itemAdded"
-	ServerNotificationKindThreadRealtimeOutputAudioDelta          ServerNotificationKind = "thread/realtime/outputAudio/delta"
-	ServerNotificationKindThreadRealtimeSdp                       ServerNotificationKind = "thread/realtime/sdp"
-	ServerNotificationKindThreadRealtimeStarted                   ServerNotificationKind = "thread/realtime/started"
-	ServerNotificationKindThreadRealtimeTranscriptDelta           ServerNotificationKind = "thread/realtime/transcript/delta"
-	ServerNotificationKindThreadRealtimeTranscriptDone            ServerNotificationKind = "thread/realtime/transcript/done"
-	ServerNotificationKindThreadSettingsUpdated                   ServerNotificationKind = "thread/settings/updated"
-	ServerNotificationKindThreadStarted                           ServerNotificationKind = "thread/started"
-	ServerNotificationKindThreadStatusChanged                     ServerNotificationKind = "thread/status/changed"
-	ServerNotificationKindThreadTokenUsageUpdated                 ServerNotificationKind = "thread/tokenUsage/updated"
-	ServerNotificationKindThreadUnarchived                        ServerNotificationKind = "thread/unarchived"
-	ServerNotificationKindTurnCompleted                           ServerNotificationKind = "turn/completed"
-	ServerNotificationKindTurnDiffUpdated                         ServerNotificationKind = "turn/diff/updated"
-	ServerNotificationKindTurnModerationMetadata                  ServerNotificationKind = "turn/moderationMetadata"
-	ServerNotificationKindTurnPlanUpdated                         ServerNotificationKind = "turn/plan/updated"
-	ServerNotificationKindTurnStarted                             ServerNotificationKind = "turn/started"
-	ServerNotificationKindWarning                                 ServerNotificationKind = "warning"
-	ServerNotificationKindWindowsWorldWritableWarning             ServerNotificationKind = "windows/worldWritableWarning"
-	ServerNotificationKindWindowsSandboxSetupCompleted            ServerNotificationKind = "windowsSandbox/setupCompleted"
+	// ServerNotificationKindItemCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemCompleted ServerNotificationKind = "item/completed"
+	// ServerNotificationKindItemFileChangeOutputDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemFileChangeOutputDelta ServerNotificationKind = "item/fileChange/outputDelta"
+	// ServerNotificationKindItemFileChangePatchUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemFileChangePatchUpdated ServerNotificationKind = "item/fileChange/patchUpdated"
+	// ServerNotificationKindItemMCPToolCallProgress is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemMCPToolCallProgress ServerNotificationKind = "item/mcpToolCall/progress"
+	// ServerNotificationKindItemPlanDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemPlanDelta ServerNotificationKind = "item/plan/delta"
+	// ServerNotificationKindItemReasoningSummaryPartAdded is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemReasoningSummaryPartAdded ServerNotificationKind = "item/reasoning/summaryPartAdded"
+	// ServerNotificationKindItemReasoningSummaryTextDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemReasoningSummaryTextDelta ServerNotificationKind = "item/reasoning/summaryTextDelta"
+	// ServerNotificationKindItemReasoningTextDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemReasoningTextDelta ServerNotificationKind = "item/reasoning/textDelta"
+	// ServerNotificationKindItemStarted is a generated Codex app-server protocol constant.
+	ServerNotificationKindItemStarted ServerNotificationKind = "item/started"
+	// ServerNotificationKindMCPServerOAuthLoginCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindMCPServerOAuthLoginCompleted ServerNotificationKind = "mcpServer/oauthLogin/completed"
+	// ServerNotificationKindMCPServerStartupStatusUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindMCPServerStartupStatusUpdated ServerNotificationKind = "mcpServer/startupStatus/updated"
+	// ServerNotificationKindModelRerouted is a generated Codex app-server protocol constant.
+	ServerNotificationKindModelRerouted ServerNotificationKind = "model/rerouted"
+	// ServerNotificationKindModelSafetyBufferingUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindModelSafetyBufferingUpdated ServerNotificationKind = "model/safetyBuffering/updated"
+	// ServerNotificationKindModelVerification is a generated Codex app-server protocol constant.
+	ServerNotificationKindModelVerification ServerNotificationKind = "model/verification"
+	// ServerNotificationKindProcessExited is a generated Codex app-server protocol constant.
+	ServerNotificationKindProcessExited ServerNotificationKind = "process/exited"
+	// ServerNotificationKindProcessOutputDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindProcessOutputDelta ServerNotificationKind = "process/outputDelta"
+	// ServerNotificationKindRemoteControlStatusChanged is a generated Codex app-server protocol constant.
+	ServerNotificationKindRemoteControlStatusChanged ServerNotificationKind = "remoteControl/status/changed"
+	// ServerNotificationKindServerRequestResolved is a generated Codex app-server protocol constant.
+	ServerNotificationKindServerRequestResolved ServerNotificationKind = "serverRequest/resolved"
+	// ServerNotificationKindSkillsChanged is a generated Codex app-server protocol constant.
+	ServerNotificationKindSkillsChanged ServerNotificationKind = "skills/changed"
+	// ServerNotificationKindThreadArchived is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadArchived ServerNotificationKind = "thread/archived"
+	// ServerNotificationKindThreadClosed is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadClosed ServerNotificationKind = "thread/closed"
+	// ServerNotificationKindThreadCompacted is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadCompacted ServerNotificationKind = "thread/compacted"
+	// ServerNotificationKindThreadDeleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadDeleted ServerNotificationKind = "thread/deleted"
+	// ServerNotificationKindThreadGoalCleared is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadGoalCleared ServerNotificationKind = "thread/goal/cleared"
+	// ServerNotificationKindThreadGoalUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadGoalUpdated ServerNotificationKind = "thread/goal/updated"
+	// ServerNotificationKindThreadNameUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadNameUpdated ServerNotificationKind = "thread/name/updated"
+	// ServerNotificationKindThreadRealtimeClosed is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeClosed ServerNotificationKind = "thread/realtime/closed"
+	// ServerNotificationKindThreadRealtimeError is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeError ServerNotificationKind = "thread/realtime/error"
+	// ServerNotificationKindThreadRealtimeItemAdded is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeItemAdded ServerNotificationKind = "thread/realtime/itemAdded"
+	// ServerNotificationKindThreadRealtimeOutputAudioDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeOutputAudioDelta ServerNotificationKind = "thread/realtime/outputAudio/delta"
+	// ServerNotificationKindThreadRealtimeSdp is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeSdp ServerNotificationKind = "thread/realtime/sdp"
+	// ServerNotificationKindThreadRealtimeStarted is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeStarted ServerNotificationKind = "thread/realtime/started"
+	// ServerNotificationKindThreadRealtimeTranscriptDelta is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeTranscriptDelta ServerNotificationKind = "thread/realtime/transcript/delta"
+	// ServerNotificationKindThreadRealtimeTranscriptDone is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadRealtimeTranscriptDone ServerNotificationKind = "thread/realtime/transcript/done"
+	// ServerNotificationKindThreadSettingsUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadSettingsUpdated ServerNotificationKind = "thread/settings/updated"
+	// ServerNotificationKindThreadStarted is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadStarted ServerNotificationKind = "thread/started"
+	// ServerNotificationKindThreadStatusChanged is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadStatusChanged ServerNotificationKind = "thread/status/changed"
+	// ServerNotificationKindThreadTokenUsageUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadTokenUsageUpdated ServerNotificationKind = "thread/tokenUsage/updated"
+	// ServerNotificationKindThreadUnarchived is a generated Codex app-server protocol constant.
+	ServerNotificationKindThreadUnarchived ServerNotificationKind = "thread/unarchived"
+	// ServerNotificationKindTurnCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindTurnCompleted ServerNotificationKind = "turn/completed"
+	// ServerNotificationKindTurnDiffUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindTurnDiffUpdated ServerNotificationKind = "turn/diff/updated"
+	// ServerNotificationKindTurnModerationMetadata is a generated Codex app-server protocol constant.
+	ServerNotificationKindTurnModerationMetadata ServerNotificationKind = "turn/moderationMetadata"
+	// ServerNotificationKindTurnPlanUpdated is a generated Codex app-server protocol constant.
+	ServerNotificationKindTurnPlanUpdated ServerNotificationKind = "turn/plan/updated"
+	// ServerNotificationKindTurnStarted is a generated Codex app-server protocol constant.
+	ServerNotificationKindTurnStarted ServerNotificationKind = "turn/started"
+	// ServerNotificationKindWarning is a generated Codex app-server protocol constant.
+	ServerNotificationKindWarning ServerNotificationKind = "warning"
+	// ServerNotificationKindWindowsWorldWritableWarning is a generated Codex app-server protocol constant.
+	ServerNotificationKindWindowsWorldWritableWarning ServerNotificationKind = "windows/worldWritableWarning"
+	// ServerNotificationKindWindowsSandboxSetupCompleted is a generated Codex app-server protocol constant.
+	ServerNotificationKindWindowsSandboxSetupCompleted ServerNotificationKind = "windowsSandbox/setupCompleted"
 )
 
 // ServerNotification preserves the complete JSON payload for a discriminated union.
@@ -2810,6 +3110,7 @@ func NewServerNotification(value any) (ServerNotification, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ServerNotification) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "method")
 	if err != nil {
@@ -3094,6 +3395,7 @@ func (value *ServerNotification) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ServerNotification) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -3257,16 +3559,26 @@ func (value ServerNotification) IsKnown() bool {
 type ServerRequestKind string
 
 const (
-	ServerRequestKindAccountChatgptAuthTokensRefresh     ServerRequestKind = "account/chatgptAuthTokens/refresh"
-	ServerRequestKindApplyPatchApproval                  ServerRequestKind = "applyPatchApproval"
-	ServerRequestKindAttestationGenerate                 ServerRequestKind = "attestation/generate"
-	ServerRequestKindExecCommandApproval                 ServerRequestKind = "execCommandApproval"
+	// ServerRequestKindAccountChatgptAuthTokensRefresh is a generated Codex app-server protocol constant.
+	ServerRequestKindAccountChatgptAuthTokensRefresh ServerRequestKind = "account/chatgptAuthTokens/refresh"
+	// ServerRequestKindApplyPatchApproval is a generated Codex app-server protocol constant.
+	ServerRequestKindApplyPatchApproval ServerRequestKind = "applyPatchApproval"
+	// ServerRequestKindAttestationGenerate is a generated Codex app-server protocol constant.
+	ServerRequestKindAttestationGenerate ServerRequestKind = "attestation/generate"
+	// ServerRequestKindExecCommandApproval is a generated Codex app-server protocol constant.
+	ServerRequestKindExecCommandApproval ServerRequestKind = "execCommandApproval"
+	// ServerRequestKindItemCommandExecutionRequestApproval is a generated Codex app-server protocol constant.
 	ServerRequestKindItemCommandExecutionRequestApproval ServerRequestKind = "item/commandExecution/requestApproval"
-	ServerRequestKindItemFileChangeRequestApproval       ServerRequestKind = "item/fileChange/requestApproval"
-	ServerRequestKindItemPermissionsRequestApproval      ServerRequestKind = "item/permissions/requestApproval"
-	ServerRequestKindItemToolCall                        ServerRequestKind = "item/tool/call"
-	ServerRequestKindItemToolRequestUserInput            ServerRequestKind = "item/tool/requestUserInput"
-	ServerRequestKindMCPServerElicitationRequest         ServerRequestKind = "mcpServer/elicitation/request"
+	// ServerRequestKindItemFileChangeRequestApproval is a generated Codex app-server protocol constant.
+	ServerRequestKindItemFileChangeRequestApproval ServerRequestKind = "item/fileChange/requestApproval"
+	// ServerRequestKindItemPermissionsRequestApproval is a generated Codex app-server protocol constant.
+	ServerRequestKindItemPermissionsRequestApproval ServerRequestKind = "item/permissions/requestApproval"
+	// ServerRequestKindItemToolCall is a generated Codex app-server protocol constant.
+	ServerRequestKindItemToolCall ServerRequestKind = "item/tool/call"
+	// ServerRequestKindItemToolRequestUserInput is a generated Codex app-server protocol constant.
+	ServerRequestKindItemToolRequestUserInput ServerRequestKind = "item/tool/requestUserInput"
+	// ServerRequestKindMCPServerElicitationRequest is a generated Codex app-server protocol constant.
+	ServerRequestKindMCPServerElicitationRequest ServerRequestKind = "mcpServer/elicitation/request"
 )
 
 // ServerRequest preserves the complete JSON payload for a discriminated union.
@@ -3286,6 +3598,7 @@ func NewServerRequest(value any) (ServerRequest, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ServerRequest) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "method")
 	if err != nil {
@@ -3338,6 +3651,7 @@ func (value *ServerRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ServerRequest) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -3385,24 +3699,42 @@ func (value ServerRequest) IsKnown() bool {
 type ThreadItemKind string
 
 const (
-	ThreadItemKindAgentMessage        ThreadItemKind = "agentMessage"
+	// ThreadItemKindAgentMessage is a generated Codex app-server protocol constant.
+	ThreadItemKindAgentMessage ThreadItemKind = "agentMessage"
+	// ThreadItemKindCollabAgentToolCall is a generated Codex app-server protocol constant.
 	ThreadItemKindCollabAgentToolCall ThreadItemKind = "collabAgentToolCall"
-	ThreadItemKindCommandExecution    ThreadItemKind = "commandExecution"
-	ThreadItemKindContextCompaction   ThreadItemKind = "contextCompaction"
-	ThreadItemKindDynamicToolCall     ThreadItemKind = "dynamicToolCall"
-	ThreadItemKindEnteredReviewMode   ThreadItemKind = "enteredReviewMode"
-	ThreadItemKindExitedReviewMode    ThreadItemKind = "exitedReviewMode"
-	ThreadItemKindFileChange          ThreadItemKind = "fileChange"
-	ThreadItemKindHookPrompt          ThreadItemKind = "hookPrompt"
-	ThreadItemKindImageGeneration     ThreadItemKind = "imageGeneration"
-	ThreadItemKindImageView           ThreadItemKind = "imageView"
-	ThreadItemKindMCPToolCall         ThreadItemKind = "mcpToolCall"
-	ThreadItemKindPlan                ThreadItemKind = "plan"
-	ThreadItemKindReasoning           ThreadItemKind = "reasoning"
-	ThreadItemKindSleep               ThreadItemKind = "sleep"
-	ThreadItemKindSubAgentActivity    ThreadItemKind = "subAgentActivity"
-	ThreadItemKindUserMessage         ThreadItemKind = "userMessage"
-	ThreadItemKindWebSearch           ThreadItemKind = "webSearch"
+	// ThreadItemKindCommandExecution is a generated Codex app-server protocol constant.
+	ThreadItemKindCommandExecution ThreadItemKind = "commandExecution"
+	// ThreadItemKindContextCompaction is a generated Codex app-server protocol constant.
+	ThreadItemKindContextCompaction ThreadItemKind = "contextCompaction"
+	// ThreadItemKindDynamicToolCall is a generated Codex app-server protocol constant.
+	ThreadItemKindDynamicToolCall ThreadItemKind = "dynamicToolCall"
+	// ThreadItemKindEnteredReviewMode is a generated Codex app-server protocol constant.
+	ThreadItemKindEnteredReviewMode ThreadItemKind = "enteredReviewMode"
+	// ThreadItemKindExitedReviewMode is a generated Codex app-server protocol constant.
+	ThreadItemKindExitedReviewMode ThreadItemKind = "exitedReviewMode"
+	// ThreadItemKindFileChange is a generated Codex app-server protocol constant.
+	ThreadItemKindFileChange ThreadItemKind = "fileChange"
+	// ThreadItemKindHookPrompt is a generated Codex app-server protocol constant.
+	ThreadItemKindHookPrompt ThreadItemKind = "hookPrompt"
+	// ThreadItemKindImageGeneration is a generated Codex app-server protocol constant.
+	ThreadItemKindImageGeneration ThreadItemKind = "imageGeneration"
+	// ThreadItemKindImageView is a generated Codex app-server protocol constant.
+	ThreadItemKindImageView ThreadItemKind = "imageView"
+	// ThreadItemKindMCPToolCall is a generated Codex app-server protocol constant.
+	ThreadItemKindMCPToolCall ThreadItemKind = "mcpToolCall"
+	// ThreadItemKindPlan is a generated Codex app-server protocol constant.
+	ThreadItemKindPlan ThreadItemKind = "plan"
+	// ThreadItemKindReasoning is a generated Codex app-server protocol constant.
+	ThreadItemKindReasoning ThreadItemKind = "reasoning"
+	// ThreadItemKindSleep is a generated Codex app-server protocol constant.
+	ThreadItemKindSleep ThreadItemKind = "sleep"
+	// ThreadItemKindSubAgentActivity is a generated Codex app-server protocol constant.
+	ThreadItemKindSubAgentActivity ThreadItemKind = "subAgentActivity"
+	// ThreadItemKindUserMessage is a generated Codex app-server protocol constant.
+	ThreadItemKindUserMessage ThreadItemKind = "userMessage"
+	// ThreadItemKindWebSearch is a generated Codex app-server protocol constant.
+	ThreadItemKindWebSearch ThreadItemKind = "webSearch"
 )
 
 // ThreadItem preserves the complete JSON payload for a discriminated union.
@@ -3422,6 +3754,7 @@ func NewThreadItem(value any) (ThreadItem, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ThreadItem) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -3506,6 +3839,7 @@ func (value *ThreadItem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ThreadItem) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -3567,7 +3901,9 @@ func (value ThreadItem) IsKnown() bool {
 type ThreadRealtimeStartTransportKind string
 
 const (
-	ThreadRealtimeStartTransportKindWebrtc    ThreadRealtimeStartTransportKind = "webrtc"
+	// ThreadRealtimeStartTransportKindWebrtc is a generated Codex app-server protocol constant.
+	ThreadRealtimeStartTransportKindWebrtc ThreadRealtimeStartTransportKind = "webrtc"
+	// ThreadRealtimeStartTransportKindWebsocket is a generated Codex app-server protocol constant.
 	ThreadRealtimeStartTransportKindWebsocket ThreadRealtimeStartTransportKind = "websocket"
 )
 
@@ -3588,6 +3924,7 @@ func NewThreadRealtimeStartTransport(value any) (ThreadRealtimeStartTransport, e
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ThreadRealtimeStartTransport) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -3608,6 +3945,7 @@ func (value *ThreadRealtimeStartTransport) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ThreadRealtimeStartTransport) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -3639,9 +3977,13 @@ func (value ThreadRealtimeStartTransport) IsKnown() bool {
 type ThreadStatusKind string
 
 const (
-	ThreadStatusKindActive      ThreadStatusKind = "active"
-	ThreadStatusKindIdle        ThreadStatusKind = "idle"
-	ThreadStatusKindNotLoaded   ThreadStatusKind = "notLoaded"
+	// ThreadStatusKindActive is a generated Codex app-server protocol constant.
+	ThreadStatusKindActive ThreadStatusKind = "active"
+	// ThreadStatusKindIdle is a generated Codex app-server protocol constant.
+	ThreadStatusKindIdle ThreadStatusKind = "idle"
+	// ThreadStatusKindNotLoaded is a generated Codex app-server protocol constant.
+	ThreadStatusKindNotLoaded ThreadStatusKind = "notLoaded"
+	// ThreadStatusKindSystemError is a generated Codex app-server protocol constant.
 	ThreadStatusKindSystemError ThreadStatusKind = "systemError"
 )
 
@@ -3662,6 +4004,7 @@ func NewThreadStatus(value any) (ThreadStatus, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *ThreadStatus) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -3690,6 +4033,7 @@ func (value *ThreadStatus) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value ThreadStatus) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -3725,11 +4069,16 @@ func (value ThreadStatus) IsKnown() bool {
 type UserInputKind string
 
 const (
-	UserInputKindImage      UserInputKind = "image"
+	// UserInputKindImage is a generated Codex app-server protocol constant.
+	UserInputKindImage UserInputKind = "image"
+	// UserInputKindLocalImage is a generated Codex app-server protocol constant.
 	UserInputKindLocalImage UserInputKind = "localImage"
-	UserInputKindMention    UserInputKind = "mention"
-	UserInputKindSkill      UserInputKind = "skill"
-	UserInputKindText       UserInputKind = "text"
+	// UserInputKindMention is a generated Codex app-server protocol constant.
+	UserInputKindMention UserInputKind = "mention"
+	// UserInputKindSkill is a generated Codex app-server protocol constant.
+	UserInputKindSkill UserInputKind = "skill"
+	// UserInputKindText is a generated Codex app-server protocol constant.
+	UserInputKindText UserInputKind = "text"
 )
 
 // UserInput preserves the complete JSON payload for a discriminated union.
@@ -3749,6 +4098,7 @@ func NewUserInput(value any) (UserInput, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *UserInput) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -3781,6 +4131,7 @@ func (value *UserInput) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value UserInput) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil
@@ -3816,10 +4167,14 @@ func (value UserInput) IsKnown() bool {
 type WebSearchActionKind string
 
 const (
+	// WebSearchActionKindFindInPage is a generated Codex app-server protocol constant.
 	WebSearchActionKindFindInPage WebSearchActionKind = "findInPage"
-	WebSearchActionKindOpenPage   WebSearchActionKind = "openPage"
-	WebSearchActionKindOther      WebSearchActionKind = "other"
-	WebSearchActionKindSearch     WebSearchActionKind = "search"
+	// WebSearchActionKindOpenPage is a generated Codex app-server protocol constant.
+	WebSearchActionKindOpenPage WebSearchActionKind = "openPage"
+	// WebSearchActionKindOther is a generated Codex app-server protocol constant.
+	WebSearchActionKindOther WebSearchActionKind = "other"
+	// WebSearchActionKindSearch is a generated Codex app-server protocol constant.
+	WebSearchActionKindSearch WebSearchActionKind = "search"
 )
 
 // WebSearchAction preserves the complete JSON payload for a discriminated union.
@@ -3839,6 +4194,7 @@ func NewWebSearchAction(value any) (WebSearchAction, error) {
 	return result, err
 }
 
+// UnmarshalJSON implements generated Codex app-server protocol behavior.
 func (value *WebSearchAction) UnmarshalJSON(data []byte) error {
 	kind, raw, err := decodeDiscriminatedUnion(data, "type")
 	if err != nil {
@@ -3867,6 +4223,7 @@ func (value *WebSearchAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON implements generated Codex app-server protocol behavior.
 func (value WebSearchAction) MarshalJSON() ([]byte, error) {
 	if len(value.raw) == 0 {
 		return []byte("null"), nil

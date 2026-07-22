@@ -4,192 +4,567 @@
 
 package protocol
 
+// SanitizedAccountLoginCompletedNotification is a generated alias for a Codex app-server protocol type.
 // Aliases for JSON-suffixed schema types.
 type SanitizedAccountLoginCompletedNotification = SanitizedAccountLoginCompletedNotificationJSON
+
+// SanitizedAccountRateLimitsUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedAccountRateLimitsUpdatedNotification = SanitizedAccountRateLimitsUpdatedNotificationJSON
+
+// SanitizedAccountUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedAccountUpdatedNotification = SanitizedAccountUpdatedNotificationJSON
+
+// SanitizedAgentMessageDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedAgentMessageDeltaNotification = SanitizedAgentMessageDeltaNotificationJSON
+
+// SanitizedAppListUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedAppListUpdatedNotification = SanitizedAppListUpdatedNotificationJSON
+
+// SanitizedApplyPatchApprovalParams is a generated alias for a Codex app-server protocol type.
 type SanitizedApplyPatchApprovalParams = SanitizedApplyPatchApprovalParamsJSON
+
+// SanitizedApplyPatchApprovalResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedApplyPatchApprovalResponse = SanitizedApplyPatchApprovalResponseJSON
+
+// SanitizedAppsListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedAppsListParams = SanitizedAppsListParamsJSON
+
+// SanitizedAppsListResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedAppsListResponse = SanitizedAppsListResponseJSON
+
+// SanitizedAttestationGenerateParams is a generated alias for a Codex app-server protocol type.
 type SanitizedAttestationGenerateParams = SanitizedAttestationGenerateParamsJSON
+
+// SanitizedAttestationGenerateResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedAttestationGenerateResponse = SanitizedAttestationGenerateResponseJSON
+
+// SanitizedCancelLoginAccountParams is a generated alias for a Codex app-server protocol type.
 type SanitizedCancelLoginAccountParams = SanitizedCancelLoginAccountParamsJSON
+
+// SanitizedCancelLoginAccountResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedCancelLoginAccountResponse = SanitizedCancelLoginAccountResponseJSON
+
+// SanitizedChatgptAuthTokensRefreshParams is a generated alias for a Codex app-server protocol type.
 type SanitizedChatgptAuthTokensRefreshParams = SanitizedChatgptAuthTokensRefreshParamsJSON
+
+// SanitizedChatgptAuthTokensRefreshResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedChatgptAuthTokensRefreshResponse = SanitizedChatgptAuthTokensRefreshResponseJSON
+
+// SanitizedCommandExecOutputDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecOutputDeltaNotification = SanitizedCommandExecOutputDeltaNotificationJSON
+
+// SanitizedCommandExecResizeResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecResizeResponse = SanitizedCommandExecResizeResponseJSON
+
+// SanitizedCommandExecResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecResponse = SanitizedCommandExecResponseJSON
+
+// SanitizedCommandExecTerminateParams is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecTerminateParams = SanitizedCommandExecTerminateParamsJSON
+
+// SanitizedCommandExecTerminateResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecTerminateResponse = SanitizedCommandExecTerminateResponseJSON
+
+// SanitizedCommandExecWriteParams is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecWriteParams = SanitizedCommandExecWriteParamsJSON
+
+// SanitizedCommandExecWriteResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecWriteResponse = SanitizedCommandExecWriteResponseJSON
+
+// SanitizedCommandExecutionOutputDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecutionOutputDeltaNotification = SanitizedCommandExecutionOutputDeltaNotificationJSON
+
+// SanitizedCommandExecutionRequestApprovalResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedCommandExecutionRequestApprovalResponse = SanitizedCommandExecutionRequestApprovalResponseJSON
+
+// SanitizedConfigBatchWriteParams is a generated alias for a Codex app-server protocol type.
 type SanitizedConfigBatchWriteParams = SanitizedConfigBatchWriteParamsJSON
+
+// SanitizedConfigReadParams is a generated alias for a Codex app-server protocol type.
 type SanitizedConfigReadParams = SanitizedConfigReadParamsJSON
+
+// SanitizedConfigRequirementsReadResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedConfigRequirementsReadResponse = SanitizedConfigRequirementsReadResponseJSON
+
+// SanitizedConfigValueWriteParams is a generated alias for a Codex app-server protocol type.
 type SanitizedConfigValueWriteParams = SanitizedConfigValueWriteParamsJSON
+
+// SanitizedConfigWarningNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedConfigWarningNotification = SanitizedConfigWarningNotificationJSON
+
+// SanitizedConsumeAccountRateLimitResetCreditParams is a generated alias for a Codex app-server protocol type.
 type SanitizedConsumeAccountRateLimitResetCreditParams = SanitizedConsumeAccountRateLimitResetCreditParamsJSON
+
+// SanitizedConsumeAccountRateLimitResetCreditResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedConsumeAccountRateLimitResetCreditResponse = SanitizedConsumeAccountRateLimitResetCreditResponseJSON
+
+// SanitizedContextCompactedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedContextCompactedNotification = SanitizedContextCompactedNotificationJSON
+
+// SanitizedDeprecationNoticeNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedDeprecationNoticeNotification = SanitizedDeprecationNoticeNotificationJSON
+
+// SanitizedDynamicToolCallParams is a generated alias for a Codex app-server protocol type.
 type SanitizedDynamicToolCallParams = SanitizedDynamicToolCallParamsJSON
+
+// SanitizedDynamicToolCallResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedDynamicToolCallResponse = SanitizedDynamicToolCallResponseJSON
+
+// SanitizedErrorNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedErrorNotification = SanitizedErrorNotificationJSON
+
+// SanitizedExecCommandApprovalParams is a generated alias for a Codex app-server protocol type.
 type SanitizedExecCommandApprovalParams = SanitizedExecCommandApprovalParamsJSON
+
+// SanitizedExecCommandApprovalResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedExecCommandApprovalResponse = SanitizedExecCommandApprovalResponseJSON
+
+// SanitizedExperimentalFeatureEnablementSetParams is a generated alias for a Codex app-server protocol type.
 type SanitizedExperimentalFeatureEnablementSetParams = SanitizedExperimentalFeatureEnablementSetParamsJSON
+
+// SanitizedExperimentalFeatureEnablementSetResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedExperimentalFeatureEnablementSetResponse = SanitizedExperimentalFeatureEnablementSetResponseJSON
+
+// SanitizedExperimentalFeatureListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedExperimentalFeatureListParams = SanitizedExperimentalFeatureListParamsJSON
+
+// SanitizedExperimentalFeatureListResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedExperimentalFeatureListResponse = SanitizedExperimentalFeatureListResponseJSON
+
+// SanitizedExternalAgentConfigDetectParams is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigDetectParams = SanitizedExternalAgentConfigDetectParamsJSON
+
+// SanitizedExternalAgentConfigDetectResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigDetectResponse = SanitizedExternalAgentConfigDetectResponseJSON
+
+// SanitizedExternalAgentConfigImportCompletedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigImportCompletedNotification = SanitizedExternalAgentConfigImportCompletedNotificationJSON
+
+// SanitizedExternalAgentConfigImportHistoriesReadResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigImportHistoriesReadResponse = SanitizedExternalAgentConfigImportHistoriesReadResponseJSON
+
+// SanitizedExternalAgentConfigImportParams is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigImportParams = SanitizedExternalAgentConfigImportParamsJSON
+
+// SanitizedExternalAgentConfigImportProgressNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigImportProgressNotification = SanitizedExternalAgentConfigImportProgressNotificationJSON
+
+// SanitizedExternalAgentConfigImportResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedExternalAgentConfigImportResponse = SanitizedExternalAgentConfigImportResponseJSON
+
+// SanitizedFeedbackUploadParams is a generated alias for a Codex app-server protocol type.
 type SanitizedFeedbackUploadParams = SanitizedFeedbackUploadParamsJSON
+
+// SanitizedFeedbackUploadResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFeedbackUploadResponse = SanitizedFeedbackUploadResponseJSON
+
+// SanitizedFileChangeOutputDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedFileChangeOutputDeltaNotification = SanitizedFileChangeOutputDeltaNotificationJSON
+
+// SanitizedFileChangePatchUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedFileChangePatchUpdatedNotification = SanitizedFileChangePatchUpdatedNotificationJSON
+
+// SanitizedFileChangeRequestApprovalParams is a generated alias for a Codex app-server protocol type.
 type SanitizedFileChangeRequestApprovalParams = SanitizedFileChangeRequestApprovalParamsJSON
+
+// SanitizedFileChangeRequestApprovalResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFileChangeRequestApprovalResponse = SanitizedFileChangeRequestApprovalResponseJSON
+
+// SanitizedFsCopyResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsCopyResponse = SanitizedFsCopyResponseJSON
+
+// SanitizedFsCreateDirectoryResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsCreateDirectoryResponse = SanitizedFsCreateDirectoryResponseJSON
+
+// SanitizedFsGetMetadataResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsGetMetadataResponse = SanitizedFsGetMetadataResponseJSON
+
+// SanitizedFsReadDirectoryResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsReadDirectoryResponse = SanitizedFsReadDirectoryResponseJSON
+
+// SanitizedFsReadFileResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsReadFileResponse = SanitizedFsReadFileResponseJSON
+
+// SanitizedFsRemoveResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsRemoveResponse = SanitizedFsRemoveResponseJSON
+
+// SanitizedFsUnwatchParams is a generated alias for a Codex app-server protocol type.
 type SanitizedFsUnwatchParams = SanitizedFsUnwatchParamsJSON
+
+// SanitizedFsUnwatchResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsUnwatchResponse = SanitizedFsUnwatchResponseJSON
+
+// SanitizedFsWriteFileResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFsWriteFileResponse = SanitizedFsWriteFileResponseJSON
+
+// SanitizedFuzzyFileSearchParams is a generated alias for a Codex app-server protocol type.
 type SanitizedFuzzyFileSearchParams = SanitizedFuzzyFileSearchParamsJSON
+
+// SanitizedFuzzyFileSearchResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedFuzzyFileSearchResponse = SanitizedFuzzyFileSearchResponseJSON
+
+// SanitizedFuzzyFileSearchSessionCompletedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedFuzzyFileSearchSessionCompletedNotification = SanitizedFuzzyFileSearchSessionCompletedNotificationJSON
+
+// SanitizedFuzzyFileSearchSessionUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedFuzzyFileSearchSessionUpdatedNotification = SanitizedFuzzyFileSearchSessionUpdatedNotificationJSON
+
+// SanitizedGetAccountParams is a generated alias for a Codex app-server protocol type.
 type SanitizedGetAccountParams = SanitizedGetAccountParamsJSON
+
+// SanitizedGetAccountRateLimitsResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedGetAccountRateLimitsResponse = SanitizedGetAccountRateLimitsResponseJSON
+
+// SanitizedGetAccountResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedGetAccountResponse = SanitizedGetAccountResponseJSON
+
+// SanitizedGetAccountTokenUsageResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedGetAccountTokenUsageResponse = SanitizedGetAccountTokenUsageResponseJSON
+
+// SanitizedGetWorkspaceMessagesResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedGetWorkspaceMessagesResponse = SanitizedGetWorkspaceMessagesResponseJSON
+
+// SanitizedGuardianWarningNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedGuardianWarningNotification = SanitizedGuardianWarningNotificationJSON
+
+// SanitizedHooksListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedHooksListParams = SanitizedHooksListParamsJSON
+
+// SanitizedInitializeParams is a generated alias for a Codex app-server protocol type.
 type SanitizedInitializeParams = SanitizedInitializeParamsJSON
+
+// SanitizedListMCPServerStatusParams is a generated alias for a Codex app-server protocol type.
 type SanitizedListMCPServerStatusParams = SanitizedListMCPServerStatusParamsJSON
+
+// SanitizedListMCPServerStatusResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedListMCPServerStatusResponse = SanitizedListMCPServerStatusResponseJSON
+
+// SanitizedLogoutAccountResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedLogoutAccountResponse = SanitizedLogoutAccountResponseJSON
+
+// SanitizedMCPResourceReadParams is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPResourceReadParams = SanitizedMCPResourceReadParamsJSON
+
+// SanitizedMCPResourceReadResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPResourceReadResponse = SanitizedMCPResourceReadResponseJSON
+
+// SanitizedMCPServerElicitationRequestResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerElicitationRequestResponse = SanitizedMCPServerElicitationRequestResponseJSON
+
+// SanitizedMCPServerOAuthLoginCompletedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginCompletedNotification = SanitizedMCPServerOAuthLoginCompletedNotificationJSON
+
+// SanitizedMCPServerOAuthLoginParams is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginParams = SanitizedMCPServerOAuthLoginParamsJSON
+
+// SanitizedMCPServerOAuthLoginResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerOAuthLoginResponse = SanitizedMCPServerOAuthLoginResponseJSON
+
+// SanitizedMCPServerRefreshResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerRefreshResponse = SanitizedMCPServerRefreshResponseJSON
+
+// SanitizedMCPServerStatusUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerStatusUpdatedNotification = SanitizedMCPServerStatusUpdatedNotificationJSON
+
+// SanitizedMCPServerToolCallParams is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerToolCallParams = SanitizedMCPServerToolCallParamsJSON
+
+// SanitizedMCPServerToolCallResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPServerToolCallResponse = SanitizedMCPServerToolCallResponseJSON
+
+// SanitizedMCPToolCallProgressNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedMCPToolCallProgressNotification = SanitizedMCPToolCallProgressNotificationJSON
+
+// SanitizedMarketplaceAddParams is a generated alias for a Codex app-server protocol type.
 type SanitizedMarketplaceAddParams = SanitizedMarketplaceAddParamsJSON
+
+// SanitizedMarketplaceRemoveParams is a generated alias for a Codex app-server protocol type.
 type SanitizedMarketplaceRemoveParams = SanitizedMarketplaceRemoveParamsJSON
+
+// SanitizedMarketplaceUpgradeParams is a generated alias for a Codex app-server protocol type.
 type SanitizedMarketplaceUpgradeParams = SanitizedMarketplaceUpgradeParamsJSON
+
+// SanitizedModelListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedModelListParams = SanitizedModelListParamsJSON
+
+// SanitizedModelListResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedModelListResponse = SanitizedModelListResponseJSON
+
+// SanitizedModelProviderCapabilitiesReadParams is a generated alias for a Codex app-server protocol type.
 type SanitizedModelProviderCapabilitiesReadParams = SanitizedModelProviderCapabilitiesReadParamsJSON
+
+// SanitizedModelProviderCapabilitiesReadResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedModelProviderCapabilitiesReadResponse = SanitizedModelProviderCapabilitiesReadResponseJSON
+
+// SanitizedModelReroutedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedModelReroutedNotification = SanitizedModelReroutedNotificationJSON
+
+// SanitizedModelSafetyBufferingUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedModelSafetyBufferingUpdatedNotification = SanitizedModelSafetyBufferingUpdatedNotificationJSON
+
+// SanitizedModelVerificationNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedModelVerificationNotification = SanitizedModelVerificationNotificationJSON
+
+// SanitizedPermissionProfileListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPermissionProfileListParams = SanitizedPermissionProfileListParamsJSON
+
+// SanitizedPermissionProfileListResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPermissionProfileListResponse = SanitizedPermissionProfileListResponseJSON
+
+// SanitizedPermissionsRequestApprovalResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPermissionsRequestApprovalResponse = SanitizedPermissionsRequestApprovalResponseJSON
+
+// SanitizedPlanDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedPlanDeltaNotification = SanitizedPlanDeltaNotificationJSON
+
+// SanitizedPluginInstallResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginInstallResponse = SanitizedPluginInstallResponseJSON
+
+// SanitizedPluginShareCheckoutParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareCheckoutParams = SanitizedPluginShareCheckoutParamsJSON
+
+// SanitizedPluginShareDeleteParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareDeleteParams = SanitizedPluginShareDeleteParamsJSON
+
+// SanitizedPluginShareDeleteResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareDeleteResponse = SanitizedPluginShareDeleteResponseJSON
+
+// SanitizedPluginShareListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareListParams = SanitizedPluginShareListParamsJSON
+
+// SanitizedPluginShareSaveResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareSaveResponse = SanitizedPluginShareSaveResponseJSON
+
+// SanitizedPluginShareUpdateTargetsParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareUpdateTargetsParams = SanitizedPluginShareUpdateTargetsParamsJSON
+
+// SanitizedPluginShareUpdateTargetsResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginShareUpdateTargetsResponse = SanitizedPluginShareUpdateTargetsResponseJSON
+
+// SanitizedPluginSkillReadParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginSkillReadParams = SanitizedPluginSkillReadParamsJSON
+
+// SanitizedPluginSkillReadResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginSkillReadResponse = SanitizedPluginSkillReadResponseJSON
+
+// SanitizedPluginUninstallParams is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginUninstallParams = SanitizedPluginUninstallParamsJSON
+
+// SanitizedPluginUninstallResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedPluginUninstallResponse = SanitizedPluginUninstallResponseJSON
+
+// SanitizedProcessExitedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedProcessExitedNotification = SanitizedProcessExitedNotificationJSON
+
+// SanitizedProcessOutputDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedProcessOutputDeltaNotification = SanitizedProcessOutputDeltaNotificationJSON
+
+// SanitizedRawResponseItemCompletedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedRawResponseItemCompletedNotification = SanitizedRawResponseItemCompletedNotificationJSON
+
+// SanitizedReasoningSummaryPartAddedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedReasoningSummaryPartAddedNotification = SanitizedReasoningSummaryPartAddedNotificationJSON
+
+// SanitizedReasoningSummaryTextDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedReasoningSummaryTextDeltaNotification = SanitizedReasoningSummaryTextDeltaNotificationJSON
+
+// SanitizedReasoningTextDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedReasoningTextDeltaNotification = SanitizedReasoningTextDeltaNotificationJSON
+
+// SanitizedRemoteControlStatusChangedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedRemoteControlStatusChangedNotification = SanitizedRemoteControlStatusChangedNotificationJSON
+
+// SanitizedReviewStartParams is a generated alias for a Codex app-server protocol type.
 type SanitizedReviewStartParams = SanitizedReviewStartParamsJSON
+
+// SanitizedSendAddCreditsNudgeEmailParams is a generated alias for a Codex app-server protocol type.
 type SanitizedSendAddCreditsNudgeEmailParams = SanitizedSendAddCreditsNudgeEmailParamsJSON
+
+// SanitizedSendAddCreditsNudgeEmailResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedSendAddCreditsNudgeEmailResponse = SanitizedSendAddCreditsNudgeEmailResponseJSON
+
+// SanitizedServerRequestResolvedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedServerRequestResolvedNotification = SanitizedServerRequestResolvedNotificationJSON
+
+// SanitizedSkillsChangedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedSkillsChangedNotification = SanitizedSkillsChangedNotificationJSON
+
+// SanitizedSkillsConfigWriteResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedSkillsConfigWriteResponse = SanitizedSkillsConfigWriteResponseJSON
+
+// SanitizedSkillsExtraRootsSetResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedSkillsExtraRootsSetResponse = SanitizedSkillsExtraRootsSetResponseJSON
+
+// SanitizedSkillsListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedSkillsListParams = SanitizedSkillsListParamsJSON
+
+// SanitizedTerminalInteractionNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedTerminalInteractionNotification = SanitizedTerminalInteractionNotificationJSON
+
+// SanitizedThreadApproveGuardianDeniedActionParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadApproveGuardianDeniedActionParams = SanitizedThreadApproveGuardianDeniedActionParamsJSON
+
+// SanitizedThreadApproveGuardianDeniedActionResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadApproveGuardianDeniedActionResponse = SanitizedThreadApproveGuardianDeniedActionResponseJSON
+
+// SanitizedThreadArchiveParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadArchiveParams = SanitizedThreadArchiveParamsJSON
+
+// SanitizedThreadArchiveResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadArchiveResponse = SanitizedThreadArchiveResponseJSON
+
+// SanitizedThreadArchivedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadArchivedNotification = SanitizedThreadArchivedNotificationJSON
+
+// SanitizedThreadClosedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadClosedNotification = SanitizedThreadClosedNotificationJSON
+
+// SanitizedThreadCompactStartParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadCompactStartParams = SanitizedThreadCompactStartParamsJSON
+
+// SanitizedThreadCompactStartResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadCompactStartResponse = SanitizedThreadCompactStartResponseJSON
+
+// SanitizedThreadDeleteParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadDeleteParams = SanitizedThreadDeleteParamsJSON
+
+// SanitizedThreadDeleteResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadDeleteResponse = SanitizedThreadDeleteResponseJSON
+
+// SanitizedThreadDeletedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadDeletedNotification = SanitizedThreadDeletedNotificationJSON
+
+// SanitizedThreadGoalClearParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadGoalClearParams = SanitizedThreadGoalClearParamsJSON
+
+// SanitizedThreadGoalClearResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadGoalClearResponse = SanitizedThreadGoalClearResponseJSON
+
+// SanitizedThreadGoalClearedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadGoalClearedNotification = SanitizedThreadGoalClearedNotificationJSON
+
+// SanitizedThreadGoalGetParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadGoalGetParams = SanitizedThreadGoalGetParamsJSON
+
+// SanitizedThreadGoalSetParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadGoalSetParams = SanitizedThreadGoalSetParamsJSON
+
+// SanitizedThreadInjectItemsParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadInjectItemsParams = SanitizedThreadInjectItemsParamsJSON
+
+// SanitizedThreadInjectItemsResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadInjectItemsResponse = SanitizedThreadInjectItemsResponseJSON
+
+// SanitizedThreadListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadListParams = SanitizedThreadListParamsJSON
+
+// SanitizedThreadLoadedListParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadLoadedListParams = SanitizedThreadLoadedListParamsJSON
+
+// SanitizedThreadLoadedListResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadLoadedListResponse = SanitizedThreadLoadedListResponseJSON
+
+// SanitizedThreadMetadataUpdateParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadMetadataUpdateParams = SanitizedThreadMetadataUpdateParamsJSON
+
+// SanitizedThreadNameUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadNameUpdatedNotification = SanitizedThreadNameUpdatedNotificationJSON
+
+// SanitizedThreadReadParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadReadParams = SanitizedThreadReadParamsJSON
+
+// SanitizedThreadRealtimeClosedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeClosedNotification = SanitizedThreadRealtimeClosedNotificationJSON
+
+// SanitizedThreadRealtimeErrorNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeErrorNotification = SanitizedThreadRealtimeErrorNotificationJSON
+
+// SanitizedThreadRealtimeItemAddedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeItemAddedNotification = SanitizedThreadRealtimeItemAddedNotificationJSON
+
+// SanitizedThreadRealtimeOutputAudioDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeOutputAudioDeltaNotification = SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON
+
+// SanitizedThreadRealtimeSdpNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeSdpNotification = SanitizedThreadRealtimeSdpNotificationJSON
+
+// SanitizedThreadRealtimeStartedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeStartedNotification = SanitizedThreadRealtimeStartedNotificationJSON
+
+// SanitizedThreadRealtimeTranscriptDeltaNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeTranscriptDeltaNotification = SanitizedThreadRealtimeTranscriptDeltaNotificationJSON
+
+// SanitizedThreadRealtimeTranscriptDoneNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRealtimeTranscriptDoneNotification = SanitizedThreadRealtimeTranscriptDoneNotificationJSON
+
+// SanitizedThreadRollbackParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadRollbackParams = SanitizedThreadRollbackParamsJSON
+
+// SanitizedThreadSetNameParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadSetNameParams = SanitizedThreadSetNameParamsJSON
+
+// SanitizedThreadSetNameResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadSetNameResponse = SanitizedThreadSetNameResponseJSON
+
+// SanitizedThreadShellCommandParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadShellCommandParams = SanitizedThreadShellCommandParamsJSON
+
+// SanitizedThreadShellCommandResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadShellCommandResponse = SanitizedThreadShellCommandResponseJSON
+
+// SanitizedThreadStatusChangedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadStatusChangedNotification = SanitizedThreadStatusChangedNotificationJSON
+
+// SanitizedThreadTokenUsageUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadTokenUsageUpdatedNotification = SanitizedThreadTokenUsageUpdatedNotificationJSON
+
+// SanitizedThreadUnarchiveParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadUnarchiveParams = SanitizedThreadUnarchiveParamsJSON
+
+// SanitizedThreadUnarchivedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadUnarchivedNotification = SanitizedThreadUnarchivedNotificationJSON
+
+// SanitizedThreadUnsubscribeParams is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadUnsubscribeParams = SanitizedThreadUnsubscribeParamsJSON
+
+// SanitizedThreadUnsubscribeResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedThreadUnsubscribeResponse = SanitizedThreadUnsubscribeResponseJSON
+
+// SanitizedToolRequestUserInputParams is a generated alias for a Codex app-server protocol type.
 type SanitizedToolRequestUserInputParams = SanitizedToolRequestUserInputParamsJSON
+
+// SanitizedToolRequestUserInputResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedToolRequestUserInputResponse = SanitizedToolRequestUserInputResponseJSON
+
+// SanitizedTurnDiffUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedTurnDiffUpdatedNotification = SanitizedTurnDiffUpdatedNotificationJSON
+
+// SanitizedTurnInterruptParams is a generated alias for a Codex app-server protocol type.
 type SanitizedTurnInterruptParams = SanitizedTurnInterruptParamsJSON
+
+// SanitizedTurnInterruptResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedTurnInterruptResponse = SanitizedTurnInterruptResponseJSON
+
+// SanitizedTurnModerationMetadataNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedTurnModerationMetadataNotification = SanitizedTurnModerationMetadataNotificationJSON
+
+// SanitizedTurnPlanUpdatedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedTurnPlanUpdatedNotification = SanitizedTurnPlanUpdatedNotificationJSON
+
+// SanitizedTurnSteerResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedTurnSteerResponse = SanitizedTurnSteerResponseJSON
+
+// SanitizedWarningNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedWarningNotification = SanitizedWarningNotificationJSON
+
+// SanitizedWindowsSandboxReadinessResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedWindowsSandboxReadinessResponse = SanitizedWindowsSandboxReadinessResponseJSON
+
+// SanitizedWindowsSandboxSetupCompletedNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedWindowsSandboxSetupCompletedNotification = SanitizedWindowsSandboxSetupCompletedNotificationJSON
+
+// SanitizedWindowsSandboxSetupStartResponse is a generated alias for a Codex app-server protocol type.
 type SanitizedWindowsSandboxSetupStartResponse = SanitizedWindowsSandboxSetupStartResponseJSON
+
+// SanitizedWindowsWorldWritableWarningNotification is a generated alias for a Codex app-server protocol type.
 type SanitizedWindowsWorldWritableWarningNotification = SanitizedWindowsWorldWritableWarningNotificationJSON

@@ -56,6 +56,138 @@ func TestNormalizeGeneratedHeader(t *testing.T) {
 	}
 }
 
+func TestDocumentExportedDeclarations(t *testing.T) {
+	source := []byte(`package protocol
+
+// Existing schema description.
+type Existing struct{}
+
+type Alias = Existing
+
+const (
+	ExportedConstant = "value"
+	unexportedConstant = "value"
+)
+
+var ExportedVariable = Existing{}
+
+func ExportedFunction() {}
+func unexportedFunction() {}
+
+func (Existing) MarshalJSON() ([]byte, error) { return nil, nil }
+`)
+
+	documented, err := documentExportedDeclarations(source)
+	if err != nil {
+		t.Fatalf("document exported declarations: %v", err)
+	}
+	text := string(documented)
+	for _, want := range []string{
+		"// Existing schema description.\ntype Existing struct{}",
+		"// Alias is a generated alias for a Codex app-server protocol type.\ntype Alias = Existing",
+		"// ExportedConstant is a generated Codex app-server protocol constant.",
+		"// ExportedVariable is a generated Codex app-server protocol variable.\nvar ExportedVariable = Existing{}",
+		"// ExportedFunction implements generated Codex app-server protocol behavior.",
+		"// MarshalJSON implements generated Codex app-server protocol behavior.\nfunc (Existing) MarshalJSON()",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("documented source missing %q:\n%s", want, text)
+		}
+	}
+	if strings.Contains(text, "// unexportedFunction") || strings.Contains(text, "// unexportedConstant") {
+		t.Fatalf("unexported declarations must remain undocumented:\n%s", text)
+	}
+	if err := validateExportedDeclarationComments(documented); err != nil {
+		t.Fatalf("validate documented source: %v", err)
+	}
+	again, err := documentExportedDeclarations(documented)
+	if err != nil {
+		t.Fatalf("document source a second time: %v", err)
+	}
+	if string(again) != string(documented) {
+		t.Fatalf("documentation transform is not idempotent:\nfirst:\n%s\nsecond:\n%s", documented, again)
+	}
+}
+
+func TestDocumentExportedDeclarationsPreservesDeprecation(t *testing.T) {
+	source := []byte(`package protocol
+
+// Deprecated: use Current.
+type Legacy = Current
+
+type Current struct{}
+`)
+	documented, err := documentExportedDeclarations(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(documented), "// Legacy is a generated alias for a Codex app-server protocol type.\n// Deprecated: use Current.\ntype Legacy = Current") {
+		t.Fatalf("deprecation comment was not preserved:\n%s", documented)
+	}
+}
+
+func TestDocumentExportedDeclarationsRejectsInvalidGo(t *testing.T) {
+	if _, err := documentExportedDeclarations([]byte("package protocol\ntype")); err == nil {
+		t.Fatal("expected invalid Go source to fail")
+	}
+}
+
+func TestDocumentExportedDeclarationsRejectsMultipleExportedValues(t *testing.T) {
+	source := []byte(`package protocol
+
+var ExportedOne, ExportedTwo = 1, 2
+`)
+	_, err := documentExportedDeclarations(source)
+	if err == nil {
+		t.Fatal("expected multiple exported values to fail")
+	}
+	if want := "multiple exported names ExportedOne, ExportedTwo"; !strings.Contains(err.Error(), want) {
+		t.Fatalf("unexpected error %q; want it to contain %q", err, want)
+	}
+}
+
+func TestValidateExportedDeclarationCommentsRejectsMissingGoDoc(t *testing.T) {
+	source := []byte(`package protocol
+
+type MissingType struct{}
+
+const MissingConstant = 1
+
+var MissingVariable = 1
+
+func MissingFunction() {}
+
+func (MissingType) MissingMethod() {}
+`)
+	err := validateExportedDeclarationComments(source)
+	if err == nil {
+		t.Fatal("expected undocumented exported declarations to fail")
+	}
+	want := "exported declarations missing name-leading GoDoc: MissingConstant, MissingFunction, MissingMethod, MissingType, MissingVariable"
+	if err.Error() != want {
+		t.Fatalf("unexpected error:\n got: %q\nwant: %q", err, want)
+	}
+}
+
+func TestCommittedGeneratedProtocolDeclarationsHaveGoDoc(t *testing.T) {
+	paths, err := filepath.Glob(filepath.Join("..", "..", "protocol", "*_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) == 0 {
+		t.Fatal("expected committed generated protocol files")
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := validateExportedDeclarationComments(data); err != nil {
+			t.Errorf("%s: %v", path, err)
+		}
+	}
+}
+
 func TestRefName(t *testing.T) {
 	if got := refName("#/definitions/Foo"); got != "Foo" {
 		t.Fatalf("unexpected ref name: %s", got)

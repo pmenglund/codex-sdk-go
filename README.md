@@ -1,5 +1,8 @@
 # Codex Go SDK
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/pmenglund/codex-sdk-go.svg)](https://pkg.go.dev/github.com/pmenglund/codex-sdk-go)
+[![Codecov](https://codecov.io/gh/pmenglund/codex-sdk-go/graph/badge.svg)](https://codecov.io/gh/pmenglund/codex-sdk-go)
+
 Embed the Codex app-server in Go workflows.
 
 This SDK speaks JSON-RPC to the `codex app-server` process. By default it spawns the CLI and communicates over stdio.

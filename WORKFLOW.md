@@ -57,8 +57,12 @@ If Linear MCP is unavailable, proceed using the best available context and note 
 The required `Quality` workflow is secretless and runs on pushes and pull
 requests with Go 1.25.12 and patched Go 1.26.5. It checks formatting,
 the checksum-verifying Codex installer fixtures, vet, unit tests, race tests,
-Staticcheck v0.7.0, and govulncheck v1.3.0. It must be safe for fork pull
-requests: it receives no API credential and does not download or execute Codex.
+Staticcheck v0.7.0, and govulncheck v1.3.0. The Go 1.25.12 job also records an
+atomic coverage profile; a separate least-privilege job publishes it to
+Codecov with GitHub OIDC. `codecov.yml` gates project and patch coverage at 80
+percent while excluding generated files, executable examples, and credentialed
+test support. The workflow must be safe for fork pull requests: it receives no
+API credential and does not download or execute Codex.
 
 The `Trusted E2E` workflow runs only on protected `main` pushes, manual
 dispatch, or as a reusable release gate. Its `e2e` GitHub Environment must
