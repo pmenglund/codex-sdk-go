@@ -19,15 +19,15 @@ func TestRetryableErrorHelpers(t *testing.T) {
 	if !IsRetryable(wrapped) {
 		t.Fatalf("expected wrapped overload to be retryable")
 	}
-	responseErr := &rpc.ResponseError{Detail: rpc.JSONRPCErrorError{Code: 429, Message: "too many requests"}}
+	responseErr := &rpc.ResponseError{Detail: rpc.JSONRPCErrorDetail{Code: 429, Message: "too many requests"}}
 	if !IsOverloaded(responseErr) {
 		t.Fatalf("expected 429 response to be overloaded")
 	}
-	responseErr = &rpc.ResponseError{Detail: rpc.JSONRPCErrorError{Code: -32000, Message: "server busy"}}
+	responseErr = &rpc.ResponseError{Detail: rpc.JSONRPCErrorDetail{Code: -32000, Message: "server busy"}}
 	if !IsRetryable(responseErr) {
 		t.Fatalf("expected server busy to be retryable")
 	}
-	responseErr = &rpc.ResponseError{Detail: rpc.JSONRPCErrorError{Code: -32000, Message: "boom"}}
+	responseErr = &rpc.ResponseError{Detail: rpc.JSONRPCErrorDetail{Code: -32000, Message: "boom"}}
 	if IsRetryable(responseErr) {
 		t.Fatalf("generic response should not be retryable")
 	}

@@ -1,10 +1,12 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -229,7 +231,7 @@ func TestSubscribeAfterClientCloseIsNotRetained(t *testing.T) {
 }
 
 func TestServerRequestDispatch(t *testing.T) {
-	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
+	resp := protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
 	handler := &testHandler{
 		called: make(chan struct{}, 1),
 		applyPatch: func(params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
@@ -396,7 +398,7 @@ func TestCallErrorResponse(t *testing.T) {
 		}),
 		readLine(JSONRPCError{
 			ID: NewIntRequestID(1),
-			Error: JSONRPCErrorError{
+			Error: JSONRPCErrorDetail{
 				Code:    -1,
 				Message: "boom",
 			},
@@ -545,6 +547,29 @@ func TestContextTransportReceivesWriteContext(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatalf("context-aware write method was not used")
 	}
+	if err := client.Notify(context.Background(), "after/canceled/write", nil); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("context-aware write error was not terminal: %v", err)
+	}
+}
+
+func TestClientRejectsOversizedCustomTransportMessage(t *testing.T) {
+	for name, line := range map[string]string{
+		"json":       "12345",
+		"whitespace": "     ",
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := NewClient(&stubTransport{reads: []string{line}}, ClientOptions{MaxMessageBytes: 4})
+			defer client.Close()
+			select {
+			case <-client.done:
+				if !errors.Is(client.errOrClosed(), ErrMessageTooLarge) {
+					t.Fatalf("expected ErrMessageTooLarge, got %v", client.errOrClosed())
+				}
+			case <-time.After(time.Second):
+				t.Fatal("client did not reject oversized message")
+			}
+		})
+	}
 }
 
 func TestServerRequestQueueIsBounded(t *testing.T) {
@@ -576,12 +601,15 @@ func TestServerRequestQueueIsBounded(t *testing.T) {
 	transport.waitForReads(t, 1)
 
 	writes := transport.waitForWrites(t, 1)
-	var response JSONRPCError
-	if err := json.Unmarshal([]byte(writes[0]), &response); err != nil {
-		t.Fatalf("decode busy response: %v", err)
-	}
-	if response.ID.String() != "3" || response.Error.Code != ServerRequestBusyCode {
-		t.Fatalf("unexpected busy response: %#v", response)
+	expected := mustJSON(JSONRPCError{
+		ID: NewIntRequestID(3),
+		Error: JSONRPCErrorDetail{
+			Code:    ServerRequestBusyCode,
+			Message: "server request queue is full",
+		},
+	})
+	if !equalJSONLine(expected, writes[0]) {
+		t.Fatalf("unexpected busy response:\n got: %s\nwant: %s", writes[0], expected)
 	}
 	close(handler.release)
 	transport.waitForWrites(t, 3)
@@ -607,6 +635,69 @@ func TestServerRequestPanicIsContained(t *testing.T) {
 	}
 	if err := client.Notify(context.Background(), "still/alive", nil); err != nil {
 		t.Fatalf("panic stopped unrelated traffic: %v", err)
+	}
+}
+
+func TestServerRequestWireErrorContract(t *testing.T) {
+	validParams := mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}})
+	tests := []struct {
+		name    string
+		handler ServerRequestHandler
+		method  string
+		params  json.RawMessage
+		code    int64
+		message string
+	}{
+		{name: "no handler", method: "applyPatchApproval", params: validParams, code: ServerRequestMethodNotFoundCode, message: "no handler configured"},
+		{name: "unknown method", handler: &recordingHandler{}, method: "unknown", code: ServerRequestMethodNotFoundCode, message: "method not found"},
+		{name: "invalid params", handler: &recordingHandler{}, method: "applyPatchApproval", params: mustRaw([]any{}), code: ServerRequestInvalidParamsCode, message: "invalid params"},
+		{name: "handler failure", handler: &testHandler{applyPatch: func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+			return nil, errors.New("secret failure")
+		}}, method: "applyPatchApproval", params: validParams, code: ServerRequestHandlerErrorCode, message: "server request handler failed"},
+		{name: "unsupported callback", handler: UnimplementedServerRequestHandler{}, method: "applyPatchApproval", params: validParams, code: ServerRequestMethodNotFoundCode, message: "method not found"},
+		{name: "panic", handler: &panicServerRequestHandler{}, method: "applyPatchApproval", params: validParams, code: ServerRequestInternalErrorCode, message: "server request handler panicked"},
+	}
+	for index, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			transport := newChannelTransport()
+			client := NewClient(transport, ClientOptions{RequestHandler: test.handler})
+			defer client.Close()
+			transport.pushReadLine(mustJSON(JSONRPCRequest{ID: NewIntRequestID(int64(index + 1)), Method: test.method, Params: test.params}))
+			writes := transport.waitForWrites(t, 1)
+			expected := mustJSON(JSONRPCError{
+				ID: NewIntRequestID(int64(index + 1)),
+				Error: JSONRPCErrorDetail{
+					Code:    test.code,
+					Message: test.message,
+				},
+			})
+			if !equalJSONLine(expected, writes[0]) {
+				t.Fatalf("unexpected response:\n got: %s\nwant: %s", writes[0], expected)
+			}
+			if err := client.Notify(context.Background(), "still/alive", nil); err != nil {
+				t.Fatalf("request error stopped unrelated traffic: %v", err)
+			}
+		})
+	}
+}
+
+func TestServerRequestLogsRedactCallbackValues(t *testing.T) {
+	const secret = "TOP-SECRET-CALLBACK-VALUE"
+	for _, handler := range []ServerRequestHandler{
+		&testHandler{applyPatch: func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+			return nil, errors.New(secret)
+		}},
+		&sensitivePanicHandler{value: secret},
+	} {
+		var logs bytes.Buffer
+		transport := newChannelTransport()
+		client := NewClient(transport, ClientOptions{Logger: slog.New(slog.NewTextHandler(&logs, nil)), RequestHandler: handler})
+		transport.pushReadLine(mustJSON(JSONRPCRequest{ID: NewIntRequestID(1), Method: "applyPatchApproval", Params: mustRaw(map[string]any{})}))
+		transport.waitForWrites(t, 1)
+		_ = client.Close()
+		if strings.Contains(logs.String(), secret) {
+			t.Fatalf("callback value leaked to logs: %s", logs.String())
+		}
 	}
 }
 
@@ -746,7 +837,7 @@ func (h *testHandler) ApplyPatchApproval(ctx context.Context, params protocol.Ap
 	if h.applyPatch != nil {
 		return h.applyPatch(params)
 	}
-	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
+	resp := protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
 	return &resp, nil
 }
 
@@ -782,7 +873,7 @@ func (h *testHandler) ItemToolRequestUserInput(ctx context.Context, params proto
 	return nil, errors.New("not implemented")
 }
 
-func (h *testHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+func (h *testHandler) McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -906,13 +997,22 @@ func (h *queueBlockingHandler) ApplyPatchApproval(context.Context, protocol.Appl
 	default:
 	}
 	<-h.release
-	return &protocol.ApplyPatchApprovalResponse{Decision: "approved"}, nil
+	return &protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}, nil
 }
 
 type panicServerRequestHandler struct{ testHandler }
 
 func (*panicServerRequestHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	panic("handler panic")
+}
+
+type sensitivePanicHandler struct {
+	testHandler
+	value string
+}
+
+func (h *sensitivePanicHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	panic(h.value)
 }
 
 type failingWriteTransport struct {

@@ -25,6 +25,13 @@ type Codex struct {
 // New creates a new Codex client and performs the initialize handshake.
 func New(ctx context.Context, opts Options) (*Codex, error) {
 	logger := resolveLogger(opts.Logger)
+	if opts.RequestHandler != nil && !isNilServerRequestHandler(opts.ApprovalHandler) {
+		return nil, errors.New("request handler conflicts with deprecated approval handler")
+	}
+	requestHandler := opts.ApprovalHandler
+	if opts.RequestHandler != nil {
+		requestHandler = *opts.RequestHandler
+	}
 
 	transport := opts.Transport
 	if transport == nil {
@@ -60,10 +67,13 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		logger.Info("codex using custom transport")
 	}
 
-	client := rpc.NewClient(transport, rpc.ClientOptions{
+	client, err := rpc.NewClientChecked(transport, rpc.ClientOptions{
 		Logger:         logger,
-		RequestHandler: attachApprovalLogger(opts.ApprovalHandler, logger),
+		RequestHandler: attachApprovalLogger(requestHandler, logger),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	info := opts.ClientInfo
 	if info.Name == "" {

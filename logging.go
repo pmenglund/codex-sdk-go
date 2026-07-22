@@ -15,6 +15,7 @@ func resolveLogger(logger *slog.Logger) *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
+//lint:ignore SA1019 compatibility bridge for Options.ApprovalHandler
 func attachApprovalLogger(handler rpc.ServerRequestHandler, logger *slog.Logger) rpc.ServerRequestHandler {
 	if isNilServerRequestHandler(handler) {
 		return nil
@@ -47,8 +48,13 @@ func attachApprovalLogger(handler rpc.ServerRequestHandler, logger *slog.Logger)
 	}
 }
 
+//lint:ignore SA1019 compatibility bridge for Options.ApprovalHandler
 func isNilServerRequestHandler(handler rpc.ServerRequestHandler) bool {
-	value := reflect.ValueOf(handler)
+	return isNilValue(handler)
+}
+
+func isNilValue(candidate any) bool {
+	value := reflect.ValueOf(candidate)
 	if !value.IsValid() {
 		return true
 	}

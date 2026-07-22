@@ -38,7 +38,7 @@ func TestTurnHandleRunSteerInterruptWithReplay(t *testing.T) {
 					"total": tokenUsageBreakdown(4, 5, 9),
 				},
 			})}),
-			readLine(rpc.JSONRPCNotification{Method: "item/completed", Params: mustRaw(map[string]any{"threadId": "thr_123", "item": map[string]any{"text": "final"}})}),
+			readLine(rpc.JSONRPCNotification{Method: "item/completed", Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1", "completedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": "final"}})}),
 			readLine(rpc.JSONRPCNotification{Method: "turn/completed", Params: mustRaw(map[string]any{"threadId": "thr_123", "turn": turnPayload("turn_1", "completed")})}),
 		}),
 		ClientInfo: info,
@@ -128,6 +128,165 @@ func TestTurnHandleContextCancellation(t *testing.T) {
 	}
 }
 
+func TestTurnHandleRejectsMixedConsumptionModes(t *testing.T) {
+	newHandle := func() (*TurnHandle, func()) {
+		client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+		return &TurnHandle{
+			client:   client,
+			threadID: "thr_123",
+			stream:   &TurnStream{iter: client.SubscribeNotifications(1), threadID: "thr_123"},
+		}, func() { _ = client.Close() }
+	}
+
+	handle, cleanup := newHandle()
+	stream, err := handle.Stream()
+	if err != nil {
+		t.Fatalf("claim stream: %v", err)
+	}
+	if _, err := handle.Stream(); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected repeated stream conflict, got %v", err)
+	}
+	if _, err := handle.Next(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected stream/next conflict, got %v", err)
+	}
+	if _, err := handle.Run(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected stream/run conflict, got %v", err)
+	}
+	stream.Close()
+	cleanup()
+
+	handle, cleanup = newHandle()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := handle.Next(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("claim next: %v", err)
+	}
+	if _, err := handle.Stream(); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected next/stream conflict, got %v", err)
+	}
+	if _, err := handle.Run(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected next/run conflict, got %v", err)
+	}
+	cleanup()
+}
+
+func TestTurnHandleRunRejectsConcurrentConsumers(t *testing.T) {
+	client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+	defer client.Close()
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	handle := &TurnHandle{
+		client:   client,
+		threadID: "thr_123",
+		stream: &TurnStream{next: func(context.Context) (rpc.Notification, error) {
+			close(entered)
+			<-release
+			return rpc.Notification{Method: "turn/completed", Raw: mustRaw(map[string]any{
+				"threadId": "thr_123",
+				"turn":     turnPayload("turn_1", "completed"),
+			})}, nil
+		}},
+	}
+	runDone := make(chan error, 1)
+	go func() {
+		_, err := handle.Run(context.Background())
+		runDone <- err
+	}()
+	<-entered
+	if _, err := handle.Next(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected run/next conflict, got %v", err)
+	}
+	if _, err := handle.Stream(); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected run/stream conflict, got %v", err)
+	}
+	if _, err := handle.Run(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected run/run conflict, got %v", err)
+	}
+	close(release)
+	if err := <-runDone; err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+}
+
+func TestTurnHandleNextAllowsSequentialAndRejectsConcurrentConsumers(t *testing.T) {
+	client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+	defer client.Close()
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	index := 0
+	handle := &TurnHandle{
+		client:   client,
+		threadID: "thr_123",
+		stream: &TurnStream{next: func(context.Context) (rpc.Notification, error) {
+			index++
+			if index == 1 {
+				return rpc.Notification{Method: "first"}, nil
+			}
+			close(entered)
+			<-release
+			return rpc.Notification{Method: "second"}, nil
+		}},
+	}
+
+	first, err := handle.Next(context.Background())
+	if err != nil || first.Method != "first" {
+		t.Fatalf("sequential first Next: note=%#v err=%v", first, err)
+	}
+	secondDone := make(chan error, 1)
+	go func() {
+		_, err := handle.Next(context.Background())
+		secondDone <- err
+	}()
+	<-entered
+	if _, err := handle.Next(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected concurrent next/next conflict, got %v", err)
+	}
+	close(release)
+	if err := <-secondDone; err != nil {
+		t.Fatalf("sequential second Next: %v", err)
+	}
+}
+
+func TestTurnHandleStreamUpdatesStateAndRejectsConcurrentConsumers(t *testing.T) {
+	client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+	defer client.Close()
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	handle := &TurnHandle{
+		client:   client,
+		threadID: "thr_123",
+		stream: &TurnStream{next: func(context.Context) (rpc.Notification, error) {
+			close(entered)
+			<-release
+			return rpc.Notification{
+				Method: "turn/started",
+				Raw:    mustRaw(map[string]any{"threadId": "thr_123", "turn": turnPayload("turn_stream", "inProgress")}),
+			}, nil
+		}},
+	}
+	stream, err := handle.Stream()
+	if err != nil {
+		t.Fatalf("stream: %v", err)
+	}
+
+	firstDone := make(chan error, 1)
+	go func() {
+		_, nextErr := stream.Next(context.Background())
+		firstDone <- nextErr
+	}()
+	<-entered
+	if _, err := stream.Next(context.Background()); !errors.Is(err, ErrTurnConsumptionMode) {
+		t.Fatalf("expected concurrent consumer error, got %v", err)
+	}
+	close(release)
+	if err := <-firstDone; err != nil {
+		t.Fatalf("first stream consumer: %v", err)
+	}
+	if handle.ID() != "turn_stream" {
+		t.Fatalf("stream did not update handle state: %q", handle.ID())
+	}
+}
+
 func TestTurnHandleRunCancellationInterruptsAndPreservesContextError(t *testing.T) {
 	info := protocol.ClientInfo{Name: "codex-go-test", Version: "test"}
 	client, err := New(context.Background(), Options{
@@ -140,7 +299,7 @@ func TestTurnHandleRunCancellationInterruptsAndPreservesContextError(t *testing.
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "turn/start", Params: mustRaw(turnStartParams("hello"))}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"turn": turnPayload("turn_1", "inProgress")})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(4), Method: "turn/interrupt", Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1"})}),
-			readLine(rpc.JSONRPCError{ID: rpc.NewIntRequestID(4), Error: rpc.JSONRPCErrorError{Code: -32000, Message: "interrupt failed"}}),
+			readLine(rpc.JSONRPCError{ID: rpc.NewIntRequestID(4), Error: rpc.JSONRPCErrorDetail{Code: -32000, Message: "interrupt failed"}}),
 		}),
 		ClientInfo: info,
 	})

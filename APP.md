@@ -16,8 +16,8 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 ## Repository Layout
 
 - Repository root (`*.go`) - main `codex` package and user-facing API.
-- `rpc/` - low-level JSON-RPC transport/client and generated stubs.
-- `protocol/` - generated protocol schema types.
+- `rpc/` - low-level JSON-RPC transport/client, bounded writer and server-request queues, and generated stubs.
+- `protocol/` - generated protocol schema types plus reviewed manual wrappers for schemas the generator cannot yet express safely.
 - `internal/codegen/` - code generation implementation invoked by `go generate`.
 - `examples/` - runnable usage examples.
 - `*_test.go` files at root plus `examples_test.go`/`turn_test.go` - automated tests.
@@ -26,8 +26,8 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 ## Core Components
 
 - `codex` package: High-level SDK facade (client/thread/turn APIs, options, approvals integration).
-- `rpc` package: JSON-RPC client/server plumbing and request/notification handling.
-- `protocol` package: Generated wire-level types shared by SDK and app-server protocol.
+- `rpc` package: JSON-RPC client/server plumbing with serialized context-bounded writes, bounded server-request workers, and request/notification handling.
+- `protocol` package: Generated wire-level types shared by SDK and app-server protocol. Canonical Go initialisms are generated centrally; raw-preserving wrappers retain unresolved union data.
 
 ## Architecture Rules
 
@@ -35,6 +35,9 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 - Prefer extension through existing abstractions before introducing new top-level modules.
 - Record significant architecture tradeoffs in the active ExecPlan decision log.
 - Generated files in `protocol/` and `rpc/` must be checked in.
+- Keep manual protocol declarations in `protocol/manual_types.go` listed in the generator's reviewed manual-type set. Do not hand-edit generated declarations.
+- Prefer `ServerRequestCallbacks` in the root package or embedding `rpc.UnimplementedServerRequestHandler`; broad generated handler interfaces are compatibility surfaces only.
+- A `TurnHandle` has exactly one notification consumer (`Run`, `Next`, or `Stream`).
 - Keep examples in `examples/` aligned with `README.md` and `doc.go`.
 
 ## Local Development

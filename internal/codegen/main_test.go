@@ -25,6 +25,19 @@ func TestMethodBaseName(t *testing.T) {
 	if got := methodName(""); got != "Unknown" {
 		t.Fatalf("expected Unknown, got %s", got)
 	}
+	for input, want := range map[string]string{
+		"McpServerOauthLoginParams": "MCPServerOAuthLoginParams",
+		"ThreadIdURL":               "ThreadIDURL",
+		"JSONRPCMessage":            "JSONRPCMessage",
+		"HttpSseUuid":               "HTTPSSEUUID",
+	} {
+		if got := canonicalGoName(input); got != want {
+			t.Errorf("canonicalGoName(%q) = %q, want %q", input, got, want)
+		}
+	}
+	if got := methodName("mcpServer/oauth/login"); got != "MCPServerOAuthLogin" {
+		t.Fatalf("unexpected canonical method name: %s", got)
+	}
 }
 
 func TestNormalizeGeneratedHeader(t *testing.T) {
@@ -194,6 +207,92 @@ func TestStripAndSanitize(t *testing.T) {
 	}
 }
 
+func TestDeprecateSanitizedFallbacks(t *testing.T) {
+	source := []byte("package protocol\n\ntype SanitizedMCPThingJSON struct{}\ntype SanitizedNestedJSON struct{}\n")
+	got := string(deprecateSanitizedFallbacks(source, map[string]string{
+		"SanitizedMCPThingJSON": "MCPThing",
+	}))
+	if !strings.Contains(got, "// Deprecated: use MCPThing.\ntype SanitizedMCPThingJSON") {
+		t.Fatalf("missing deprecation comment:\n%s", got)
+	}
+	if strings.Contains(got, "Deprecated: use SanitizedNestedJSON") {
+		t.Fatalf("unexpected nested-type deprecation:\n%s", got)
+	}
+}
+
+func TestWriteCompatibilityAliases(t *testing.T) {
+	dir := t.TempDir()
+	generated := map[string]struct{}{
+		"MCPServerOAuthLoginParams":                {},
+		"SanitizedMCPServerOAuthLoginResponseJSON": {},
+	}
+	for name := range protocolAliasNames(generated, nil) {
+		generated[name] = struct{}{}
+	}
+	if err := writeCompatibilityAliases(dir, generated, testCodexCommit); err != nil {
+		t.Fatalf("write compatibility aliases: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "compatibility_gen.go"))
+	if err != nil {
+		t.Fatalf("read compatibility aliases: %v", err)
+	}
+	text := string(data)
+	for _, want := range []string{
+		"type MCPServerOauthLoginParams = MCPServerOAuthLoginParams",
+		"type SanitizedMCPServerOauthLoginResponse = SanitizedMCPServerOAuthLoginResponse",
+		"const ClientRequestKindMcpServerOauthLogin = ClientRequestKindMCPServerOAuthLogin",
+		"Deprecated: use MCPServerOAuthLoginParams.",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("compatibility output missing %q:\n%s", want, text)
+		}
+	}
+}
+
+func TestValidateManualStructSchemaCoverageReportsAllMissingFields(t *testing.T) {
+	repoRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(repoRoot, "protocol"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manualSource := []byte("package protocol\n\ntype Example struct {\n\tPresent string `json:\"present\"`\n\tRequiredOmitted string `json:\"requiredOmitted,omitempty\"`\n}\n")
+	if err := os.WriteFile(filepath.Join(repoRoot, "protocol", "manual_types.go"), manualSource, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	schemaDir := t.TempDir()
+	writeJSON(t, filepath.Join(schemaDir, "Bundle.json"), map[string]any{
+		"title": "Bundle",
+		"definitions": map[string]any{
+			"Example": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"present":         map[string]any{"type": "string"},
+					"requiredOmitted": map[string]any{"type": "string"},
+					"missingOne":      map[string]any{"type": "string"},
+					"missingTwo":      map[string]any{"type": "string"},
+				},
+				"required": []string{"requiredOmitted"},
+			},
+		},
+	})
+
+	originalRequired := requiredManualSchemaCoverage
+	requiredManualSchemaCoverage = map[string]struct{}{"Example": {}}
+	t.Cleanup(func() { requiredManualSchemaCoverage = originalRequired })
+
+	err := validateManualStructSchemaCoverage(schemaDir, repoRoot)
+	if err == nil {
+		t.Fatal("expected missing schema properties")
+	}
+	for _, want := range []string{
+		"Example missing: missingOne, missingTwo",
+		"Example required with omitempty: requiredOmitted",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error %q does not contain %q", err, want)
+		}
+	}
+}
+
 func TestStripSubschemasHandlesArrays(t *testing.T) {
 	input := []any{
 		map[string]any{"oneOf": []any{map[string]any{"type": "string"}}},
@@ -287,6 +386,7 @@ func TestRejectsUnreviewedInterfaceFallbacks(t *testing.T) {
 func TestRenderHelpers(t *testing.T) {
 	methods := []rpcMethod{
 		{Method: "foo/bar", ParamsType: "FooParams", ResponseType: "FooResponse"},
+		{Method: "mcpServer/elicitation/request", ParamsType: "MCPServerElicitationRequestParams", ResponseType: "MCPServerElicitationRequestResponse"},
 	}
 	client := string(renderClientRequests(methods, testCodexCommit))
 	if !strings.Contains(client, "Source codex commit: "+testCodexCommit) {
@@ -300,8 +400,20 @@ func TestRenderHelpers(t *testing.T) {
 	}
 
 	server := string(renderServerRequests(methods, testCodexCommit))
-	if !strings.Contains(server, "unsupported server request") {
-		t.Fatalf("expected server dispatch")
+	if !strings.Contains(server, "ServerRequestMethodError") {
+		t.Fatalf("expected typed server dispatch error")
+	}
+	if !strings.Contains(server, "UnimplementedServerRequestHandler") {
+		t.Fatalf("expected forward-compatible server handler")
+	}
+	for _, want := range []string{
+		"type MCPServerElicitationRequestHandler interface",
+		"handler.(MCPServerElicitationRequestHandler)",
+		"canonicalHandler.MCPServerElicitationRequest(ctx, params)",
+	} {
+		if !strings.Contains(server, want) {
+			t.Fatalf("server request output missing %q:\n%s", want, server)
+		}
 	}
 
 	notes := string(renderNotifications([]rpcNotification{{Method: "turn/started", ParamsType: "TurnStartedNotification"}}, testCodexCommit))
@@ -451,6 +563,20 @@ func TestExternalUnionInventoryWhenConfigured(t *testing.T) {
 		t.Skip("set CODEX_SCHEMA_TEST_DIR to verify an exported production schema inventory")
 	}
 	if err := validateUnionInventory(schemaDir); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestExternalManualStructSchemaCoverageWhenConfigured(t *testing.T) {
+	schemaDir := os.Getenv("CODEX_SCHEMA_TEST_DIR")
+	if schemaDir == "" {
+		t.Skip("set CODEX_SCHEMA_TEST_DIR to verify manual structs against exported production schemas")
+	}
+	root, err := repoRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validateManualStructSchemaCoverage(schemaDir, root); err != nil {
 		t.Fatal(err)
 	}
 }

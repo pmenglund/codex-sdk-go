@@ -5,12 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
 	"go/format"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"sort"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/atombender/go-jsonschema/pkg/generator"
 )
@@ -93,7 +99,7 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 		DefaultPackageName: "protocol",
 		DefaultOutputName:  "types_gen.go",
 		Tags:               []string{"json"},
-		Capitalizations:    []string{"ID", "JSON", "RPC", "MCP", "HTTP", "URL", "SSE", "UUID"},
+		Capitalizations:    []string{"ID", "JSON", "RPC", "MCP", "OAuth", "HTTP", "URL", "SSE", "UUID"},
 		OnlyModels:         true,
 	}
 	gen, err := generator.New(cfg)
@@ -141,6 +147,9 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 		return err
 	}
 	manualTypes := manualProtocolTypes()
+	if err := validateManualStructSchemaCoverage(schemaDir, repoRoot); err != nil {
+		return err
+	}
 	for name := range unions {
 		manualTypes[name] = struct{}{}
 	}
@@ -172,9 +181,16 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 		}
 		fallbacks = append(fallbacks, title)
 	}
+	deprecatedSanitized := make(map[string]string)
+	for _, name := range fallbacks {
+		if target, ok := sanitizedFallbackTarget(name, generated); ok {
+			deprecatedSanitized[target] = name
+		}
+	}
 
 	for name, src := range sources {
 		normalized := normalizeGeneratedHeader(src, codexCommit)
+		normalized = deprecateSanitizedFallbacks(normalized, deprecatedSanitized)
 		if err := writeGoFile(outDir, name, normalized); err != nil {
 			return err
 		}
@@ -185,6 +201,19 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 	}
 
 	if err := writeProtocolAliases(outDir, generated, fallbacks, codexCommit); err != nil {
+		return err
+	}
+	compatibilityTypes := make(map[string]struct{}, len(generated)+len(fallbacks))
+	for name := range generated {
+		compatibilityTypes[name] = struct{}{}
+	}
+	for _, name := range fallbacks {
+		compatibilityTypes[name] = struct{}{}
+	}
+	for name := range protocolAliasNames(generated, fallbacks) {
+		compatibilityTypes[name] = struct{}{}
+	}
+	if err := writeCompatibilityAliases(outDir, compatibilityTypes, codexCommit); err != nil {
 		return err
 	}
 
@@ -201,6 +230,298 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 	}
 
 	return nil
+}
+
+var requiredManualSchemaCoverage = map[string]struct{}{
+	"CommandExecutionRequestApprovalParams":   {},
+	"CommandExecutionRequestApprovalResponse": {},
+	"ErrorNotification":                       {},
+	"GitInfo":                                 {},
+	"ItemCompletedNotification":               {},
+	"PermissionsRequestApprovalParams":        {},
+	"PermissionsRequestApprovalResponse":      {},
+	"Thread":                                  {},
+	"ThreadForkParams":                        {},
+	"ThreadForkResponse":                      {},
+	"ThreadListParams":                        {},
+	"ThreadListResponse":                      {},
+	"ThreadReadResponse":                      {},
+	"ThreadResumeParams":                      {},
+	"ThreadResumeResponse":                    {},
+	"ThreadStartParams":                       {},
+	"ThreadStartResponse":                     {},
+	"ThreadUnarchiveResponse":                 {},
+	"Turn":                                    {},
+	"TurnStartParams":                         {},
+	"TurnStartResponse":                       {},
+	"TurnsPage":                               {},
+}
+
+var manualStructSchemaCoverageExclusions = map[string]struct{}{
+	"CommandExecutionApprovalDecision": {},
+	"ReviewDecision":                   {},
+}
+
+func validateManualStructSchemaCoverage(schemaDir, repoRoot string) error {
+	manualPath := filepath.Join(repoRoot, "protocol", "manual_types.go")
+	manualFields, err := manualStructJSONFields(manualPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+	files, err := findSchemaFiles(schemaDir)
+	if err != nil {
+		return err
+	}
+	validated := make(map[string]struct{})
+	missing := make(map[string]map[string]struct{})
+	requiredOmitted := make(map[string]map[string]struct{})
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		var root map[string]any
+		if err := json.Unmarshal(data, &root); err != nil {
+			return err
+		}
+		for title, schema := range namedSchemaObjects(root) {
+			fields, hasManualStruct := manualFields[title]
+			if !hasManualStruct {
+				continue
+			}
+			if _, excluded := manualStructSchemaCoverageExclusions[title]; excluded {
+				continue
+			}
+			properties := schemaObjectProperties(schema, root, make(map[string]bool))
+			if len(properties) == 0 {
+				continue
+			}
+			validated[title] = struct{}{}
+			for property := range properties {
+				if _, ok := fields[property]; !ok {
+					if missing[title] == nil {
+						missing[title] = make(map[string]struct{})
+					}
+					missing[title][property] = struct{}{}
+				}
+			}
+			for property := range schemaObjectRequired(schema, root, make(map[string]bool)) {
+				field, ok := fields[property]
+				if !ok || !field.omitEmpty {
+					continue
+				}
+				if requiredOmitted[title] == nil {
+					requiredOmitted[title] = make(map[string]struct{})
+				}
+				requiredOmitted[title][property] = struct{}{}
+			}
+		}
+	}
+	if len(missing) > 0 || len(requiredOmitted) > 0 {
+		typeSet := make(map[string]struct{}, len(missing)+len(requiredOmitted))
+		for name := range missing {
+			typeSet[name] = struct{}{}
+		}
+		for name := range requiredOmitted {
+			typeSet[name] = struct{}{}
+		}
+		types := make([]string, 0, len(typeSet))
+		for name := range typeSet {
+			types = append(types, name)
+		}
+		sort.Strings(types)
+		problems := make([]string, 0, len(types))
+		for _, name := range types {
+			properties := make([]string, 0, len(missing[name]))
+			for property := range missing[name] {
+				properties = append(properties, property)
+			}
+			sort.Strings(properties)
+			if len(properties) > 0 {
+				problems = append(problems, fmt.Sprintf("%s missing: %s", name, strings.Join(properties, ", ")))
+			}
+			properties = properties[:0]
+			for property := range requiredOmitted[name] {
+				properties = append(properties, property)
+			}
+			sort.Strings(properties)
+			if len(properties) > 0 {
+				problems = append(problems, fmt.Sprintf("%s required with omitempty: %s", name, strings.Join(properties, ", ")))
+			}
+		}
+		return fmt.Errorf("manual protocol types do not match schema (%s)", strings.Join(problems, "; "))
+	}
+	for name := range requiredManualSchemaCoverage {
+		if _, ok := validated[name]; !ok {
+			return fmt.Errorf("manual protocol type %s was not validated against an object schema", name)
+		}
+	}
+	return nil
+}
+
+type manualJSONField struct {
+	omitEmpty bool
+}
+
+func namedSchemaObjects(root map[string]any) map[string]map[string]any {
+	objects := make(map[string]map[string]any)
+	if title, ok := root["title"].(string); ok && title != "" {
+		objects[title] = root
+	}
+	definitions, _ := root["definitions"].(map[string]any)
+	for name, value := range definitions {
+		if object, ok := value.(map[string]any); ok {
+			objects[name] = object
+		}
+	}
+	return objects
+}
+
+func manualStructJSONFields(path string) (map[string]map[string]manualJSONField, error) {
+	parsed, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]map[string]manualJSONField)
+	for _, declaration := range parsed.Decls {
+		generic, ok := declaration.(*ast.GenDecl)
+		if !ok || generic.Tok != token.TYPE {
+			continue
+		}
+		for _, spec := range generic.Specs {
+			typeSpec, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				continue
+			}
+			structure, ok := typeSpec.Type.(*ast.StructType)
+			if !ok {
+				continue
+			}
+			fields := make(map[string]manualJSONField)
+			for _, field := range structure.Fields.List {
+				if field.Tag == nil {
+					continue
+				}
+				tag, err := strconv.Unquote(field.Tag.Value)
+				if err != nil {
+					return nil, err
+				}
+				parts := strings.Split(reflect.StructTag(tag).Get("json"), ",")
+				jsonName := parts[0]
+				if jsonName != "" && jsonName != "-" {
+					field := manualJSONField{}
+					for _, option := range parts[1:] {
+						field.omitEmpty = field.omitEmpty || option == "omitempty"
+					}
+					fields[jsonName] = field
+				}
+			}
+			result[typeSpec.Name.Name] = fields
+		}
+	}
+	return result, nil
+}
+
+func schemaObjectRequired(node, root map[string]any, seen map[string]bool) map[string]struct{} {
+	required := make(map[string]struct{})
+	if ref, ok := node["$ref"].(string); ok && strings.HasPrefix(ref, "#/") && !seen[ref] {
+		seen[ref] = true
+		if target, ok := resolveSchemaReference(root, ref); ok {
+			for name := range schemaObjectRequired(target, root, seen) {
+				required[name] = struct{}{}
+			}
+		}
+	}
+	if values, ok := node["required"].([]any); ok {
+		for _, value := range values {
+			if name, ok := value.(string); ok {
+				required[name] = struct{}{}
+			}
+		}
+	}
+	if variants, ok := node["allOf"].([]any); ok {
+		for _, variant := range variants {
+			object, ok := variant.(map[string]any)
+			if !ok {
+				continue
+			}
+			for name := range schemaObjectRequired(object, root, seen) {
+				required[name] = struct{}{}
+			}
+		}
+	}
+	return required
+}
+
+func schemaObjectProperties(node, root map[string]any, seen map[string]bool) map[string]struct{} {
+	properties := make(map[string]struct{})
+	if ref, ok := node["$ref"].(string); ok && strings.HasPrefix(ref, "#/") && !seen[ref] {
+		seen[ref] = true
+		if target, ok := resolveSchemaReference(root, ref); ok {
+			for name := range schemaObjectProperties(target, root, seen) {
+				properties[name] = struct{}{}
+			}
+		}
+	}
+	if values, ok := node["properties"].(map[string]any); ok {
+		for name := range values {
+			properties[name] = struct{}{}
+		}
+	}
+	for _, keyword := range []string{"allOf", "anyOf", "oneOf"} {
+		variants, _ := node[keyword].([]any)
+		for _, variant := range variants {
+			object, ok := variant.(map[string]any)
+			if !ok {
+				continue
+			}
+			for name := range schemaObjectProperties(object, root, seen) {
+				properties[name] = struct{}{}
+			}
+		}
+	}
+	return properties
+}
+
+func resolveSchemaReference(root map[string]any, ref string) (map[string]any, bool) {
+	var current any = root
+	for _, raw := range strings.Split(strings.TrimPrefix(ref, "#/"), "/") {
+		part := strings.ReplaceAll(strings.ReplaceAll(raw, "~1", "/"), "~0", "~")
+		object, ok := current.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		current, ok = object[part]
+		if !ok {
+			return nil, false
+		}
+	}
+	object, ok := current.(map[string]any)
+	return object, ok
+}
+
+func deprecateSanitizedFallbacks(src []byte, replacements map[string]string) []byte {
+	if len(replacements) == 0 {
+		return src
+	}
+	lines := strings.SplitAfter(string(src), "\n")
+	out := make([]string, 0, len(lines)+len(replacements))
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "type ") {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 2 {
+				if replacement, ok := replacements[fields[1]]; ok {
+					out = append(out, "// Deprecated: use "+replacement+".\n")
+				}
+			}
+		}
+		out = append(out, line)
+	}
+	return []byte(strings.Join(out, ""))
 }
 
 func filterManualTypeDeclarations(src []byte, manualTypes map[string]struct{}) []byte {
@@ -535,10 +856,10 @@ func parseDefinitionNames(schemaDir string) (map[string]struct{}, error) {
 			return nil, err
 		}
 		if doc.Title != "" {
-			defs[doc.Title] = struct{}{}
+			defs[canonicalGoName(doc.Title)] = struct{}{}
 		}
 		for name := range doc.Definitions {
-			defs[name] = struct{}{}
+			defs[canonicalGoName(name)] = struct{}{}
 		}
 	}
 	return defs, nil
@@ -555,7 +876,7 @@ func schemaTitle(path string) (string, error) {
 	if err := json.Unmarshal(data, &doc); err != nil {
 		return "", err
 	}
-	return doc.Title, nil
+	return canonicalGoName(doc.Title), nil
 }
 
 func writeFallbackTypes(outDir string, titles []string, generated map[string]struct{}, codexCommit string) error {
@@ -632,23 +953,9 @@ var opaqueFallbackTypeAllowlist = map[string]struct{}{
 	"ItemGuardianApprovalReviewCompletedNotification": {},
 	"ItemGuardianApprovalReviewStartedNotification":   {},
 	"ItemStartedNotification":                         {},
-	"ListMcpServerStatusParams":                       {},
-	"ListMcpServerStatusResponse":                     {},
 	"MarketplaceAddResponse":                          {},
 	"MarketplaceRemoveResponse":                       {},
 	"MarketplaceUpgradeResponse":                      {},
-	"McpResourceReadParams":                           {},
-	"McpResourceReadResponse":                         {},
-	"McpServerElicitationRequestParams":               {},
-	"McpServerElicitationRequestResponse":             {},
-	"McpServerOauthLoginCompletedNotification":        {},
-	"McpServerOauthLoginParams":                       {},
-	"McpServerOauthLoginResponse":                     {},
-	"McpServerRefreshResponse":                        {},
-	"McpServerStatusUpdatedNotification":              {},
-	"McpServerToolCallParams":                         {},
-	"McpServerToolCallResponse":                       {},
-	"McpToolCallProgressNotification":                 {},
 	"PluginInstalledResponse":                         {},
 	"PluginListResponse":                              {},
 	"PluginReadResponse":                              {},
@@ -674,11 +981,9 @@ var opaqueGeneratedInterfaceAllowlist = map[string]struct{}{
 	"ChatgptAuthTokensRefreshReason":            {},
 	"CodexErrorInfo":                            {},
 	"CommandExecOutputStream":                   {},
-	"CommandExecutionApprovalDecision":          {},
 	"ConsumeAccountRateLimitResetCreditOutcome": {},
 	"DynamicToolNamespaceTool":                  {},
 	"ExperimentalFeatureStage":                  {},
-	"FileChangeApprovalDecision":                {},
 	"FunctionCallOutputBody":                    {},
 	"InputModality":                             {},
 	"LocalShellAction":                          {},
@@ -693,7 +998,6 @@ var opaqueGeneratedInterfaceAllowlist = map[string]struct{}{
 	"ReasoningSummary":                          {},
 	"RequestID":                                 {},
 	"ResourceContent":                           {},
-	"ReviewDecision":                            {},
 	"ThreadListCwdFilter":                       {},
 	"TurnItemsView":                             {},
 }
@@ -739,30 +1043,7 @@ func collectGeneratedTypes(sources map[string][]byte) map[string]struct{} {
 }
 
 func writeProtocolAliases(outDir string, generated map[string]struct{}, fallbacks []string, codexCommit string) error {
-	existing := map[string]struct{}{}
-	for name := range generated {
-		existing[name] = struct{}{}
-	}
-	for _, name := range fallbacks {
-		if name != "" {
-			existing[name] = struct{}{}
-		}
-	}
-
-	aliases := map[string]string{}
-	for name := range generated {
-		if !strings.HasSuffix(name, "JSON") {
-			continue
-		}
-		base := strings.TrimSuffix(name, "JSON")
-		if base == "" {
-			continue
-		}
-		if _, ok := existing[base]; ok {
-			continue
-		}
-		aliases[base] = name
-	}
+	aliases := protocolAliasNames(generated, fallbacks)
 
 	aliasPath := filepath.Join(outDir, "aliases_gen.go")
 	if len(aliases) == 0 {
@@ -789,6 +1070,114 @@ func writeProtocolAliases(outDir string, generated map[string]struct{}, fallback
 	}
 
 	return writeGoFile(outDir, filepath.Base(aliasPath), []byte(b.String()))
+}
+
+func protocolAliasNames(generated map[string]struct{}, fallbacks []string) map[string]string {
+	existing := map[string]struct{}{}
+	for name := range generated {
+		existing[name] = struct{}{}
+	}
+	for _, name := range fallbacks {
+		if name != "" {
+			existing[name] = struct{}{}
+		}
+	}
+
+	aliases := map[string]string{}
+	for name := range generated {
+		if !strings.HasSuffix(name, "JSON") {
+			continue
+		}
+		base := strings.TrimSuffix(name, "JSON")
+		if base == "" {
+			continue
+		}
+		if _, ok := existing[base]; ok {
+			continue
+		}
+		aliases[base] = name
+	}
+
+	return aliases
+}
+
+func writeCompatibilityAliases(outDir string, generated map[string]struct{}, codexCommit string) error {
+	candidates := map[string]string{
+		"ListMcpServerStatusParams":                                     "ListMCPServerStatusParams",
+		"ListMcpServerStatusResponse":                                   "ListMCPServerStatusResponse",
+		"McpResourceReadParams":                                         "MCPResourceReadParams",
+		"McpResourceReadResponse":                                       "MCPResourceReadResponse",
+		"McpServerElicitationRequestParams":                             "MCPServerElicitationRequestParams",
+		"McpServerElicitationRequestResponse":                           "MCPServerElicitationRequestResponse",
+		"McpServerOauthLoginCompletedNotification":                      "MCPServerOAuthLoginCompletedNotification",
+		"McpServerOauthLoginParams":                                     "MCPServerOAuthLoginParams",
+		"McpServerOauthLoginResponse":                                   "MCPServerOAuthLoginResponse",
+		"McpServerRefreshResponse":                                      "MCPServerRefreshResponse",
+		"McpServerStatusUpdatedNotification":                            "MCPServerStatusUpdatedNotification",
+		"McpServerToolCallParams":                                       "MCPServerToolCallParams",
+		"McpServerToolCallResponse":                                     "MCPServerToolCallResponse",
+		"McpToolCallProgressNotification":                               "MCPToolCallProgressNotification",
+		"MCPServerOauthLoginParams":                                     "MCPServerOAuthLoginParams",
+		"MCPServerOauthLoginParamsScopes":                               "MCPServerOAuthLoginParamsScopes",
+		"MCPServerOauthLoginParamsThreadID":                             "MCPServerOAuthLoginParamsThreadID",
+		"MCPServerOauthLoginParamsTimeoutSecs":                          "MCPServerOAuthLoginParamsTimeoutSecs",
+		"SanitizedMCPServerOauthLoginCompletedNotificationJSON":         "SanitizedMCPServerOAuthLoginCompletedNotificationJSON",
+		"SanitizedMCPServerOauthLoginCompletedNotification":             "SanitizedMCPServerOAuthLoginCompletedNotification",
+		"SanitizedMCPServerOauthLoginCompletedNotificationJSONError":    "SanitizedMCPServerOAuthLoginCompletedNotificationJSONError",
+		"SanitizedMCPServerOauthLoginCompletedNotificationJSONThreadID": "SanitizedMCPServerOAuthLoginCompletedNotificationJSONThreadID",
+		"SanitizedMCPServerOauthLoginParamsJSON":                        "SanitizedMCPServerOAuthLoginParamsJSON",
+		"SanitizedMCPServerOauthLoginParams":                            "SanitizedMCPServerOAuthLoginParams",
+		"SanitizedMCPServerOauthLoginParamsJSONScopes":                  "SanitizedMCPServerOAuthLoginParamsJSONScopes",
+		"SanitizedMCPServerOauthLoginParamsJSONThreadID":                "SanitizedMCPServerOAuthLoginParamsJSONThreadID",
+		"SanitizedMCPServerOauthLoginParamsJSONTimeoutSecs":             "SanitizedMCPServerOAuthLoginParamsJSONTimeoutSecs",
+		"SanitizedMCPServerOauthLoginResponseJSON":                      "SanitizedMCPServerOAuthLoginResponseJSON",
+		"SanitizedMCPServerOauthLoginResponse":                          "SanitizedMCPServerOAuthLoginResponse",
+	}
+	constantCandidates := map[string]string{
+		"ClientRequestKindConfigMcpServerReload":              "ClientRequestKindConfigMCPServerReload",
+		"ClientRequestKindMcpServerOauthLogin":                "ClientRequestKindMCPServerOAuthLogin",
+		"ClientRequestKindMcpServerResourceRead":              "ClientRequestKindMCPServerResourceRead",
+		"ClientRequestKindMcpServerToolCall":                  "ClientRequestKindMCPServerToolCall",
+		"ClientRequestKindMcpServerStatusList":                "ClientRequestKindMCPServerStatusList",
+		"GuardianApprovalReviewActionKindMcpToolCall":         "GuardianApprovalReviewActionKindMCPToolCall",
+		"ServerNotificationKindItemMcpToolCallProgress":       "ServerNotificationKindItemMCPToolCallProgress",
+		"ServerNotificationKindMcpServerOauthLoginCompleted":  "ServerNotificationKindMCPServerOAuthLoginCompleted",
+		"ServerNotificationKindMcpServerStartupStatusUpdated": "ServerNotificationKindMCPServerStartupStatusUpdated",
+		"ServerRequestKindMcpServerElicitationRequest":        "ServerRequestKindMCPServerElicitationRequest",
+		"ThreadItemKindMcpToolCall":                           "ThreadItemKindMCPToolCall",
+	}
+	aliases := make(map[string]string)
+	for legacy, canonical := range candidates {
+		if _, exists := generated[canonical]; exists {
+			aliases[legacy] = canonical
+		}
+	}
+	path := filepath.Join(outDir, "compatibility_gen.go")
+	if len(aliases) == 0 && len(constantCandidates) == 0 {
+		_ = os.Remove(path)
+		return nil
+	}
+	names := make([]string, 0, len(aliases))
+	for name := range aliases {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	var b strings.Builder
+	b.WriteString(generatedHeader(codexCommit))
+	b.WriteString("package protocol\n\n")
+	for _, name := range names {
+		fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\ntype %s = %s\n\n", name, aliases[name], aliases[name], name, aliases[name])
+	}
+	constantNames := make([]string, 0, len(constantCandidates))
+	for name := range constantCandidates {
+		constantNames = append(constantNames, name)
+	}
+	sort.Strings(constantNames)
+	for _, name := range constantNames {
+		canonical := constantCandidates[name]
+		fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nconst %s = %s\n\n", name, canonical, canonical, name, canonical)
+	}
+	return writeGoFile(outDir, filepath.Base(path), []byte(b.String()))
 }
 
 func skipSchemaFiles() map[string]bool {
@@ -887,9 +1276,9 @@ func loadNotifications(path string) ([]rpcNotification, error) {
 func refName(ref string) string {
 	const prefix = "#/definitions/"
 	if strings.HasPrefix(ref, prefix) {
-		return strings.TrimPrefix(ref, prefix)
+		return canonicalGoName(strings.TrimPrefix(ref, prefix))
 	}
-	return ref
+	return canonicalGoName(ref)
 }
 
 type rpcMethod struct {
@@ -939,7 +1328,7 @@ func resolveResponseType(method rpcMethod, defs map[string]struct{}, overrides m
 	return "", fmt.Errorf("unable to resolve response type for method %q", method.Method)
 }
 
-func methodBaseName(method string) string {
+func rawMethodBaseName(method string) string {
 	parts := strings.FieldsFunc(method, func(r rune) bool {
 		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9')
 	})
@@ -956,6 +1345,59 @@ func methodBaseName(method string) string {
 	return b.String()
 }
 
+var canonicalInitialisms = map[string]string{
+	"http":  "HTTP",
+	"id":    "ID",
+	"json":  "JSON",
+	"mcp":   "MCP",
+	"oauth": "OAuth",
+	"rpc":   "RPC",
+	"sse":   "SSE",
+	"url":   "URL",
+	"uuid":  "UUID",
+}
+
+func canonicalGoName(name string) string {
+	words := splitGoName(name)
+	for index, word := range words {
+		if initialism, ok := canonicalInitialisms[strings.ToLower(word)]; ok {
+			words[index] = initialism
+		}
+	}
+	return strings.Join(words, "")
+}
+
+func legacyGoName(name string) string {
+	replacer := strings.NewReplacer("MCP", "Mcp", "OAuth", "Oauth")
+	return replacer.Replace(name)
+}
+
+func splitGoName(name string) []string {
+	runes := []rune(name)
+	if len(runes) == 0 {
+		return nil
+	}
+	var words []string
+	start := 0
+	for index := 1; index < len(runes); index++ {
+		previous := runes[index-1]
+		current := runes[index]
+		nextLower := index+1 < len(runes) && unicode.IsLower(runes[index+1])
+		boundary := unicode.IsLower(previous) && unicode.IsUpper(current) ||
+			unicode.IsUpper(previous) && unicode.IsUpper(current) && nextLower ||
+			unicode.IsDigit(previous) != unicode.IsDigit(current)
+		if boundary {
+			words = append(words, string(runes[start:index]))
+			start = index
+		}
+	}
+	return append(words, string(runes[start:]))
+}
+
+func methodBaseName(method string) string {
+	return canonicalGoName(rawMethodBaseName(method))
+}
+
 func clientResponseOverrides() map[string]string {
 	return map[string]string{
 		"account/logout":                           "LogoutAccountResponse",
@@ -965,7 +1407,7 @@ func clientResponseOverrides() map[string]string {
 		"addConversationListener":                  "AddConversationSubscriptionResponse",
 		"config/value/write":                       "ConfigWriteResponse",
 		"config/batchWrite":                        "ConfigWriteResponse",
-		"config/mcpServer/reload":                  "McpServerRefreshResponse",
+		"config/mcpServer/reload":                  "MCPServerRefreshResponse",
 		"externalAgentConfig/import/readHistories": "ExternalAgentConfigImportHistoriesReadResponse",
 		"removeConversationListener":               "RemoveConversationSubscriptionResponse",
 	}
@@ -977,7 +1419,7 @@ func renderClientRequests(methods []rpcMethod, codexCommit string) []byte {
 	b.WriteString("package rpc\n\n")
 	b.WriteString("import (\n\t\"context\"\n\t\"encoding/json\"\n\n\t\"github.com/pmenglund/codex-sdk-go/protocol\"\n)\n\n")
 
-	b.WriteString("// ClientRequests exposes typed JSON-RPC calls supported by the app-server.\n")
+	b.WriteString("// ClientRequests exposes every generated JSON-RPC call supported by the app-server.\n//\n// Deprecated: define a narrow interface containing only the methods your code consumes.\n")
 	b.WriteString("type ClientRequests interface {\n")
 	for _, method := range methods {
 		if method.ParamsType == "" {
@@ -1004,6 +1446,14 @@ func renderClientRequests(methods []rpcMethod, codexCommit string) []byte {
 			b.WriteString(fmt.Sprintf("\tif err := c.Call(ctx, %q, params, &result); err != nil {\n", method.Method))
 		}
 		b.WriteString("\t\treturn nil, err\n\t}\n\treturn &result, nil\n}\n\n")
+		legacy := legacyGoName(methodName(method.Method))
+		if legacy != methodName(method.Method) {
+			if method.ParamsType == "" {
+				fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nfunc (c *Client) %s(ctx context.Context) (*protocol.%s, error) { return c.%s(ctx) }\n\n", legacy, methodName(method.Method), methodName(method.Method), legacy, method.ResponseType, methodName(method.Method))
+			} else {
+				fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nfunc (c *Client) %s(ctx context.Context, params %s) (*protocol.%s, error) { return c.%s(ctx, params) }\n\n", legacy, methodName(method.Method), methodName(method.Method), legacy, paramsType(method.ParamsType), method.ResponseType, methodName(method.Method))
+			}
+		}
 	}
 
 	b.WriteString("// BuildClientRequest builds a JSON-RPC request for a client method.\n")
@@ -1019,33 +1469,65 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 	b.WriteString("package rpc\n\n")
 	b.WriteString("import (\n\t\"context\"\n\t\"encoding/json\"\n\n\t\"github.com/pmenglund/codex-sdk-go/protocol\"\n)\n\n")
 
-	b.WriteString("// ServerRequestHandler handles requests initiated by the app-server.\n")
+	for _, method := range methods {
+		legacy := rawMethodBaseName(method.Method)
+		canonical := methodBaseName(method.Method)
+		if canonical == legacy {
+			continue
+		}
+		fmt.Fprintf(&b, "// %sHandler handles %s using canonical Go initialisms.\n", canonical, method.Method)
+		fmt.Fprintf(&b, "type %sHandler interface {\n", canonical)
+		if method.ParamsType == "" {
+			fmt.Fprintf(&b, "\t%s(ctx context.Context) (*protocol.%s, error)\n", canonical, method.ResponseType)
+		} else {
+			fmt.Fprintf(&b, "\t%s(ctx context.Context, params %s) (*protocol.%s, error)\n", canonical, paramsType(method.ParamsType), method.ResponseType)
+		}
+		b.WriteString("}\n\n")
+	}
+
+	b.WriteString("// ServerRequestHandler handles requests initiated by the app-server. Embed\n// UnimplementedServerRequestHandler so newly added methods do not break implementations.\n// Canonical-initialism capability interfaces take precedence over legacy method spellings.\n//\n// Deprecated: embed UnimplementedServerRequestHandler and override only required methods.\n")
 	b.WriteString("type ServerRequestHandler interface {\n")
 	for _, method := range methods {
 		if method.ParamsType == "" {
-			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context) (*protocol.%s, error)\n", methodName(method.Method), method.ResponseType))
+			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context) (*protocol.%s, error)\n", rawMethodBaseName(method.Method), method.ResponseType))
 		} else {
-			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context, params %s) (*protocol.%s, error)\n", methodName(method.Method), paramsType(method.ParamsType), method.ResponseType))
+			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context, params %s) (*protocol.%s, error)\n", rawMethodBaseName(method.Method), paramsType(method.ParamsType), method.ResponseType))
 		}
 	}
 	b.WriteString("}\n\n")
+	b.WriteString("// UnimplementedServerRequestHandler provides forward-compatible default methods.\n")
+	b.WriteString("type UnimplementedServerRequestHandler struct{}\n\n")
+	for _, method := range methods {
+		name := rawMethodBaseName(method.Method)
+		if method.ParamsType == "" {
+			fmt.Fprintf(&b, "func (UnimplementedServerRequestHandler) %s(context.Context) (*protocol.%s, error) { return nil, ErrServerRequestUnsupported }\n\n", name, method.ResponseType)
+		} else {
+			fmt.Fprintf(&b, "func (UnimplementedServerRequestHandler) %s(context.Context, %s) (*protocol.%s, error) { return nil, ErrServerRequestUnsupported }\n\n", name, paramsType(method.ParamsType), method.ResponseType)
+		}
+	}
 
 	b.WriteString("func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, req JSONRPCRequest) (result any, err error) {\n")
 	b.WriteString("\tswitch req.Method {\n")
 	for _, method := range methods {
+		legacy := rawMethodBaseName(method.Method)
+		canonical := methodBaseName(method.Method)
 		b.WriteString(fmt.Sprintf("\tcase %q:\n", method.Method))
 		if method.ParamsType == "" {
-			b.WriteString("\t\tresult, err = handler.")
-			b.WriteString(methodName(method.Method))
-			b.WriteString("(ctx)\n")
+			if canonical != legacy {
+				fmt.Fprintf(&b, "\t\tif canonicalHandler, ok := handler.(%sHandler); ok {\n\t\t\tresult, err = canonicalHandler.%s(ctx)\n\t\t} else {\n\t\t\tresult, err = handler.%s(ctx)\n\t\t}\n", canonical, canonical, legacy)
+			} else {
+				fmt.Fprintf(&b, "\t\tresult, err = handler.%s(ctx)\n", legacy)
+			}
 		} else {
 			b.WriteString("\t\tvar params protocol.")
 			b.WriteString(method.ParamsType)
 			b.WriteString("\n")
 			b.WriteString("\t\tif len(req.Params) > 0 {\n\t\t\tif err := json.Unmarshal(req.Params, &params); err != nil {\n\t\t\t\treturn nil, &ServerRequestParamsError{Method: req.Method, Err: err}\n\t\t\t}\n\t\t}\n")
-			b.WriteString("\t\tresult, err = handler.")
-			b.WriteString(methodName(method.Method))
-			b.WriteString("(ctx, params)\n")
+			if canonical != legacy {
+				fmt.Fprintf(&b, "\t\tif canonicalHandler, ok := handler.(%sHandler); ok {\n\t\t\tresult, err = canonicalHandler.%s(ctx, params)\n\t\t} else {\n\t\t\tresult, err = handler.%s(ctx, params)\n\t\t}\n", canonical, canonical, legacy)
+			} else {
+				fmt.Fprintf(&b, "\t\tresult, err = handler.%s(ctx, params)\n", legacy)
+			}
 		}
 		b.WriteString("\t\tif err != nil {\n\t\t\treturn nil, &ServerRequestHandlerError{Method: req.Method, Err: err}\n\t\t}\n\t\treturn result, nil\n")
 	}
@@ -1104,30 +1586,46 @@ func manualProtocolTypes() map[string]struct{} {
 		"ApplyPatchApprovalResponse":              {},
 		"CommandExecutionRequestApprovalParams":   {},
 		"CommandExecutionRequestApprovalResponse": {},
+		"CommandExecutionApprovalDecision":        {},
 		"ErrorNotification":                       {},
 		"ExecCommandApprovalParams":               {},
 		"ExecCommandApprovalResponse":             {},
 		"FileChangeRequestApprovalParams":         {},
 		"FileChangeRequestApprovalResponse":       {},
+		"FileChangeApprovalDecision":              {},
 		"ItemCompletedNotification":               {},
+		"MCPServerElicitationRequestParams":       {},
 		"PermissionsRequestApprovalParams":        {},
 		"PermissionsRequestApprovalResponse":      {},
 		"ResponseItem":                            {},
+		"ReviewDecision":                          {},
 		"SandboxPolicy":                           {},
+		"Thread":                                  {},
+		"ThreadResponse":                          {},
 		"ThreadResumeResponse":                    {},
 		"ThreadGoal":                              {},
 		"ThreadGoalGetResponse":                   {},
 		"ThreadGoalSetResponse":                   {},
 		"ThreadGoalUpdatedNotification":           {},
 		"ThreadForkParams":                        {},
+		"ThreadForkResponse":                      {},
+		"ThreadListParams":                        {},
+		"ThreadListResponse":                      {},
+		"ThreadReadResponse":                      {},
 		"ThreadResumeParams":                      {},
 		"ThreadStartParams":                       {},
 		"ThreadStartResponse":                     {},
 		"ThreadStatus":                            {},
+		"ThreadUnarchiveResponse":                 {},
 		"ToolRequestUserInputParams":              {},
 		"ToolRequestUserInputResponse":            {},
 		"TurnStartParams":                         {},
 		"TurnStartParamsInputElem":                {},
+		"TurnStartResponse":                       {},
+		"TurnItemsView":                           {},
+		"Turn":                                    {},
+		"TurnStatus":                              {},
+		"TurnsPage":                               {},
 		"UserInput":                               {},
 		"TurnCompletedNotification":               {},
 		"TurnStartedNotification":                 {},

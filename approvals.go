@@ -25,7 +25,7 @@ func (h AutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Cont
 		"turn_id", params.TurnID,
 		"item_id", params.ItemID,
 	)
-	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: "accept"}
+	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("accept")}
 	return &resp, nil
 }
 
@@ -38,7 +38,7 @@ func (h AutoApproveHandler) ItemFileChangeRequestApproval(ctx context.Context, p
 		"turn_id", params.TurnID,
 		"item_id", params.ItemID,
 	)
-	resp := protocol.FileChangeRequestApprovalResponse{Decision: "accept"}
+	resp := protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionAccept}
 	return &resp, nil
 }
 
@@ -75,11 +75,18 @@ func (h AutoApproveHandler) ItemToolRequestUserInput(ctx context.Context, params
 	return nil, errors.New("tool user input requires a custom handler")
 }
 
-// McpServerElicitationRequest returns an error for MCP elicitation prompts.
-func (h AutoApproveHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+// MCPServerElicitationRequest returns an error for MCP elicitation prompts.
+func (h AutoApproveHandler) MCPServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	logger := resolveLogger(h.Logger)
 	logger.Info("codex auto-approve handler cannot answer MCP elicitation prompts")
 	return nil, errors.New("mcp elicitation requires a custom handler")
+}
+
+// McpServerElicitationRequest preserves the legacy method spelling.
+//
+// Deprecated: use MCPServerElicitationRequest.
+func (h AutoApproveHandler) McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
+	return h.MCPServerElicitationRequest(ctx, params)
 }
 
 // AccountChatgptAuthTokensRefresh returns an error for auth refresh requests.
@@ -105,7 +112,7 @@ func (h AutoApproveHandler) ApplyPatchApproval(ctx context.Context, params proto
 		"call_id", params.CallID,
 		"file_changes", len(params.FileChanges),
 	)
-	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
+	resp := protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
 	return &resp, nil
 }
 
@@ -117,7 +124,7 @@ func (h AutoApproveHandler) ExecCommandApproval(ctx context.Context, params prot
 		"conversation_id", params.ConversationID,
 		"call_id", params.CallID,
 	)
-	resp := protocol.ExecCommandApprovalResponse{Decision: "approved"}
+	resp := protocol.ExecCommandApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
 	return &resp, nil
 }
 
@@ -127,11 +134,11 @@ func (h AutoApproveHandler) ExecCommandApproval(ctx context.Context, params prot
 type RejectingApprovalHandler struct{}
 
 func (RejectingApprovalHandler) ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
-	return &protocol.CommandExecutionRequestApprovalResponse{Decision: "decline"}, nil
+	return &protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("decline")}, nil
 }
 
 func (RejectingApprovalHandler) ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
-	return &protocol.FileChangeRequestApprovalResponse{Decision: "decline"}, nil
+	return &protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionDecline}, nil
 }
 
 func (RejectingApprovalHandler) ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
@@ -139,11 +146,50 @@ func (RejectingApprovalHandler) ItemPermissionsRequestApproval(context.Context, 
 }
 
 func (RejectingApprovalHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
-	return &protocol.ApplyPatchApprovalResponse{Decision: "denied"}, nil
+	return &protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("denied")}, nil
 }
 
 func (RejectingApprovalHandler) ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
-	return &protocol.ExecCommandApprovalResponse{Decision: "denied"}, nil
+	return &protocol.ExecCommandApprovalResponse{Decision: protocol.MustReviewDecision("denied")}, nil
+}
+
+// ApprovalCallbackHandler is the stable subset needed to adapt approval
+// policies to ServerRequestCallbacks. Both AutoApproveHandler and
+// UnsafeLoggingAutoApproveHandler implement it.
+type ApprovalCallbackHandler interface {
+	ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error)
+	ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error)
+	ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error)
+	ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error)
+	ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error)
+}
+
+// AutoApproveCallbacks adapts the approval methods of handler to the preferred
+// optional-callback API. Non-approval server requests remain unsupported.
+func AutoApproveCallbacks(handler ApprovalCallbackHandler) *ServerRequestCallbacks {
+	if isNilValue(handler) {
+		return &ServerRequestCallbacks{}
+	}
+	return &ServerRequestCallbacks{
+		ApprovePatch:            handler.ApplyPatchApproval,
+		ApproveCommand:          handler.ExecCommandApproval,
+		ApproveCommandExecution: handler.ItemCommandExecutionRequestApproval,
+		ApproveFileChange:       handler.ItemFileChangeRequestApproval,
+		ApprovePermissions:      handler.ItemPermissionsRequestApproval,
+	}
+}
+
+// RejectingApprovalCallbacks returns preferred optional callbacks that reject
+// command, patch, file-change, and permission approval requests.
+func RejectingApprovalCallbacks() *ServerRequestCallbacks {
+	handler := RejectingApprovalHandler{}
+	return &ServerRequestCallbacks{
+		ApprovePatch:            handler.ApplyPatchApproval,
+		ApproveCommand:          handler.ExecCommandApproval,
+		ApproveCommandExecution: handler.ItemCommandExecutionRequestApproval,
+		ApproveFileChange:       handler.ItemFileChangeRequestApproval,
+		ApprovePermissions:      handler.ItemPermissionsRequestApproval,
+	}
 }
 
 func (RejectingApprovalHandler) ItemToolCall(context.Context, protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
@@ -154,8 +200,15 @@ func (RejectingApprovalHandler) ItemToolRequestUserInput(context.Context, protoc
 	return nil, errors.New("tool user input requires a custom handler")
 }
 
-func (RejectingApprovalHandler) McpServerElicitationRequest(context.Context, protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+func (RejectingApprovalHandler) MCPServerElicitationRequest(context.Context, protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	return nil, errors.New("mcp elicitation requires a custom handler")
+}
+
+// McpServerElicitationRequest preserves the legacy method spelling.
+//
+// Deprecated: use MCPServerElicitationRequest.
+func (h RejectingApprovalHandler) McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
+	return h.MCPServerElicitationRequest(ctx, params)
 }
 
 func (RejectingApprovalHandler) AccountChatgptAuthTokensRefresh(context.Context, protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {

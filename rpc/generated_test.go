@@ -103,6 +103,47 @@ func TestDispatchServerRequests(t *testing.T) {
 	}
 }
 
+func TestUnimplementedServerRequestHandlerSupportsPartialImplementations(t *testing.T) {
+	handler := partialServerRequestHandler{}
+	var _ ServerRequestHandler = handler
+	if _, err := handler.ItemToolCall(context.Background(), protocol.DynamicToolCallParams{}); !errors.Is(err, ErrServerRequestUnsupported) {
+		t.Fatalf("expected unsupported default method, got %v", err)
+	}
+}
+
+func TestCanonicalMCPServerHandlerOverridesEmbeddedLegacyDefault(t *testing.T) {
+	handler := &canonicalMCPServerHandler{}
+	request := JSONRPCRequest{
+		ID:     NewIntRequestID(1),
+		Method: "mcpServer/elicitation/request",
+		Params: json.RawMessage(`{"message":"choose"}`),
+	}
+	if _, err := dispatchServerRequest(context.Background(), handler, request); err != nil {
+		t.Fatalf("dispatch canonical MCP handler: %v", err)
+	}
+	if !handler.called {
+		t.Fatal("canonical MCP handler was not called")
+	}
+}
+
+type canonicalMCPServerHandler struct {
+	UnimplementedServerRequestHandler
+	called bool
+}
+
+func (h *canonicalMCPServerHandler) MCPServerElicitationRequest(context.Context, protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
+	h.called = true
+	return nil, nil
+}
+
+type partialServerRequestHandler struct {
+	UnimplementedServerRequestHandler
+}
+
+func (partialServerRequestHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	return &protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}, nil
+}
+
 func clientRequestMethods() []string {
 	iface := reflect.TypeOf((*ClientRequests)(nil)).Elem()
 	methods := make([]string, 0, iface.NumMethod())
@@ -153,7 +194,7 @@ func (t *scriptedTransport) enqueueResult(result any) {
 
 func (t *scriptedTransport) enqueueError(code int64, message string) {
 	t.mu.Lock()
-	t.queue = append(t.queue, scriptedResponse{err: &JSONRPCErrorError{Code: code, Message: message}})
+	t.queue = append(t.queue, scriptedResponse{err: &JSONRPCErrorDetail{Code: code, Message: message}})
 	t.mu.Unlock()
 }
 
@@ -222,12 +263,12 @@ type recordingHandler struct {
 
 type scriptedResponse struct {
 	result json.RawMessage
-	err    *JSONRPCErrorError
+	err    *JSONRPCErrorDetail
 }
 
 func (h *recordingHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	h.lastMethod = "applyPatchApproval"
-	resp := protocol.ApplyPatchApprovalResponse{Decision: "approved"}
+	resp := protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
 	return &resp, nil
 }
 
@@ -243,19 +284,19 @@ func (h *recordingHandler) AccountChatgptAuthTokensRefresh(ctx context.Context, 
 
 func (h *recordingHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	h.lastMethod = "execCommandApproval"
-	resp := protocol.ExecCommandApprovalResponse{Decision: "approved"}
+	resp := protocol.ExecCommandApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
 	return &resp, nil
 }
 
 func (h *recordingHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	h.lastMethod = "item/commandExecution/requestApproval"
-	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: "accept"}
+	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("accept")}
 	return &resp, nil
 }
 
 func (h *recordingHandler) ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
 	h.lastMethod = "item/fileChange/requestApproval"
-	resp := protocol.FileChangeRequestApprovalResponse{Decision: "accept"}
+	resp := protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionAccept}
 	return &resp, nil
 }
 
@@ -269,7 +310,7 @@ func (h *recordingHandler) ItemToolCall(ctx context.Context, params protocol.Dyn
 	return nil, nil
 }
 
-func (h *recordingHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+func (h *recordingHandler) McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	h.lastMethod = "mcpServer/elicitation/request"
 	return nil, nil
 }

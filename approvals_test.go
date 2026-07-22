@@ -38,25 +38,37 @@ func TestUnsafeLoggingAutoApproveHandlerEmitsSensitivePayloads(t *testing.T) {
 	if !strings.Contains(logs.String(), marker) {
 		t.Fatalf("expected explicit unsafe handler to log marker, got %s", logs.String())
 	}
+	callbacks := AutoApproveCallbacks(handler)
+	if callbacks.ApproveCommandExecution == nil || callbacks.ApproveFileChange == nil || callbacks.ApprovePermissions == nil {
+		t.Fatalf("unsafe handler did not adapt to preferred callbacks: %#v", callbacks)
+	}
+}
+
+func TestAutoApproveCallbacksAcceptsTypedNilHandler(t *testing.T) {
+	var handler *AutoApproveHandler
+	callbacks := AutoApproveCallbacks(handler)
+	if callbacks == nil || callbacks.ApprovePatch != nil || callbacks.ApproveCommandExecution != nil {
+		t.Fatalf("typed nil handler produced active callbacks: %#v", callbacks)
+	}
 }
 
 func TestRejectingApprovalHandler(t *testing.T) {
 	handler := RejectingApprovalHandler{}
 	ctx := context.Background()
 	command, err := handler.ItemCommandExecutionRequestApproval(ctx, protocol.CommandExecutionRequestApprovalParams{})
-	if err != nil || command.Decision != "decline" {
+	if err != nil || string(command.Decision.RawJSON()) != `"decline"` {
 		t.Fatalf("unexpected command rejection: %#v err=%v", command, err)
 	}
 	file, err := handler.ItemFileChangeRequestApproval(ctx, protocol.FileChangeRequestApprovalParams{})
-	if err != nil || file.Decision != "decline" {
+	if err != nil || file.Decision != protocol.FileChangeApprovalDecisionDecline {
 		t.Fatalf("unexpected file rejection: %#v err=%v", file, err)
 	}
 	patch, err := handler.ApplyPatchApproval(ctx, protocol.ApplyPatchApprovalParams{})
-	if err != nil || patch.Decision != "denied" {
+	if err != nil || string(patch.Decision.RawJSON()) != `"denied"` {
 		t.Fatalf("unexpected patch rejection: %#v err=%v", patch, err)
 	}
 	legacy, err := handler.ExecCommandApproval(ctx, protocol.ExecCommandApprovalParams{})
-	if err != nil || legacy.Decision != "denied" {
+	if err != nil || string(legacy.Decision.RawJSON()) != `"denied"` {
 		t.Fatalf("unexpected legacy rejection: %#v err=%v", legacy, err)
 	}
 	permissions, err := handler.ItemPermissionsRequestApproval(ctx, protocol.PermissionsRequestApprovalParams{})

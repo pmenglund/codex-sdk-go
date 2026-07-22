@@ -209,7 +209,7 @@ const (
 	ClientRequestKindCommandExecTerminate                   ClientRequestKind = "command/exec/terminate"
 	ClientRequestKindCommandExecWrite                       ClientRequestKind = "command/exec/write"
 	ClientRequestKindConfigBatchWrite                       ClientRequestKind = "config/batchWrite"
-	ClientRequestKindConfigMcpServerReload                  ClientRequestKind = "config/mcpServer/reload"
+	ClientRequestKindConfigMCPServerReload                  ClientRequestKind = "config/mcpServer/reload"
 	ClientRequestKindConfigRead                             ClientRequestKind = "config/read"
 	ClientRequestKindConfigValueWrite                       ClientRequestKind = "config/value/write"
 	ClientRequestKindConfigRequirementsRead                 ClientRequestKind = "configRequirements/read"
@@ -234,10 +234,10 @@ const (
 	ClientRequestKindMarketplaceAdd                         ClientRequestKind = "marketplace/add"
 	ClientRequestKindMarketplaceRemove                      ClientRequestKind = "marketplace/remove"
 	ClientRequestKindMarketplaceUpgrade                     ClientRequestKind = "marketplace/upgrade"
-	ClientRequestKindMcpServerOauthLogin                    ClientRequestKind = "mcpServer/oauth/login"
-	ClientRequestKindMcpServerResourceRead                  ClientRequestKind = "mcpServer/resource/read"
-	ClientRequestKindMcpServerToolCall                      ClientRequestKind = "mcpServer/tool/call"
-	ClientRequestKindMcpServerStatusList                    ClientRequestKind = "mcpServerStatus/list"
+	ClientRequestKindMCPServerOAuthLogin                    ClientRequestKind = "mcpServer/oauth/login"
+	ClientRequestKindMCPServerResourceRead                  ClientRequestKind = "mcpServer/resource/read"
+	ClientRequestKindMCPServerToolCall                      ClientRequestKind = "mcpServer/tool/call"
+	ClientRequestKindMCPServerStatusList                    ClientRequestKind = "mcpServerStatus/list"
 	ClientRequestKindModelList                              ClientRequestKind = "model/list"
 	ClientRequestKindModelProviderCapabilitiesRead          ClientRequestKind = "modelProvider/capabilities/read"
 	ClientRequestKindPermissionProfileList                  ClientRequestKind = "permissionProfile/list"
@@ -366,7 +366,7 @@ func (value *ClientRequest) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
-	case ClientRequestKindConfigMcpServerReload:
+	case ClientRequestKindConfigMCPServerReload:
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method"); err != nil {
 			return err
 		}
@@ -466,19 +466,19 @@ func (value *ClientRequest) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
-	case ClientRequestKindMcpServerOauthLogin:
+	case ClientRequestKindMCPServerOAuthLogin:
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
-	case ClientRequestKindMcpServerResourceRead:
+	case ClientRequestKindMCPServerResourceRead:
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
-	case ClientRequestKindMcpServerToolCall:
+	case ClientRequestKindMCPServerToolCall:
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
-	case ClientRequestKindMcpServerStatusList:
+	case ClientRequestKindMCPServerStatusList:
 		if err := requireDiscriminatedUnionFields(raw, "ClientRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
@@ -708,7 +708,7 @@ func (value ClientRequest) IsKnown() bool {
 		return true
 	case ClientRequestKindConfigBatchWrite:
 		return true
-	case ClientRequestKindConfigMcpServerReload:
+	case ClientRequestKindConfigMCPServerReload:
 		return true
 	case ClientRequestKindConfigRead:
 		return true
@@ -758,13 +758,13 @@ func (value ClientRequest) IsKnown() bool {
 		return true
 	case ClientRequestKindMarketplaceUpgrade:
 		return true
-	case ClientRequestKindMcpServerOauthLogin:
+	case ClientRequestKindMCPServerOAuthLogin:
 		return true
-	case ClientRequestKindMcpServerResourceRead:
+	case ClientRequestKindMCPServerResourceRead:
 		return true
-	case ClientRequestKindMcpServerToolCall:
+	case ClientRequestKindMCPServerToolCall:
 		return true
-	case ClientRequestKindMcpServerStatusList:
+	case ClientRequestKindMCPServerStatusList:
 		return true
 	case ClientRequestKindModelList:
 		return true
@@ -1703,7 +1703,7 @@ const (
 	GuardianApprovalReviewActionKindApplyPatch         GuardianApprovalReviewActionKind = "applyPatch"
 	GuardianApprovalReviewActionKindCommand            GuardianApprovalReviewActionKind = "command"
 	GuardianApprovalReviewActionKindExecve             GuardianApprovalReviewActionKind = "execve"
-	GuardianApprovalReviewActionKindMcpToolCall        GuardianApprovalReviewActionKind = "mcpToolCall"
+	GuardianApprovalReviewActionKindMCPToolCall        GuardianApprovalReviewActionKind = "mcpToolCall"
 	GuardianApprovalReviewActionKindNetworkAccess      GuardianApprovalReviewActionKind = "networkAccess"
 	GuardianApprovalReviewActionKindRequestPermissions GuardianApprovalReviewActionKind = "requestPermissions"
 )
@@ -1743,7 +1743,7 @@ func (value *GuardianApprovalReviewAction) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "GuardianApprovalReviewAction", kind, "argv", "cwd", "program", "source", "type"); err != nil {
 			return err
 		}
-	case GuardianApprovalReviewActionKindMcpToolCall:
+	case GuardianApprovalReviewActionKindMCPToolCall:
 		if err := requireDiscriminatedUnionFields(raw, "GuardianApprovalReviewAction", kind, "server", "toolName", "type"); err != nil {
 			return err
 		}
@@ -1785,7 +1785,7 @@ func (value GuardianApprovalReviewAction) IsKnown() bool {
 		return true
 	case GuardianApprovalReviewActionKindExecve:
 		return true
-	case GuardianApprovalReviewActionKindMcpToolCall:
+	case GuardianApprovalReviewActionKindMCPToolCall:
 		return true
 	case GuardianApprovalReviewActionKindNetworkAccess:
 		return true
@@ -2747,14 +2747,14 @@ const (
 	ServerNotificationKindItemCompleted                           ServerNotificationKind = "item/completed"
 	ServerNotificationKindItemFileChangeOutputDelta               ServerNotificationKind = "item/fileChange/outputDelta"
 	ServerNotificationKindItemFileChangePatchUpdated              ServerNotificationKind = "item/fileChange/patchUpdated"
-	ServerNotificationKindItemMcpToolCallProgress                 ServerNotificationKind = "item/mcpToolCall/progress"
+	ServerNotificationKindItemMCPToolCallProgress                 ServerNotificationKind = "item/mcpToolCall/progress"
 	ServerNotificationKindItemPlanDelta                           ServerNotificationKind = "item/plan/delta"
 	ServerNotificationKindItemReasoningSummaryPartAdded           ServerNotificationKind = "item/reasoning/summaryPartAdded"
 	ServerNotificationKindItemReasoningSummaryTextDelta           ServerNotificationKind = "item/reasoning/summaryTextDelta"
 	ServerNotificationKindItemReasoningTextDelta                  ServerNotificationKind = "item/reasoning/textDelta"
 	ServerNotificationKindItemStarted                             ServerNotificationKind = "item/started"
-	ServerNotificationKindMcpServerOauthLoginCompleted            ServerNotificationKind = "mcpServer/oauthLogin/completed"
-	ServerNotificationKindMcpServerStartupStatusUpdated           ServerNotificationKind = "mcpServer/startupStatus/updated"
+	ServerNotificationKindMCPServerOAuthLoginCompleted            ServerNotificationKind = "mcpServer/oauthLogin/completed"
+	ServerNotificationKindMCPServerStartupStatusUpdated           ServerNotificationKind = "mcpServer/startupStatus/updated"
 	ServerNotificationKindModelRerouted                           ServerNotificationKind = "model/rerouted"
 	ServerNotificationKindModelSafetyBufferingUpdated             ServerNotificationKind = "model/safetyBuffering/updated"
 	ServerNotificationKindModelVerification                       ServerNotificationKind = "model/verification"
@@ -2912,7 +2912,7 @@ func (value *ServerNotification) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "ServerNotification", kind, "method", "params"); err != nil {
 			return err
 		}
-	case ServerNotificationKindItemMcpToolCallProgress:
+	case ServerNotificationKindItemMCPToolCallProgress:
 		if err := requireDiscriminatedUnionFields(raw, "ServerNotification", kind, "method", "params"); err != nil {
 			return err
 		}
@@ -2936,11 +2936,11 @@ func (value *ServerNotification) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "ServerNotification", kind, "method", "params"); err != nil {
 			return err
 		}
-	case ServerNotificationKindMcpServerOauthLoginCompleted:
+	case ServerNotificationKindMCPServerOAuthLoginCompleted:
 		if err := requireDiscriminatedUnionFields(raw, "ServerNotification", kind, "method", "params"); err != nil {
 			return err
 		}
-	case ServerNotificationKindMcpServerStartupStatusUpdated:
+	case ServerNotificationKindMCPServerStartupStatusUpdated:
 		if err := requireDiscriminatedUnionFields(raw, "ServerNotification", kind, "method", "params"); err != nil {
 			return err
 		}
@@ -3160,7 +3160,7 @@ func (value ServerNotification) IsKnown() bool {
 		return true
 	case ServerNotificationKindItemFileChangePatchUpdated:
 		return true
-	case ServerNotificationKindItemMcpToolCallProgress:
+	case ServerNotificationKindItemMCPToolCallProgress:
 		return true
 	case ServerNotificationKindItemPlanDelta:
 		return true
@@ -3172,9 +3172,9 @@ func (value ServerNotification) IsKnown() bool {
 		return true
 	case ServerNotificationKindItemStarted:
 		return true
-	case ServerNotificationKindMcpServerOauthLoginCompleted:
+	case ServerNotificationKindMCPServerOAuthLoginCompleted:
 		return true
-	case ServerNotificationKindMcpServerStartupStatusUpdated:
+	case ServerNotificationKindMCPServerStartupStatusUpdated:
 		return true
 	case ServerNotificationKindModelRerouted:
 		return true
@@ -3266,7 +3266,7 @@ const (
 	ServerRequestKindItemPermissionsRequestApproval      ServerRequestKind = "item/permissions/requestApproval"
 	ServerRequestKindItemToolCall                        ServerRequestKind = "item/tool/call"
 	ServerRequestKindItemToolRequestUserInput            ServerRequestKind = "item/tool/requestUserInput"
-	ServerRequestKindMcpServerElicitationRequest         ServerRequestKind = "mcpServer/elicitation/request"
+	ServerRequestKindMCPServerElicitationRequest         ServerRequestKind = "mcpServer/elicitation/request"
 )
 
 // ServerRequest preserves the complete JSON payload for a discriminated union.
@@ -3328,7 +3328,7 @@ func (value *ServerRequest) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "ServerRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
-	case ServerRequestKindMcpServerElicitationRequest:
+	case ServerRequestKindMCPServerElicitationRequest:
 		if err := requireDiscriminatedUnionFields(raw, "ServerRequest", kind, "id", "method", "params"); err != nil {
 			return err
 		}
@@ -3374,7 +3374,7 @@ func (value ServerRequest) IsKnown() bool {
 		return true
 	case ServerRequestKindItemToolRequestUserInput:
 		return true
-	case ServerRequestKindMcpServerElicitationRequest:
+	case ServerRequestKindMCPServerElicitationRequest:
 		return true
 	default:
 		return false
@@ -3396,7 +3396,7 @@ const (
 	ThreadItemKindHookPrompt          ThreadItemKind = "hookPrompt"
 	ThreadItemKindImageGeneration     ThreadItemKind = "imageGeneration"
 	ThreadItemKindImageView           ThreadItemKind = "imageView"
-	ThreadItemKindMcpToolCall         ThreadItemKind = "mcpToolCall"
+	ThreadItemKindMCPToolCall         ThreadItemKind = "mcpToolCall"
 	ThreadItemKindPlan                ThreadItemKind = "plan"
 	ThreadItemKindReasoning           ThreadItemKind = "reasoning"
 	ThreadItemKindSleep               ThreadItemKind = "sleep"
@@ -3472,7 +3472,7 @@ func (value *ThreadItem) UnmarshalJSON(data []byte) error {
 		if err := requireDiscriminatedUnionFields(raw, "ThreadItem", kind, "id", "path", "type"); err != nil {
 			return err
 		}
-	case ThreadItemKindMcpToolCall:
+	case ThreadItemKindMCPToolCall:
 		if err := requireDiscriminatedUnionFields(raw, "ThreadItem", kind, "arguments", "id", "server", "status", "tool", "type"); err != nil {
 			return err
 		}
@@ -3544,7 +3544,7 @@ func (value ThreadItem) IsKnown() bool {
 		return true
 	case ThreadItemKindImageView:
 		return true
-	case ThreadItemKindMcpToolCall:
+	case ThreadItemKindMCPToolCall:
 		return true
 	case ThreadItemKindPlan:
 		return true

@@ -11,7 +11,16 @@ import (
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
 
-// ServerRequestHandler handles requests initiated by the app-server.
+// MCPServerElicitationRequestHandler handles mcpServer/elicitation/request using canonical Go initialisms.
+type MCPServerElicitationRequestHandler interface {
+	MCPServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error)
+}
+
+// ServerRequestHandler handles requests initiated by the app-server. Embed
+// UnimplementedServerRequestHandler so newly added methods do not break implementations.
+// Canonical-initialism capability interfaces take precedence over legacy method spellings.
+//
+// Deprecated: embed UnimplementedServerRequestHandler and override only required methods.
 type ServerRequestHandler interface {
 	AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error)
 	ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error)
@@ -22,7 +31,50 @@ type ServerRequestHandler interface {
 	ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error)
 	ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error)
 	ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error)
-	McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error)
+	McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error)
+}
+
+// UnimplementedServerRequestHandler provides forward-compatible default methods.
+type UnimplementedServerRequestHandler struct{}
+
+func (UnimplementedServerRequestHandler) AccountChatgptAuthTokensRefresh(context.Context, protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) AttestationGenerate(context.Context, protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ItemToolCall(context.Context, protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) ItemToolRequestUserInput(context.Context, protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
+	return nil, ErrServerRequestUnsupported
+}
+
+func (UnimplementedServerRequestHandler) McpServerElicitationRequest(context.Context, protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
+	return nil, ErrServerRequestUnsupported
 }
 
 func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, req JSONRPCRequest) (result any, err error) {
@@ -136,13 +188,17 @@ func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, re
 		}
 		return result, nil
 	case "mcpServer/elicitation/request":
-		var params protocol.McpServerElicitationRequestParams
+		var params protocol.MCPServerElicitationRequestParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
 				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		result, err = handler.McpServerElicitationRequest(ctx, params)
+		if canonicalHandler, ok := handler.(MCPServerElicitationRequestHandler); ok {
+			result, err = canonicalHandler.MCPServerElicitationRequest(ctx, params)
+		} else {
+			result, err = handler.McpServerElicitationRequest(ctx, params)
+		}
 		if err != nil {
 			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
 		}

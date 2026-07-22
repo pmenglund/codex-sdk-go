@@ -11,7 +11,9 @@ import (
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
 
-// ClientRequests exposes typed JSON-RPC calls supported by the app-server.
+// ClientRequests exposes every generated JSON-RPC call supported by the app-server.
+//
+// Deprecated: define a narrow interface containing only the methods your code consumes.
 type ClientRequests interface {
 	AccountLoginCancel(ctx context.Context, params protocol.CancelLoginAccountParams) (*protocol.CancelLoginAccountResponse, error)
 	AccountLoginStart(ctx context.Context, params protocol.LoginAccountParams) (*protocol.LoginAccountResponse, error)
@@ -28,7 +30,7 @@ type ClientRequests interface {
 	CommandExecTerminate(ctx context.Context, params protocol.CommandExecTerminateParams) (*protocol.CommandExecTerminateResponse, error)
 	CommandExecWrite(ctx context.Context, params protocol.CommandExecWriteParams) (*protocol.CommandExecWriteResponse, error)
 	ConfigBatchWrite(ctx context.Context, params protocol.ConfigBatchWriteParams) (*protocol.ConfigWriteResponse, error)
-	ConfigMcpServerReload(ctx context.Context) (*protocol.McpServerRefreshResponse, error)
+	ConfigMCPServerReload(ctx context.Context) (*protocol.MCPServerRefreshResponse, error)
 	ConfigRead(ctx context.Context, params protocol.ConfigReadParams) (*protocol.ConfigReadResponse, error)
 	ConfigValueWrite(ctx context.Context, params protocol.ConfigValueWriteParams) (*protocol.ConfigWriteResponse, error)
 	ConfigRequirementsRead(ctx context.Context) (*protocol.ConfigRequirementsReadResponse, error)
@@ -53,10 +55,10 @@ type ClientRequests interface {
 	MarketplaceAdd(ctx context.Context, params protocol.MarketplaceAddParams) (*protocol.MarketplaceAddResponse, error)
 	MarketplaceRemove(ctx context.Context, params protocol.MarketplaceRemoveParams) (*protocol.MarketplaceRemoveResponse, error)
 	MarketplaceUpgrade(ctx context.Context, params protocol.MarketplaceUpgradeParams) (*protocol.MarketplaceUpgradeResponse, error)
-	McpServerOauthLogin(ctx context.Context, params protocol.McpServerOauthLoginParams) (*protocol.McpServerOauthLoginResponse, error)
-	McpServerResourceRead(ctx context.Context, params protocol.McpResourceReadParams) (*protocol.McpResourceReadResponse, error)
-	McpServerToolCall(ctx context.Context, params protocol.McpServerToolCallParams) (*protocol.McpServerToolCallResponse, error)
-	McpServerStatusList(ctx context.Context, params protocol.ListMcpServerStatusParams) (*protocol.ListMcpServerStatusResponse, error)
+	MCPServerOAuthLogin(ctx context.Context, params protocol.MCPServerOAuthLoginParams) (*protocol.MCPServerOAuthLoginResponse, error)
+	MCPServerResourceRead(ctx context.Context, params protocol.MCPResourceReadParams) (*protocol.MCPResourceReadResponse, error)
+	MCPServerToolCall(ctx context.Context, params protocol.MCPServerToolCallParams) (*protocol.MCPServerToolCallResponse, error)
+	MCPServerStatusList(ctx context.Context, params protocol.ListMCPServerStatusParams) (*protocol.ListMCPServerStatusResponse, error)
 	ModelList(ctx context.Context, params protocol.ModelListParams) (*protocol.ModelListResponse, error)
 	ModelProviderCapabilitiesRead(ctx context.Context, params protocol.ModelProviderCapabilitiesReadParams) (*protocol.ModelProviderCapabilitiesReadResponse, error)
 	PermissionProfileList(ctx context.Context, params protocol.PermissionProfileListParams) (*protocol.PermissionProfileListResponse, error)
@@ -223,12 +225,19 @@ func (c *Client) ConfigBatchWrite(ctx context.Context, params protocol.ConfigBat
 	return &result, nil
 }
 
-func (c *Client) ConfigMcpServerReload(ctx context.Context) (*protocol.McpServerRefreshResponse, error) {
-	var result protocol.McpServerRefreshResponse
+func (c *Client) ConfigMCPServerReload(ctx context.Context) (*protocol.MCPServerRefreshResponse, error) {
+	var result protocol.MCPServerRefreshResponse
 	if err := c.Call(ctx, "config/mcpServer/reload", nil, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
+}
+
+// ConfigMcpServerReload is the former spelling of ConfigMCPServerReload.
+//
+// Deprecated: use ConfigMCPServerReload.
+func (c *Client) ConfigMcpServerReload(ctx context.Context) (*protocol.MCPServerRefreshResponse, error) {
+	return c.ConfigMCPServerReload(ctx)
 }
 
 func (c *Client) ConfigRead(ctx context.Context, params protocol.ConfigReadParams) (*protocol.ConfigReadResponse, error) {
@@ -423,36 +432,64 @@ func (c *Client) MarketplaceUpgrade(ctx context.Context, params protocol.Marketp
 	return &result, nil
 }
 
-func (c *Client) McpServerOauthLogin(ctx context.Context, params protocol.McpServerOauthLoginParams) (*protocol.McpServerOauthLoginResponse, error) {
-	var result protocol.McpServerOauthLoginResponse
+func (c *Client) MCPServerOAuthLogin(ctx context.Context, params protocol.MCPServerOAuthLoginParams) (*protocol.MCPServerOAuthLoginResponse, error) {
+	var result protocol.MCPServerOAuthLoginResponse
 	if err := c.Call(ctx, "mcpServer/oauth/login", params, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func (c *Client) McpServerResourceRead(ctx context.Context, params protocol.McpResourceReadParams) (*protocol.McpResourceReadResponse, error) {
-	var result protocol.McpResourceReadResponse
+// McpServerOauthLogin is the former spelling of MCPServerOAuthLogin.
+//
+// Deprecated: use MCPServerOAuthLogin.
+func (c *Client) McpServerOauthLogin(ctx context.Context, params protocol.MCPServerOAuthLoginParams) (*protocol.MCPServerOAuthLoginResponse, error) {
+	return c.MCPServerOAuthLogin(ctx, params)
+}
+
+func (c *Client) MCPServerResourceRead(ctx context.Context, params protocol.MCPResourceReadParams) (*protocol.MCPResourceReadResponse, error) {
+	var result protocol.MCPResourceReadResponse
 	if err := c.Call(ctx, "mcpServer/resource/read", params, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func (c *Client) McpServerToolCall(ctx context.Context, params protocol.McpServerToolCallParams) (*protocol.McpServerToolCallResponse, error) {
-	var result protocol.McpServerToolCallResponse
+// McpServerResourceRead is the former spelling of MCPServerResourceRead.
+//
+// Deprecated: use MCPServerResourceRead.
+func (c *Client) McpServerResourceRead(ctx context.Context, params protocol.MCPResourceReadParams) (*protocol.MCPResourceReadResponse, error) {
+	return c.MCPServerResourceRead(ctx, params)
+}
+
+func (c *Client) MCPServerToolCall(ctx context.Context, params protocol.MCPServerToolCallParams) (*protocol.MCPServerToolCallResponse, error) {
+	var result protocol.MCPServerToolCallResponse
 	if err := c.Call(ctx, "mcpServer/tool/call", params, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func (c *Client) McpServerStatusList(ctx context.Context, params protocol.ListMcpServerStatusParams) (*protocol.ListMcpServerStatusResponse, error) {
-	var result protocol.ListMcpServerStatusResponse
+// McpServerToolCall is the former spelling of MCPServerToolCall.
+//
+// Deprecated: use MCPServerToolCall.
+func (c *Client) McpServerToolCall(ctx context.Context, params protocol.MCPServerToolCallParams) (*protocol.MCPServerToolCallResponse, error) {
+	return c.MCPServerToolCall(ctx, params)
+}
+
+func (c *Client) MCPServerStatusList(ctx context.Context, params protocol.ListMCPServerStatusParams) (*protocol.ListMCPServerStatusResponse, error) {
+	var result protocol.ListMCPServerStatusResponse
 	if err := c.Call(ctx, "mcpServerStatus/list", params, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
+}
+
+// McpServerStatusList is the former spelling of MCPServerStatusList.
+//
+// Deprecated: use MCPServerStatusList.
+func (c *Client) McpServerStatusList(ctx context.Context, params protocol.ListMCPServerStatusParams) (*protocol.ListMCPServerStatusResponse, error) {
+	return c.MCPServerStatusList(ctx, params)
 }
 
 func (c *Client) ModelList(ctx context.Context, params protocol.ModelListParams) (*protocol.ModelListResponse, error) {

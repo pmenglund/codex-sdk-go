@@ -237,7 +237,7 @@ var notificationParsers = map[string]notificationParser{
 		return Notification{Method: "item/fileChange/patchUpdated", Params: payload, Raw: params}, nil
 	},
 	"item/mcpToolCall/progress": func(params json.RawMessage) (Notification, error) {
-		var payload protocol.McpToolCallProgressNotification
+		var payload protocol.MCPToolCallProgressNotification
 		if len(params) > 0 {
 			if err := json.Unmarshal(params, &payload); err != nil {
 				return Notification{Method: "item/mcpToolCall/progress", Raw: params}, err
@@ -291,7 +291,7 @@ var notificationParsers = map[string]notificationParser{
 		return Notification{Method: "item/started", Params: payload, Raw: params}, nil
 	},
 	"mcpServer/oauthLogin/completed": func(params json.RawMessage) (Notification, error) {
-		var payload protocol.McpServerOauthLoginCompletedNotification
+		var payload protocol.MCPServerOAuthLoginCompletedNotification
 		if len(params) > 0 {
 			if err := json.Unmarshal(params, &payload); err != nil {
 				return Notification{Method: "mcpServer/oauthLogin/completed", Raw: params}, err
@@ -300,7 +300,7 @@ var notificationParsers = map[string]notificationParser{
 		return Notification{Method: "mcpServer/oauthLogin/completed", Params: payload, Raw: params}, nil
 	},
 	"mcpServer/startupStatus/updated": func(params json.RawMessage) (Notification, error) {
-		var payload protocol.McpServerStatusUpdatedNotification
+		var payload protocol.MCPServerStatusUpdatedNotification
 		if len(params) > 0 {
 			if err := json.Unmarshal(params, &payload); err != nil {
 				return Notification{Method: "mcpServer/startupStatus/updated", Raw: params}, err

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,9 +17,20 @@ import (
 
 const stdioCloseTimeout = 2 * time.Second
 
-// Transport reads and writes JSON-RPC lines. Implementations should not block
-// WriteLine indefinitely, and Close must unblock in-flight reads and writes so
-// bounded SDK cleanup cannot leave transport goroutines running.
+// DefaultMaxMessageBytes is the maximum JSON payload accepted from a built-in
+// line-oriented transport. The trailing newline is not counted.
+const DefaultMaxMessageBytes = 8 << 20
+
+// ErrMessageTooLarge identifies an inbound JSON-RPC line over the configured
+// client or built-in transport limit.
+var ErrMessageTooLarge = errors.New("rpc message exceeds size limit")
+
+// Transport reads and writes JSON-RPC lines. ReadLine implementations must
+// enforce a finite allocation limit and should return ErrMessageTooLarge when
+// it is exceeded; implementations backed by bufio.Reader can use
+// ReadLineLimited. Implementations should not block WriteLine indefinitely,
+// and Close must unblock in-flight reads and writes so bounded SDK cleanup
+// cannot leave transport goroutines running.
 type Transport interface {
 	ReadLine() (string, error)
 	WriteLine(line string) error
@@ -74,14 +86,7 @@ func SpawnStdio(ctx context.Context, binary string, args []string, stderr io.Wri
 
 // ReadLine reads a single line from stdout.
 func (t *StdioTransport) ReadLine() (string, error) {
-	line, err := t.stdout.ReadString('\n')
-	if err != nil {
-		if errors.Is(err, io.EOF) && line != "" {
-			return strings.TrimRight(line, "\n"), nil
-		}
-		return "", err
-	}
-	return strings.TrimRight(line, "\n"), nil
+	return ReadLineLimited(t.stdout, DefaultMaxMessageBytes)
 }
 
 // WriteLine writes a single line to stdin.
@@ -160,14 +165,42 @@ func NewConnTransportChecked(conn io.ReadWriteCloser) (*ConnTransport, error) {
 
 // ReadLine reads a line from the connection.
 func (t *ConnTransport) ReadLine() (string, error) {
-	line, err := t.reader.ReadString('\n')
-	if err != nil {
-		if errors.Is(err, io.EOF) && line != "" {
-			return strings.TrimRight(line, "\n"), nil
+	return ReadLineLimited(t.reader, DefaultMaxMessageBytes)
+}
+
+// ReadLineLimited reads one newline-delimited payload and rejects it before the
+// assembled payload exceeds maxBytes plus the delimiter. maxBytes must be
+// positive.
+func ReadLineLimited(reader *bufio.Reader, maxBytes int) (string, error) {
+	if reader == nil {
+		return "", errors.New("rpc line reader is nil")
+	}
+	if maxBytes <= 0 {
+		return "", errors.New("rpc line limit must be positive")
+	}
+	line := make([]byte, 0, min(maxBytes+1, reader.Size()))
+	for {
+		fragment, err := reader.ReadSlice('\n')
+		if len(line)+len(fragment) > maxBytes+1 {
+			return "", ErrMessageTooLarge
+		}
+		line = append(line, fragment...)
+		if err == nil {
+			break
+		}
+		if errors.Is(err, bufio.ErrBufferFull) {
+			continue
+		}
+		if errors.Is(err, io.EOF) && len(line) > 0 {
+			break
 		}
 		return "", err
 	}
-	return strings.TrimRight(line, "\n"), nil
+	line = bytes.TrimSuffix(line, []byte{'\n'})
+	if len(line) > maxBytes {
+		return "", ErrMessageTooLarge
+	}
+	return string(line), nil
 }
 
 // WriteLine writes a line to the connection.

@@ -41,16 +41,16 @@ const exampleReplayEnv = "CODEX_EXAMPLE_REPLAY"
 func exampleOptions(prompt string, logger *slog.Logger) codex.Options {
 	if os.Getenv(exampleReplayEnv) == "" {
 		return codex.Options{
-			Logger:          logger,
-			ApprovalHandler: codex.RejectingApprovalHandler{},
+			Logger:         logger,
+			RequestHandler: codex.RejectingApprovalCallbacks(),
 		}
 	}
 
 	info := exampleClientInfo()
 	return codex.Options{
-		Transport:       rpc.NewReplayTransport(exampleTranscript(info, prompt, "Approved summary")),
-		ClientInfo:      info,
-		ApprovalHandler: codex.RejectingApprovalHandler{},
+		Transport:      rpc.NewReplayTransport(exampleTranscript(info, prompt, "Approved summary")),
+		ClientInfo:     info,
+		RequestHandler: codex.RejectingApprovalCallbacks(),
 	}
 }
 
@@ -100,7 +100,7 @@ func exampleTranscript(info protocol.ClientInfo, prompt, finalResponse string) [
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "item/completed",
-			Params: mustRaw(map[string]any{"threadId": "thr_123", "item": map[string]any{"text": finalResponse}}),
+			Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1", "completedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": finalResponse}}),
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "turn/completed",

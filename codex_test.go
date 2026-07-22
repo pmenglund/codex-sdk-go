@@ -56,6 +56,13 @@ func TestThreadStartOptionsToParams(t *testing.T) {
 	assertEqual(t, "ephemeral", params.Ephemeral, &ephemeral)
 }
 
+func TestNewRejectsTypedNilTransport(t *testing.T) {
+	var transport *rpc.ReplayTransport
+	if _, err := New(context.Background(), Options{Transport: transport}); err == nil {
+		t.Fatal("expected typed-nil transport error")
+	}
+}
+
 func TestThreadStartOptionsRejectExperimentalRawEvents(t *testing.T) {
 	_, err := (ThreadStartOptions{ExperimentalRawEvents: true}).toParams()
 	if err == nil {
@@ -252,14 +259,18 @@ func TestRunStreamedInvalidJSONOptions(t *testing.T) {
 }
 
 func TestExtractTextFromItemRaw(t *testing.T) {
-	raw := MustJSON(map[string]any{"text": "hello"})
+	raw := MustJSON(map[string]any{"type": "agentMessage", "text": "hello"})
 	if text, ok := extractTextFromItemRaw(raw); !ok || text != "hello" {
 		t.Fatalf("expected text from raw")
 	}
 
-	raw = MustJSON(map[string]any{"wrapped": map[string]any{"text": "inner"}})
+	raw = MustJSON(map[string]any{"wrapped": map[string]any{"type": "agentMessage", "text": "inner"}})
 	if text, ok := extractTextFromItemRaw(raw); !ok || text != "inner" {
 		t.Fatalf("expected text from nested raw")
+	}
+
+	if _, ok := extractTextFromItemRaw(MustJSON(map[string]any{"type": "plan", "text": "not final"})); ok {
+		t.Fatalf("plan text must not be treated as a final response")
 	}
 }
 
@@ -307,6 +318,11 @@ func TestNotificationError(t *testing.T) {
 
 func TestParseTurnNotificationTypedParams(t *testing.T) {
 	willRetry := true
+	itemRaw := MustJSON(map[string]any{"type": "agentMessage", "id": "item_1", "text": "done"})
+	var item protocol.ThreadItem
+	if err := json.Unmarshal(itemRaw, &item); err != nil {
+		t.Fatalf("decode thread item: %v", err)
+	}
 	tests := []struct {
 		name string
 		note rpc.Notification
@@ -316,58 +332,58 @@ func TestParseTurnNotificationTypedParams(t *testing.T) {
 			name: "turn value",
 			note: rpc.Notification{Params: protocol.TurnNotification{
 				ThreadID: "thr_1",
-				Turn:     &protocol.TurnNotificationTurn{ID: "turn_1"},
+				Turn:     &protocol.Turn{ID: "turn_1"},
 			}},
-			want: turnNotificationPayload{ThreadID: "thr_1", Turn: &protocol.TurnNotificationTurn{ID: "turn_1"}},
+			want: turnNotificationPayload{ThreadID: "thr_1", Turn: &protocol.Turn{ID: "turn_1"}},
 		},
 		{
 			name: "turn pointer",
 			note: rpc.Notification{Params: &protocol.TurnNotification{
 				ThreadID: "thr_2",
-				Turn:     &protocol.TurnNotificationTurn{ID: "turn_2"},
+				Turn:     &protocol.Turn{ID: "turn_2"},
 			}},
-			want: turnNotificationPayload{ThreadID: "thr_2", Turn: &protocol.TurnNotificationTurn{ID: "turn_2"}},
+			want: turnNotificationPayload{ThreadID: "thr_2", Turn: &protocol.Turn{ID: "turn_2"}},
 		},
 		{
 			name: "item value",
 			note: rpc.Notification{Params: protocol.ItemCompletedNotification{
 				ThreadID: "thr_3",
-				Item:     MustJSON(map[string]any{"text": "done"}),
+				Item:     item,
 			}},
-			want: turnNotificationPayload{ThreadID: "thr_3", Item: MustJSON(map[string]any{"text": "done"})},
+			want: turnNotificationPayload{ThreadID: "thr_3", Item: itemRaw},
 		},
 		{
 			name: "item pointer",
 			note: rpc.Notification{Params: &protocol.ItemCompletedNotification{
 				ThreadID: "thr_4",
-				Item:     MustJSON(map[string]any{"text": "done"}),
+				Item:     item,
 			}},
-			want: turnNotificationPayload{ThreadID: "thr_4", Item: MustJSON(map[string]any{"text": "done"})},
+			want: turnNotificationPayload{ThreadID: "thr_4", Item: itemRaw},
 		},
 		{
 			name: "error value",
 			note: rpc.Notification{Params: protocol.ErrorNotification{
 				ThreadID:  "thr_5",
-				WillRetry: &willRetry,
-				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+				WillRetry: willRetry,
+				Error:     protocol.TurnError{Message: "retrying"},
 			}},
 			want: turnNotificationPayload{
 				ThreadID:  "thr_5",
 				WillRetry: &willRetry,
-				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+				Error:     &protocol.TurnError{Message: "retrying"},
 			},
 		},
 		{
 			name: "error pointer",
 			note: rpc.Notification{Params: &protocol.ErrorNotification{
 				ThreadID:  "thr_6",
-				WillRetry: &willRetry,
-				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+				WillRetry: willRetry,
+				Error:     protocol.TurnError{Message: "retrying"},
 			}},
 			want: turnNotificationPayload{
 				ThreadID:  "thr_6",
 				WillRetry: &willRetry,
-				Error:     &protocol.TurnNotificationError{Message: "retrying"},
+				Error:     &protocol.TurnError{Message: "retrying"},
 			},
 		},
 		{
@@ -529,7 +545,7 @@ func TestAutoApproveLegacyResponses(t *testing.T) {
 	if _, err := handler.ItemToolCall(context.Background(), protocol.DynamicToolCallParams{}); err == nil {
 		t.Fatalf("expected error for dynamic tool call")
 	}
-	if _, err := handler.McpServerElicitationRequest(context.Background(), protocol.McpServerElicitationRequestParams(nil)); err == nil {
+	if _, err := handler.McpServerElicitationRequest(context.Background(), protocol.MCPServerElicitationRequestParams(nil)); err == nil {
 		t.Fatalf("expected error for mcp elicitation")
 	}
 	if _, err := handler.AccountChatgptAuthTokensRefresh(context.Background(), protocol.ChatgptAuthTokensRefreshParams{}); err == nil {
@@ -629,7 +645,7 @@ func TestRunStreamedStartCallError(t *testing.T) {
 		}),
 		readLine(rpc.JSONRPCError{
 			ID: rpc.NewIntRequestID(1),
-			Error: rpc.JSONRPCErrorError{
+			Error: rpc.JSONRPCErrorDetail{
 				Code:    -1,
 				Message: "start failed",
 			},
@@ -934,7 +950,7 @@ func (h *testServerRequestHandler) ItemToolRequestUserInput(ctx context.Context,
 	return nil, nil
 }
 
-func (h *testServerRequestHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+func (h *testServerRequestHandler) McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	return nil, nil
 }
 

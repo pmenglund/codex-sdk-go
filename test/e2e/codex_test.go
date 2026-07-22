@@ -149,19 +149,31 @@ func TestRealCodexThreadLifecycleHelpers(t *testing.T) {
 
 	thread := test.StartThread(t, client, ctx, stderr, cwd)
 
-	if _, err := client.ListThreads(ctx, codex.ThreadListOptions{Cwd: cwd}); err != nil {
+	listed, err := client.ListThreads(ctx, codex.ThreadListOptions{Cwd: cwd})
+	if err != nil {
 		t.Fatalf("list threads through high-level helper: %v\nstderr:\n%s", err, stderr.String())
+	}
+	var found bool
+	for _, item := range listed.Data {
+		found = found || item.ID == thread.ID()
+	}
+	if !found {
+		t.Fatalf("listed threads did not include %q: %#v\nstderr:\n%s", thread.ID(), listed.Data, stderr.String())
 	}
 	read, err := client.ReadThread(ctx, thread.ID(), codex.ThreadReadOptions{})
 	if err != nil {
 		t.Fatalf("read thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	test.AssertJSONContains(t, "client read response", read, thread.ID())
+	if read.Thread.ID != thread.ID() {
+		t.Fatalf("client read returned thread %q, want %q\nstderr:\n%s", read.Thread.ID, thread.ID(), stderr.String())
+	}
 	threadRead, err := thread.Read(ctx, codex.ThreadReadOptions{})
 	if err != nil {
 		t.Fatalf("read thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	test.AssertJSONContains(t, "thread read response", threadRead, thread.ID())
+	if threadRead.Thread.ID != thread.ID() {
+		t.Fatalf("thread read returned thread %q, want %q\nstderr:\n%s", threadRead.Thread.ID, thread.ID(), stderr.String())
+	}
 
 	if _, err := client.ResumeThread(ctx, codex.ThreadResumeOptions{ThreadID: thread.ID(), Cwd: cwd}); err == nil || !test.IsExpectedUnmaterializedThreadError(err) {
 		t.Fatalf("expected unmaterialized thread resume error, got %v\nstderr:\n%s", err, stderr.String())
@@ -176,16 +188,24 @@ func TestRealCodexThreadLifecycleHelpers(t *testing.T) {
 	if _, err := client.ArchiveThread(ctx, thread.ID()); err != nil && !test.IsExpectedUnmaterializedThreadError(err) {
 		t.Fatalf("archive thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	if _, err := client.UnarchiveThread(ctx, thread.ID()); err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
+	unarchived, err := client.UnarchiveThread(ctx, thread.ID())
+	if err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
 		t.Fatalf("unarchive thread through client helper: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if err == nil && unarchived.Thread.ID != thread.ID() {
+		t.Fatalf("client unarchive returned thread %q, want %q", unarchived.Thread.ID, thread.ID())
 	}
 
 	threadForMethods := test.StartThread(t, client, ctx, stderr, cwd)
 	if _, err := threadForMethods.Archive(ctx); err != nil && !test.IsExpectedUnmaterializedThreadError(err) {
 		t.Fatalf("archive thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	if _, err := threadForMethods.Unarchive(ctx); err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
+	methodUnarchived, err := threadForMethods.Unarchive(ctx)
+	if err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
 		t.Fatalf("unarchive thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if err == nil && methodUnarchived.Thread.ID != threadForMethods.ID() {
+		t.Fatalf("thread unarchive returned thread %q, want %q", methodUnarchived.Thread.ID, threadForMethods.ID())
 	}
 
 	threadForClientCompact := test.StartThread(t, client, ctx, stderr, cwd)
@@ -278,28 +298,42 @@ func TestRealCodexLiveTurnHelpers(t *testing.T) {
 	if _, err := client.ArchiveThread(ctx, runThread.ID()); err != nil {
 		t.Fatalf("archive materialized live thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	if _, err := client.UnarchiveThread(ctx, runThread.ID()); err != nil {
+	clientUnarchived, err := client.UnarchiveThread(ctx, runThread.ID())
+	if err != nil {
 		t.Fatalf("unarchive materialized live thread through client helper: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if clientUnarchived.Thread.ID != runThread.ID() {
+		t.Fatalf("client unarchive returned thread %q, want %q", clientUnarchived.Thread.ID, runThread.ID())
 	}
 	if _, err := runThread.Archive(ctx); err != nil {
 		t.Fatalf("archive materialized live thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	if _, err := runThread.Unarchive(ctx); err != nil {
+	threadUnarchived, err := runThread.Unarchive(ctx)
+	if err != nil {
 		t.Fatalf("unarchive materialized live thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	forkedRunThread, _, err := client.ForkThread(ctx, runThread.ID(), codex.ThreadForkOptions{Cwd: t.TempDir()})
+	if threadUnarchived.Thread.ID != runThread.ID() {
+		t.Fatalf("thread unarchive returned thread %q, want %q", threadUnarchived.Thread.ID, runThread.ID())
+	}
+	forkedRunThread, clientForkResponse, err := client.ForkThread(ctx, runThread.ID(), codex.ThreadForkOptions{Cwd: t.TempDir()})
 	if err != nil {
 		t.Fatalf("fork materialized live thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
 	if forkedRunThread.ID() == "" || forkedRunThread.ID() == runThread.ID() {
 		t.Fatalf("expected materialized client fork id, got %q from %q", forkedRunThread.ID(), runThread.ID())
 	}
-	forkedByMethod, _, err := runThread.Fork(ctx, codex.ThreadForkOptions{Cwd: t.TempDir()})
+	if clientForkResponse.Thread == nil || clientForkResponse.Thread.ID != forkedRunThread.ID() {
+		t.Fatalf("client fork response did not describe %q: %#v", forkedRunThread.ID(), clientForkResponse)
+	}
+	forkedByMethod, methodForkResponse, err := runThread.Fork(ctx, codex.ThreadForkOptions{Cwd: t.TempDir()})
 	if err != nil {
 		t.Fatalf("fork materialized live thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
 	if forkedByMethod.ID() == "" || forkedByMethod.ID() == runThread.ID() {
 		t.Fatalf("expected materialized method fork id, got %q from %q", forkedByMethod.ID(), runThread.ID())
+	}
+	if methodForkResponse.Thread == nil || methodForkResponse.Thread.ID != forkedByMethod.ID() {
+		t.Fatalf("method fork response did not describe %q: %#v", forkedByMethod.ID(), methodForkResponse)
 	}
 
 	inputsThread := test.StartThread(t, client, ctx, stderr, t.TempDir())

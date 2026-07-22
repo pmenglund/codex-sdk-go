@@ -24,6 +24,12 @@ type ClientOptions struct {
 	// ServerRequestQueueCapacity bounds queued app-server requests. Zero uses
 	// the default of 64. A full queue receives JSON-RPC code -32001.
 	ServerRequestQueueCapacity int
+	// MaxMessageBytes bounds each inbound JSON-RPC payload. Zero uses
+	// DefaultMaxMessageBytes. This client-side check covers custom transports;
+	// built-in transports always retain DefaultMaxMessageBytes as a safety
+	// ceiling, so a larger value does not raise their limit. Custom transports
+	// must bound allocation inside ReadLine before returning the payload.
+	MaxMessageBytes int
 }
 
 const (
@@ -57,9 +63,10 @@ type Client struct {
 	subs    map[int]*notificationSubscription
 	nextSub int
 
-	handlerMu sync.RWMutex
-	handler   ServerRequestHandler
-	requests  chan JSONRPCRequest
+	handlerMu       sync.RWMutex
+	handler         ServerRequestHandler
+	requests        chan JSONRPCRequest
+	maxMessageBytes int
 
 	writes chan writeRequest
 
@@ -98,6 +105,9 @@ func NewClientChecked(transport Transport, options ClientOptions) (*Client, erro
 	if options.ServerRequestQueueCapacity < 0 {
 		return nil, errors.New("server request queue capacity cannot be negative")
 	}
+	if options.MaxMessageBytes < 0 {
+		return nil, errors.New("max message bytes cannot be negative")
+	}
 	workers := options.ServerRequestWorkers
 	if workers == 0 {
 		workers = defaultServerRequestWorkers
@@ -105,6 +115,10 @@ func NewClientChecked(transport Transport, options ClientOptions) (*Client, erro
 	queueCapacity := options.ServerRequestQueueCapacity
 	if queueCapacity == 0 {
 		queueCapacity = defaultServerRequestQueueCapacity
+	}
+	maxMessageBytes := options.MaxMessageBytes
+	if maxMessageBytes == 0 {
+		maxMessageBytes = DefaultMaxMessageBytes
 	}
 	if isNilInterface(options.RequestHandler) {
 		options.RequestHandler = nil
@@ -117,16 +131,17 @@ func NewClientChecked(transport Transport, options ClientOptions) (*Client, erro
 	lifecycle, cancel := context.WithCancel(context.Background())
 
 	client := &Client{
-		transport: transport,
-		logger:    logger,
-		pending:   make(map[string]chan response),
-		subs:      make(map[int]*notificationSubscription),
-		handler:   options.RequestHandler,
-		requests:  make(chan JSONRPCRequest, queueCapacity),
-		writes:    make(chan writeRequest, defaultWriteQueueCapacity),
-		lifecycle: lifecycle,
-		cancel:    cancel,
-		done:      make(chan struct{}),
+		transport:       transport,
+		logger:          logger,
+		pending:         make(map[string]chan response),
+		subs:            make(map[int]*notificationSubscription),
+		handler:         options.RequestHandler,
+		requests:        make(chan JSONRPCRequest, queueCapacity),
+		maxMessageBytes: maxMessageBytes,
+		writes:          make(chan writeRequest, defaultWriteQueueCapacity),
+		lifecycle:       lifecycle,
+		cancel:          cancel,
+		done:            make(chan struct{}),
 	}
 
 	go client.writeLoop()
@@ -273,6 +288,10 @@ func (c *Client) readLoop() {
 			c.finish(err)
 			return
 		}
+		if len(line) > c.maxMessageBytes {
+			c.finish(fmt.Errorf("%w: got %d bytes, limit %d", ErrMessageTooLarge, len(line), c.maxMessageBytes))
+			return
+		}
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
@@ -392,7 +411,7 @@ func (c *Client) enqueueServerRequest(req JSONRPCRequest) {
 func (c *Client) handleServerRequest(req JSONRPCRequest) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			c.logger.Error("server request handler panicked", slog.String("method", req.Method), slog.Any("panic", recovered))
+			c.logger.Error("server request handler panicked", slog.String("method", req.Method), slog.String("panic_type", fmt.Sprintf("%T", recovered)))
 			if err := c.replyError(c.requestContext(), req.ID, ServerRequestInternalErrorCode, "server request handler panicked", nil); err != nil {
 				c.finish(err)
 			}
@@ -410,7 +429,7 @@ func (c *Client) handleServerRequest(req JSONRPCRequest) {
 	result, err := dispatchServerRequest(c.requestContext(), handler, req)
 	if err != nil {
 		code, message := classifyServerRequestError(err)
-		c.logger.Warn("server request failed", slog.String("method", req.Method), slog.Any("error", err))
+		c.logger.Warn("server request failed", slog.String("method", req.Method), slog.String("error_type", fmt.Sprintf("%T", err)), slog.Int64("response_code", code))
 		if replyErr := c.replyError(c.requestContext(), req.ID, code, message, nil); replyErr != nil {
 			c.finish(replyErr)
 		}
@@ -434,7 +453,7 @@ func (c *Client) replyResult(ctx context.Context, id RequestID, result any) erro
 func (c *Client) replyError(ctx context.Context, id RequestID, code int64, message string, data json.RawMessage) error {
 	resp := JSONRPCError{
 		ID: id,
-		Error: JSONRPCErrorError{
+		Error: JSONRPCErrorDetail{
 			Code:    code,
 			Message: message,
 			Data:    data,
@@ -506,7 +525,7 @@ func (c *Client) writeLoop() {
 				err = c.transport.WriteLine(request.line)
 			}
 			request.done <- err
-			if err != nil && request.ctx.Err() == nil {
+			if err != nil {
 				c.finish(err)
 				return
 			}
@@ -716,11 +735,11 @@ func (it *NotificationIterator) Close() {
 // parseMessage decodes a JSON-RPC line into a typed message.
 func parseMessage(data []byte) (message, error) {
 	var envelope struct {
-		ID     json.RawMessage    `json:"id"`
-		Method string             `json:"method"`
-		Params json.RawMessage    `json:"params"`
-		Result json.RawMessage    `json:"result"`
-		Error  *JSONRPCErrorError `json:"error"`
+		ID     json.RawMessage     `json:"id"`
+		Method string              `json:"method"`
+		Params json.RawMessage     `json:"params"`
+		Result json.RawMessage     `json:"result"`
+		Error  *JSONRPCErrorDetail `json:"error"`
 	}
 
 	if err := json.Unmarshal(data, &envelope); err != nil {

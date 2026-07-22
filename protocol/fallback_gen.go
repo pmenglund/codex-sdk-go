@@ -55,7 +55,16 @@ type GetAccountResponse = SanitizedGetAccountResponseJSON
 type GetAccountTokenUsageResponse = SanitizedGetAccountTokenUsageResponseJSON
 type GetWorkspaceMessagesResponse = SanitizedGetWorkspaceMessagesResponseJSON
 type GuardianWarningNotification = SanitizedGuardianWarningNotificationJSON
+type ListMCPServerStatusResponse = SanitizedListMCPServerStatusResponseJSON
 type LogoutAccountResponse = SanitizedLogoutAccountResponseJSON
+type MCPResourceReadResponse = SanitizedMCPResourceReadResponseJSON
+type MCPServerElicitationRequestResponse = SanitizedMCPServerElicitationRequestResponseJSON
+type MCPServerOAuthLoginCompletedNotification = SanitizedMCPServerOAuthLoginCompletedNotificationJSON
+type MCPServerOAuthLoginResponse = SanitizedMCPServerOAuthLoginResponseJSON
+type MCPServerRefreshResponse = SanitizedMCPServerRefreshResponseJSON
+type MCPServerStatusUpdatedNotification = SanitizedMCPServerStatusUpdatedNotificationJSON
+type MCPServerToolCallResponse = SanitizedMCPServerToolCallResponseJSON
+type MCPToolCallProgressNotification = SanitizedMCPToolCallProgressNotificationJSON
 type ModelListResponse = SanitizedModelListResponseJSON
 type ModelProviderCapabilitiesReadResponse = SanitizedModelProviderCapabilitiesReadResponseJSON
 type ModelReroutedNotification = SanitizedModelReroutedNotificationJSON
@@ -131,23 +140,9 @@ type InitializeResponse interface{}
 type ItemGuardianApprovalReviewCompletedNotification interface{}
 type ItemGuardianApprovalReviewStartedNotification interface{}
 type ItemStartedNotification interface{}
-type ListMcpServerStatusParams interface{}
-type ListMcpServerStatusResponse interface{}
 type MarketplaceAddResponse interface{}
 type MarketplaceRemoveResponse interface{}
 type MarketplaceUpgradeResponse interface{}
-type McpResourceReadParams interface{}
-type McpResourceReadResponse interface{}
-type McpServerElicitationRequestParams interface{}
-type McpServerElicitationRequestResponse interface{}
-type McpServerOauthLoginCompletedNotification interface{}
-type McpServerOauthLoginParams interface{}
-type McpServerOauthLoginResponse interface{}
-type McpServerRefreshResponse interface{}
-type McpServerStatusUpdatedNotification interface{}
-type McpServerToolCallParams interface{}
-type McpServerToolCallResponse interface{}
-type McpToolCallProgressNotification interface{}
 type PluginInstalledResponse interface{}
 type PluginListResponse interface{}
 type PluginReadResponse interface{}
@@ -155,12 +150,7 @@ type PluginShareCheckoutResponse interface{}
 type PluginShareListResponse interface{}
 type ReviewStartResponse interface{}
 type SkillsListResponse interface{}
-type ThreadForkResponse interface{}
-type ThreadListResponse interface{}
 type ThreadMetadataUpdateResponse interface{}
-type ThreadReadResponse interface{}
 type ThreadRollbackResponse interface{}
 type ThreadSettingsUpdatedNotification interface{}
 type ThreadStartedNotification interface{}
-type ThreadUnarchiveResponse interface{}
-type TurnStartResponse interface{}

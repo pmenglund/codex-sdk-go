@@ -128,7 +128,7 @@ func (h *errorHandler) ItemToolRequestUserInput(ctx context.Context, params prot
 	return nil, errors.New("nope")
 }
 
-func (h *errorHandler) McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error) {
+func (h *errorHandler) McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	return nil, errors.New("nope")
 }
 

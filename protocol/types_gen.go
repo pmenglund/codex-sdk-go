@@ -557,8 +557,6 @@ type CommandExecWriteParams struct {
 // Optional base64-encoded stdin bytes to write.
 type CommandExecWriteParamsDeltaBase64 *string
 
-type CommandExecutionApprovalDecision interface{}
-
 type CommandMigration struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -986,8 +984,6 @@ type FeedbackUploadParamsReason *string
 type FeedbackUploadParamsTags map[string]string
 
 type FeedbackUploadParamsThreadID *string
-
-type FileChangeApprovalDecision interface{}
 
 type FileSystemAccessMode string
 
@@ -1510,25 +1506,25 @@ type MCPServerMigration struct {
 	Name string `json:"name"`
 }
 
-type MCPServerOauthLoginParams struct {
+type MCPServerOAuthLoginParams struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 
 	// Scopes corresponds to the JSON schema field "scopes".
-	Scopes *MCPServerOauthLoginParamsScopes `json:"scopes,omitempty,omitzero"`
+	Scopes *MCPServerOAuthLoginParamsScopes `json:"scopes,omitempty,omitzero"`
 
 	// ThreadID corresponds to the JSON schema field "threadId".
-	ThreadID MCPServerOauthLoginParamsThreadID `json:"threadId,omitempty,omitzero"`
+	ThreadID MCPServerOAuthLoginParamsThreadID `json:"threadId,omitempty,omitzero"`
 
 	// TimeoutSecs corresponds to the JSON schema field "timeoutSecs".
-	TimeoutSecs MCPServerOauthLoginParamsTimeoutSecs `json:"timeoutSecs,omitempty,omitzero"`
+	TimeoutSecs MCPServerOAuthLoginParamsTimeoutSecs `json:"timeoutSecs,omitempty,omitzero"`
 }
 
-type MCPServerOauthLoginParamsScopes []string
+type MCPServerOAuthLoginParamsScopes []string
 
-type MCPServerOauthLoginParamsThreadID *string
+type MCPServerOAuthLoginParamsThreadID *string
 
-type MCPServerOauthLoginParamsTimeoutSecs *int
+type MCPServerOAuthLoginParamsTimeoutSecs *int
 
 type MCPServerStartupFailureReason string
 
@@ -2486,7 +2482,6 @@ type ResourceTemplateTitle *string
 type ResourceTitle *string
 
 // User's decision in response to an ExecApprovalRequest.
-type ReviewDecision interface{}
 
 type ReviewDelivery string
 
@@ -2511,6 +2506,7 @@ const SandboxModeDangerFullAccess SandboxMode = "danger-full-access"
 const SandboxModeReadOnly SandboxMode = "read-only"
 const SandboxModeWorkspaceWrite SandboxMode = "workspace-write"
 
+// Deprecated: use AccountLoginCompletedNotification.
 type SanitizedAccountLoginCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
 	Error SanitizedAccountLoginCompletedNotificationJSONError `json:"error,omitempty,omitzero"`
@@ -2532,11 +2528,13 @@ type SanitizedAccountLoginCompletedNotificationJSONLoginID *string
 // `account/rateLimits/read` response or refetch that snapshot. Nullable account
 // metadata may be unavailable in a rolling update and does not clear a previously
 // observed value.
+// Deprecated: use AccountRateLimitsUpdatedNotification.
 type SanitizedAccountRateLimitsUpdatedNotificationJSON struct {
 	// RateLimits corresponds to the JSON schema field "rateLimits".
 	RateLimits RateLimitSnapshot `json:"rateLimits"`
 }
 
+// Deprecated: use AccountUpdatedNotification.
 type SanitizedAccountUpdatedNotificationJSON struct {
 	// AuthMode corresponds to the JSON schema field "authMode".
 	AuthMode interface{} `json:"authMode,omitempty,omitzero"`
@@ -2545,6 +2543,7 @@ type SanitizedAccountUpdatedNotificationJSON struct {
 	PlanType interface{} `json:"planType,omitempty,omitzero"`
 }
 
+// Deprecated: use AgentMessageDeltaNotification.
 type SanitizedAgentMessageDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
 	Delta string `json:"delta"`
@@ -2560,6 +2559,7 @@ type SanitizedAgentMessageDeltaNotificationJSON struct {
 }
 
 // EXPERIMENTAL - notification emitted when the app list changes.
+// Deprecated: use AppListUpdatedNotification.
 type SanitizedAppListUpdatedNotificationJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []AppInfo `json:"data"`
@@ -2625,6 +2625,7 @@ type SanitizedAppsListParamsJSONLimit *int
 type SanitizedAppsListParamsJSONThreadID *string
 
 // EXPERIMENTAL - app list response.
+// Deprecated: use AppsListResponse.
 type SanitizedAppsListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []AppInfo `json:"data"`
@@ -2638,8 +2639,10 @@ type SanitizedAppsListResponseJSON struct {
 // there are no more items to return.
 type SanitizedAppsListResponseJSONNextCursor *string
 
+// Deprecated: use AttestationGenerateParams.
 type SanitizedAttestationGenerateParamsJSON map[string]interface{}
 
+// Deprecated: use AttestationGenerateResponse.
 type SanitizedAttestationGenerateResponseJSON struct {
 	// Opaque client attestation token.
 	Token string `json:"token"`
@@ -2650,11 +2653,13 @@ type SanitizedCancelLoginAccountParamsJSON struct {
 	LoginID string `json:"loginId"`
 }
 
+// Deprecated: use CancelLoginAccountResponse.
 type SanitizedCancelLoginAccountResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status CancelLoginAccountStatus `json:"status"`
 }
 
+// Deprecated: use ChatgptAuthTokensRefreshParams.
 type SanitizedChatgptAuthTokensRefreshParamsJSON struct {
 	// Workspace/account identifier that Codex was previously using.
 	//
@@ -2678,6 +2683,7 @@ type SanitizedChatgptAuthTokensRefreshParamsJSON struct {
 // identifier (`chatgpt_account_id`).
 type SanitizedChatgptAuthTokensRefreshParamsJSONPreviousAccountID *string
 
+// Deprecated: use ChatgptAuthTokensRefreshResponse.
 type SanitizedChatgptAuthTokensRefreshResponseJSON struct {
 	// AccessToken corresponds to the JSON schema field "accessToken".
 	AccessToken string `json:"accessToken"`
@@ -2695,6 +2701,7 @@ type SanitizedChatgptAuthTokensRefreshResponseJSONChatgptPlanType *string
 //
 // These notifications are connection-scoped. If the originating connection closes,
 // the server terminates the process.
+// Deprecated: use CommandExecOutputDeltaNotification.
 type SanitizedCommandExecOutputDeltaNotificationJSON struct {
 	// `true` on the final streamed chunk for a stream when `outputBytesCap` truncated
 	// later output on that stream.
@@ -2712,9 +2719,11 @@ type SanitizedCommandExecOutputDeltaNotificationJSON struct {
 }
 
 // Empty success response for `command/exec/resize`.
+// Deprecated: use CommandExecResizeResponse.
 type SanitizedCommandExecResizeResponseJSON map[string]interface{}
 
 // Final buffered result for `command/exec`.
+// Deprecated: use CommandExecResponse.
 type SanitizedCommandExecResponseJSON struct {
 	// Process exit code.
 	ExitCode int `json:"exitCode"`
@@ -2738,6 +2747,7 @@ type SanitizedCommandExecTerminateParamsJSON struct {
 }
 
 // Empty success response for `command/exec/terminate`.
+// Deprecated: use CommandExecTerminateResponse.
 type SanitizedCommandExecTerminateResponseJSON map[string]interface{}
 
 // Write stdin bytes to a running `command/exec` session, close stdin, or both.
@@ -2757,8 +2767,10 @@ type SanitizedCommandExecWriteParamsJSON struct {
 type SanitizedCommandExecWriteParamsJSONDeltaBase64 *string
 
 // Empty success response for `command/exec/write`.
+// Deprecated: use CommandExecWriteResponse.
 type SanitizedCommandExecWriteResponseJSON map[string]interface{}
 
+// Deprecated: use CommandExecutionOutputDeltaNotification.
 type SanitizedCommandExecutionOutputDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
 	Delta string `json:"delta"`
@@ -2815,6 +2827,7 @@ type SanitizedConfigReadParamsJSON struct {
 // project layers between `cwd` and the project/repo root).
 type SanitizedConfigReadParamsJSONCwd *string
 
+// Deprecated: use ConfigRequirementsReadResponse.
 type SanitizedConfigRequirementsReadResponseJSON struct {
 	// Null if no requirements are configured (e.g. no requirements.toml/MDM entries).
 	Requirements interface{} `json:"requirements,omitempty,omitzero"`
@@ -2844,6 +2857,7 @@ type SanitizedConfigValueWriteParamsJSONExpectedVersion *string
 // omitted.
 type SanitizedConfigValueWriteParamsJSONFilePath *string
 
+// Deprecated: use ConfigWarningNotification.
 type SanitizedConfigWarningNotificationJSON struct {
 	// Optional extra guidance or error details.
 	Details SanitizedConfigWarningNotificationJSONDetails `json:"details,omitempty,omitzero"`
@@ -2878,12 +2892,14 @@ type SanitizedConsumeAccountRateLimitResetCreditParamsJSON struct {
 // next available credit.
 type SanitizedConsumeAccountRateLimitResetCreditParamsJSONCreditID *string
 
+// Deprecated: use ConsumeAccountRateLimitResetCreditResponse.
 type SanitizedConsumeAccountRateLimitResetCreditResponseJSON struct {
 	// Outcome corresponds to the JSON schema field "outcome".
 	Outcome ConsumeAccountRateLimitResetCreditOutcome `json:"outcome"`
 }
 
 // Deprecated: Use `ContextCompaction` item type instead.
+// Deprecated: use ContextCompactedNotification.
 type SanitizedContextCompactedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -2892,6 +2908,7 @@ type SanitizedContextCompactedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use DeprecationNoticeNotification.
 type SanitizedDeprecationNoticeNotificationJSON struct {
 	// Optional extra guidance, such as migration steps or rationale.
 	Details SanitizedDeprecationNoticeNotificationJSONDetails `json:"details,omitempty,omitzero"`
@@ -2903,6 +2920,7 @@ type SanitizedDeprecationNoticeNotificationJSON struct {
 // Optional extra guidance, such as migration steps or rationale.
 type SanitizedDeprecationNoticeNotificationJSONDetails *string
 
+// Deprecated: use DynamicToolCallParams.
 type SanitizedDynamicToolCallParamsJSON struct {
 	// Arguments corresponds to the JSON schema field "arguments".
 	Arguments interface{} `json:"arguments"`
@@ -2925,6 +2943,7 @@ type SanitizedDynamicToolCallParamsJSON struct {
 
 type SanitizedDynamicToolCallParamsJSONNamespace *string
 
+// Deprecated: use DynamicToolCallResponse.
 type SanitizedDynamicToolCallResponseJSON struct {
 	// ContentItems corresponds to the JSON schema field "contentItems".
 	ContentItems []DynamicToolCallOutputContentItem `json:"contentItems"`
@@ -2995,6 +3014,7 @@ type SanitizedExperimentalFeatureEnablementSetParamsJSON struct {
 // empty map for a no-op.
 type SanitizedExperimentalFeatureEnablementSetParamsJSONEnablement map[string]bool
 
+// Deprecated: use ExperimentalFeatureEnablementSetResponse.
 type SanitizedExperimentalFeatureEnablementSetResponseJSON struct {
 	// Feature enablement entries updated by this request.
 	Enablement SanitizedExperimentalFeatureEnablementSetResponseJSONEnablement `json:"enablement"`
@@ -3027,6 +3047,7 @@ type SanitizedExperimentalFeatureListParamsJSONLimit *int
 // project-local config for the thread's cwd.
 type SanitizedExperimentalFeatureListParamsJSONThreadID *string
 
+// Deprecated: use ExperimentalFeatureListResponse.
 type SanitizedExperimentalFeatureListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []ExperimentalFeature `json:"data"`
@@ -3051,11 +3072,13 @@ type SanitizedExternalAgentConfigDetectParamsJSON struct {
 // Zero or more working directories to include for repo-scoped detection.
 type SanitizedExternalAgentConfigDetectParamsJSONCwds []string
 
+// Deprecated: use ExternalAgentConfigDetectResponse.
 type SanitizedExternalAgentConfigDetectResponseJSON struct {
 	// Items corresponds to the JSON schema field "items".
 	Items []ExternalAgentConfigMigrationItem `json:"items"`
 }
 
+// Deprecated: use ExternalAgentConfigImportCompletedNotification.
 type SanitizedExternalAgentConfigImportCompletedNotificationJSON struct {
 	// ImportID corresponds to the JSON schema field "importId".
 	ImportID string `json:"importId"`
@@ -3064,6 +3087,7 @@ type SanitizedExternalAgentConfigImportCompletedNotificationJSON struct {
 	ItemTypeResults []ExternalAgentConfigImportTypeResult `json:"itemTypeResults"`
 }
 
+// Deprecated: use ExternalAgentConfigImportHistoriesReadResponse.
 type SanitizedExternalAgentConfigImportHistoriesReadResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []ExternalAgentConfigImportHistory `json:"data"`
@@ -3080,6 +3104,7 @@ type SanitizedExternalAgentConfigImportParamsJSON struct {
 // Source product that produced the migration items. Missing means unspecified.
 type SanitizedExternalAgentConfigImportParamsJSONSource *string
 
+// Deprecated: use ExternalAgentConfigImportProgressNotification.
 type SanitizedExternalAgentConfigImportProgressNotificationJSON struct {
 	// ImportID corresponds to the JSON schema field "importId".
 	ImportID string `json:"importId"`
@@ -3088,6 +3113,7 @@ type SanitizedExternalAgentConfigImportProgressNotificationJSON struct {
 	ItemTypeResults []ExternalAgentConfigImportTypeResult `json:"itemTypeResults"`
 }
 
+// Deprecated: use ExternalAgentConfigImportResponse.
 type SanitizedExternalAgentConfigImportResponseJSON struct {
 	// ImportID corresponds to the JSON schema field "importId".
 	ImportID string `json:"importId"`
@@ -3121,6 +3147,7 @@ type SanitizedFeedbackUploadParamsJSONTags map[string]string
 
 type SanitizedFeedbackUploadParamsJSONThreadID *string
 
+// Deprecated: use FeedbackUploadResponse.
 type SanitizedFeedbackUploadResponseJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -3129,6 +3156,7 @@ type SanitizedFeedbackUploadResponseJSON struct {
 // Deprecated legacy notification for `apply_patch` textual output.
 //
 // The server no longer emits this notification.
+// Deprecated: use FileChangeOutputDeltaNotification.
 type SanitizedFileChangeOutputDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
 	Delta string `json:"delta"`
@@ -3143,6 +3171,7 @@ type SanitizedFileChangeOutputDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use FileChangePatchUpdatedNotification.
 type SanitizedFileChangePatchUpdatedNotificationJSON struct {
 	// Changes corresponds to the JSON schema field "changes".
 	Changes []FileUpdateChange `json:"changes"`
@@ -3191,12 +3220,15 @@ type SanitizedFileChangeRequestApprovalResponseJSON struct {
 }
 
 // Successful response for `fs/copy`.
+// Deprecated: use FsCopyResponse.
 type SanitizedFsCopyResponseJSON map[string]interface{}
 
 // Successful response for `fs/createDirectory`.
+// Deprecated: use FsCreateDirectoryResponse.
 type SanitizedFsCreateDirectoryResponseJSON map[string]interface{}
 
 // Metadata returned by `fs/getMetadata`.
+// Deprecated: use FsGetMetadataResponse.
 type SanitizedFsGetMetadataResponseJSON struct {
 	// File creation time in Unix milliseconds when available, otherwise `0`.
 	CreatedAtMs int `json:"createdAtMs"`
@@ -3215,18 +3247,21 @@ type SanitizedFsGetMetadataResponseJSON struct {
 }
 
 // Directory entries returned by `fs/readDirectory`.
+// Deprecated: use FsReadDirectoryResponse.
 type SanitizedFsReadDirectoryResponseJSON struct {
 	// Direct child entries in the requested directory.
 	Entries []FsReadDirectoryEntry `json:"entries"`
 }
 
 // Base64-encoded file contents returned by `fs/readFile`.
+// Deprecated: use FsReadFileResponse.
 type SanitizedFsReadFileResponseJSON struct {
 	// File contents encoded as base64.
 	DataBase64 string `json:"dataBase64"`
 }
 
 // Successful response for `fs/remove`.
+// Deprecated: use FsRemoveResponse.
 type SanitizedFsRemoveResponseJSON map[string]interface{}
 
 // Stop filesystem watch notifications for a prior `fs/watch`.
@@ -3236,9 +3271,11 @@ type SanitizedFsUnwatchParamsJSON struct {
 }
 
 // Successful response for `fs/unwatch`.
+// Deprecated: use FsUnwatchResponse.
 type SanitizedFsUnwatchResponseJSON map[string]interface{}
 
 // Successful response for `fs/writeFile`.
+// Deprecated: use FsWriteFileResponse.
 type SanitizedFsWriteFileResponseJSON map[string]interface{}
 
 type SanitizedFuzzyFileSearchParamsJSON struct {
@@ -3254,16 +3291,19 @@ type SanitizedFuzzyFileSearchParamsJSON struct {
 
 type SanitizedFuzzyFileSearchParamsJSONCancellationToken *string
 
+// Deprecated: use FuzzyFileSearchResponse.
 type SanitizedFuzzyFileSearchResponseJSON struct {
 	// Files corresponds to the JSON schema field "files".
 	Files []FuzzyFileSearchResult `json:"files"`
 }
 
+// Deprecated: use FuzzyFileSearchSessionCompletedNotification.
 type SanitizedFuzzyFileSearchSessionCompletedNotificationJSON struct {
 	// SessionID corresponds to the JSON schema field "sessionId".
 	SessionID string `json:"sessionId"`
 }
 
+// Deprecated: use FuzzyFileSearchSessionUpdatedNotification.
 type SanitizedFuzzyFileSearchSessionUpdatedNotificationJSON struct {
 	// Files corresponds to the JSON schema field "files".
 	Files []FuzzyFileSearchResult `json:"files"`
@@ -3284,6 +3324,7 @@ type SanitizedGetAccountParamsJSON struct {
 	RefreshToken *bool `json:"refreshToken,omitempty,omitzero"`
 }
 
+// Deprecated: use GetAccountRateLimitsResponse.
 type SanitizedGetAccountRateLimitsResponseJSON struct {
 	// RateLimitResetCredits corresponds to the JSON schema field
 	// "rateLimitResetCredits".
@@ -3327,6 +3368,7 @@ type SanitizedGetAccountRateLimitsResponseJSONRateLimits struct {
 // Multi-bucket view keyed by metered `limit_id` (for example, `codex`).
 type SanitizedGetAccountRateLimitsResponseJSONRateLimitsByLimitID map[string]RateLimitSnapshot
 
+// Deprecated: use GetAccountResponse.
 type SanitizedGetAccountResponseJSON struct {
 	// Account corresponds to the JSON schema field "account".
 	Account interface{} `json:"account,omitempty,omitzero"`
@@ -3335,6 +3377,7 @@ type SanitizedGetAccountResponseJSON struct {
 	RequiresOpenaiAuth bool `json:"requiresOpenaiAuth"`
 }
 
+// Deprecated: use GetAccountTokenUsageResponse.
 type SanitizedGetAccountTokenUsageResponseJSON struct {
 	// DailyUsageBuckets corresponds to the JSON schema field "dailyUsageBuckets".
 	DailyUsageBuckets *SanitizedGetAccountTokenUsageResponseJSONDailyUsageBuckets `json:"dailyUsageBuckets,omitempty,omitzero"`
@@ -3345,6 +3388,7 @@ type SanitizedGetAccountTokenUsageResponseJSON struct {
 
 type SanitizedGetAccountTokenUsageResponseJSONDailyUsageBuckets []AccountTokenUsageDailyBucket
 
+// Deprecated: use GetWorkspaceMessagesResponse.
 type SanitizedGetWorkspaceMessagesResponseJSON struct {
 	// Whether the workspace-message backend route is available for this client.
 	FeatureEnabled bool `json:"featureEnabled"`
@@ -3353,6 +3397,7 @@ type SanitizedGetWorkspaceMessagesResponseJSON struct {
 	Messages []WorkspaceMessage `json:"messages"`
 }
 
+// Deprecated: use GuardianWarningNotification.
 type SanitizedGuardianWarningNotificationJSON struct {
 	// Concise guardian warning message for the user.
 	Message string `json:"message"`
@@ -3397,6 +3442,7 @@ type SanitizedListMCPServerStatusParamsJSONLimit *int
 
 type SanitizedListMCPServerStatusParamsJSONThreadID *string
 
+// Deprecated: use ListMCPServerStatusResponse.
 type SanitizedListMCPServerStatusResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []MCPServerStatus `json:"data"`
@@ -3410,6 +3456,7 @@ type SanitizedListMCPServerStatusResponseJSON struct {
 // there are no more items to return.
 type SanitizedListMCPServerStatusResponseJSONNextCursor *string
 
+// Deprecated: use LogoutAccountResponse.
 type SanitizedLogoutAccountResponseJSON map[string]interface{}
 
 type SanitizedMCPResourceReadParamsJSON struct {
@@ -3425,11 +3472,13 @@ type SanitizedMCPResourceReadParamsJSON struct {
 
 type SanitizedMCPResourceReadParamsJSONThreadID *string
 
+// Deprecated: use MCPResourceReadResponse.
 type SanitizedMCPResourceReadResponseJSON struct {
 	// Contents corresponds to the JSON schema field "contents".
 	Contents []ResourceContent `json:"contents"`
 }
 
+// Deprecated: use MCPServerElicitationRequestResponse.
 type SanitizedMCPServerElicitationRequestResponseJSON struct {
 	// Optional client metadata for form-mode action handling.
 	Meta interface{} `json:"_meta,omitempty,omitzero"`
@@ -3444,9 +3493,10 @@ type SanitizedMCPServerElicitationRequestResponseJSON struct {
 	Content interface{} `json:"content,omitempty,omitzero"`
 }
 
-type SanitizedMCPServerOauthLoginCompletedNotificationJSON struct {
+// Deprecated: use MCPServerOAuthLoginCompletedNotification.
+type SanitizedMCPServerOAuthLoginCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
-	Error SanitizedMCPServerOauthLoginCompletedNotificationJSONError `json:"error,omitempty,omitzero"`
+	Error SanitizedMCPServerOAuthLoginCompletedNotificationJSONError `json:"error,omitempty,omitzero"`
 
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
@@ -3455,40 +3505,43 @@ type SanitizedMCPServerOauthLoginCompletedNotificationJSON struct {
 	Success bool `json:"success"`
 
 	// ThreadID corresponds to the JSON schema field "threadId".
-	ThreadID SanitizedMCPServerOauthLoginCompletedNotificationJSONThreadID `json:"threadId,omitempty,omitzero"`
+	ThreadID SanitizedMCPServerOAuthLoginCompletedNotificationJSONThreadID `json:"threadId,omitempty,omitzero"`
 }
 
-type SanitizedMCPServerOauthLoginCompletedNotificationJSONError *string
+type SanitizedMCPServerOAuthLoginCompletedNotificationJSONError *string
 
-type SanitizedMCPServerOauthLoginCompletedNotificationJSONThreadID *string
+type SanitizedMCPServerOAuthLoginCompletedNotificationJSONThreadID *string
 
-type SanitizedMCPServerOauthLoginParamsJSON struct {
+type SanitizedMCPServerOAuthLoginParamsJSON struct {
 	// Name corresponds to the JSON schema field "name".
 	Name string `json:"name"`
 
 	// Scopes corresponds to the JSON schema field "scopes".
-	Scopes *SanitizedMCPServerOauthLoginParamsJSONScopes `json:"scopes,omitempty,omitzero"`
+	Scopes *SanitizedMCPServerOAuthLoginParamsJSONScopes `json:"scopes,omitempty,omitzero"`
 
 	// ThreadID corresponds to the JSON schema field "threadId".
-	ThreadID SanitizedMCPServerOauthLoginParamsJSONThreadID `json:"threadId,omitempty,omitzero"`
+	ThreadID SanitizedMCPServerOAuthLoginParamsJSONThreadID `json:"threadId,omitempty,omitzero"`
 
 	// TimeoutSecs corresponds to the JSON schema field "timeoutSecs".
-	TimeoutSecs SanitizedMCPServerOauthLoginParamsJSONTimeoutSecs `json:"timeoutSecs,omitempty,omitzero"`
+	TimeoutSecs SanitizedMCPServerOAuthLoginParamsJSONTimeoutSecs `json:"timeoutSecs,omitempty,omitzero"`
 }
 
-type SanitizedMCPServerOauthLoginParamsJSONScopes []string
+type SanitizedMCPServerOAuthLoginParamsJSONScopes []string
 
-type SanitizedMCPServerOauthLoginParamsJSONThreadID *string
+type SanitizedMCPServerOAuthLoginParamsJSONThreadID *string
 
-type SanitizedMCPServerOauthLoginParamsJSONTimeoutSecs *int
+type SanitizedMCPServerOAuthLoginParamsJSONTimeoutSecs *int
 
-type SanitizedMCPServerOauthLoginResponseJSON struct {
+// Deprecated: use MCPServerOAuthLoginResponse.
+type SanitizedMCPServerOAuthLoginResponseJSON struct {
 	// AuthorizationURL corresponds to the JSON schema field "authorizationUrl".
 	AuthorizationURL string `json:"authorizationUrl"`
 }
 
+// Deprecated: use MCPServerRefreshResponse.
 type SanitizedMCPServerRefreshResponseJSON map[string]interface{}
 
+// Deprecated: use MCPServerStatusUpdatedNotification.
 type SanitizedMCPServerStatusUpdatedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
 	Error SanitizedMCPServerStatusUpdatedNotificationJSONError `json:"error,omitempty,omitzero"`
@@ -3527,6 +3580,7 @@ type SanitizedMCPServerToolCallParamsJSON struct {
 	Tool string `json:"tool"`
 }
 
+// Deprecated: use MCPServerToolCallResponse.
 type SanitizedMCPServerToolCallResponseJSON struct {
 	// Meta corresponds to the JSON schema field "_meta".
 	Meta interface{} `json:"_meta,omitempty,omitzero"`
@@ -3543,6 +3597,7 @@ type SanitizedMCPServerToolCallResponseJSON struct {
 
 type SanitizedMCPServerToolCallResponseJSONIsError *bool
 
+// Deprecated: use MCPToolCallProgressNotification.
 type SanitizedMCPToolCallProgressNotificationJSON struct {
 	// ItemID corresponds to the JSON schema field "itemId".
 	ItemID string `json:"itemId"`
@@ -3604,6 +3659,7 @@ type SanitizedModelListParamsJSONIncludeHidden *bool
 // Optional page size; defaults to a reasonable server-side value.
 type SanitizedModelListParamsJSONLimit *int
 
+// Deprecated: use ModelListResponse.
 type SanitizedModelListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []Model `json:"data"`
@@ -3619,6 +3675,7 @@ type SanitizedModelListResponseJSONNextCursor *string
 
 type SanitizedModelProviderCapabilitiesReadParamsJSON map[string]interface{}
 
+// Deprecated: use ModelProviderCapabilitiesReadResponse.
 type SanitizedModelProviderCapabilitiesReadResponseJSON struct {
 	// ImageGeneration corresponds to the JSON schema field "imageGeneration".
 	ImageGeneration bool `json:"imageGeneration"`
@@ -3630,6 +3687,7 @@ type SanitizedModelProviderCapabilitiesReadResponseJSON struct {
 	WebSearch bool `json:"webSearch"`
 }
 
+// Deprecated: use ModelReroutedNotification.
 type SanitizedModelReroutedNotificationJSON struct {
 	// FromModel corresponds to the JSON schema field "fromModel".
 	FromModel string `json:"fromModel"`
@@ -3647,6 +3705,7 @@ type SanitizedModelReroutedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use ModelSafetyBufferingUpdatedNotification.
 type SanitizedModelSafetyBufferingUpdatedNotificationJSON struct {
 	// FasterModel corresponds to the JSON schema field "fasterModel".
 	FasterModel SanitizedModelSafetyBufferingUpdatedNotificationJSONFasterModel `json:"fasterModel,omitempty,omitzero"`
@@ -3672,6 +3731,7 @@ type SanitizedModelSafetyBufferingUpdatedNotificationJSON struct {
 
 type SanitizedModelSafetyBufferingUpdatedNotificationJSONFasterModel *string
 
+// Deprecated: use ModelVerificationNotification.
 type SanitizedModelVerificationNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -3703,6 +3763,7 @@ type SanitizedPermissionProfileListParamsJSONCwd *string
 // Optional page size; defaults to the full result set.
 type SanitizedPermissionProfileListParamsJSONLimit *int
 
+// Deprecated: use PermissionProfileListResponse.
 type SanitizedPermissionProfileListResponseJSON struct {
 	// Data corresponds to the JSON schema field "data".
 	Data []PermissionProfileSummary `json:"data"`
@@ -3732,6 +3793,7 @@ type SanitizedPermissionsRequestApprovalResponseJSONStrictAutoReview *bool
 
 // EXPERIMENTAL - proposed plan streaming deltas for plan items. Clients should not
 // assume concatenated deltas match the completed plan item content.
+// Deprecated: use PlanDeltaNotification.
 type SanitizedPlanDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
 	Delta string `json:"delta"`
@@ -3746,6 +3808,7 @@ type SanitizedPlanDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use PluginInstallResponse.
 type SanitizedPluginInstallResponseJSON struct {
 	// AppsNeedingAuth corresponds to the JSON schema field "appsNeedingAuth".
 	AppsNeedingAuth []AppSummary `json:"appsNeedingAuth"`
@@ -3764,10 +3827,12 @@ type SanitizedPluginShareDeleteParamsJSON struct {
 	RemotePluginID string `json:"remotePluginId"`
 }
 
+// Deprecated: use PluginShareDeleteResponse.
 type SanitizedPluginShareDeleteResponseJSON map[string]interface{}
 
 type SanitizedPluginShareListParamsJSON map[string]interface{}
 
+// Deprecated: use PluginShareSaveResponse.
 type SanitizedPluginShareSaveResponseJSON struct {
 	// RemotePluginID corresponds to the JSON schema field "remotePluginId".
 	RemotePluginID string `json:"remotePluginId"`
@@ -3787,6 +3852,7 @@ type SanitizedPluginShareUpdateTargetsParamsJSON struct {
 	ShareTargets []PluginShareTarget `json:"shareTargets"`
 }
 
+// Deprecated: use PluginShareUpdateTargetsResponse.
 type SanitizedPluginShareUpdateTargetsResponseJSON struct {
 	// Discoverability corresponds to the JSON schema field "discoverability".
 	Discoverability PluginShareDiscoverability `json:"discoverability"`
@@ -3807,6 +3873,7 @@ type SanitizedPluginSkillReadParamsJSON struct {
 	SkillName string `json:"skillName"`
 }
 
+// Deprecated: use PluginSkillReadResponse.
 type SanitizedPluginSkillReadResponseJSON struct {
 	// Contents corresponds to the JSON schema field "contents".
 	Contents SanitizedPluginSkillReadResponseJSONContents `json:"contents,omitempty,omitzero"`
@@ -3819,9 +3886,11 @@ type SanitizedPluginUninstallParamsJSON struct {
 	PluginID string `json:"pluginId"`
 }
 
+// Deprecated: use PluginUninstallResponse.
 type SanitizedPluginUninstallResponseJSON map[string]interface{}
 
 // Final process exit notification for `process/spawn`.
+// Deprecated: use ProcessExitedNotification.
 type SanitizedProcessExitedNotificationJSON struct {
 	// Process exit code.
 	ExitCode int `json:"exitCode"`
@@ -3853,6 +3922,7 @@ type SanitizedProcessExitedNotificationJSON struct {
 }
 
 // Base64-encoded output chunk emitted for a streaming `process/spawn` request.
+// Deprecated: use ProcessOutputDeltaNotification.
 type SanitizedProcessOutputDeltaNotificationJSON struct {
 	// True on the final streamed chunk for this stream when output was truncated by
 	// `outputBytesCap`.
@@ -3868,6 +3938,7 @@ type SanitizedProcessOutputDeltaNotificationJSON struct {
 	Stream interface{} `json:"stream"`
 }
 
+// Deprecated: use RawResponseItemCompletedNotification.
 type SanitizedRawResponseItemCompletedNotificationJSON struct {
 	// Item corresponds to the JSON schema field "item".
 	Item ResponseItem `json:"item"`
@@ -3879,6 +3950,7 @@ type SanitizedRawResponseItemCompletedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use ReasoningSummaryPartAddedNotification.
 type SanitizedReasoningSummaryPartAddedNotificationJSON struct {
 	// ItemID corresponds to the JSON schema field "itemId".
 	ItemID string `json:"itemId"`
@@ -3893,6 +3965,7 @@ type SanitizedReasoningSummaryPartAddedNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use ReasoningSummaryTextDeltaNotification.
 type SanitizedReasoningSummaryTextDeltaNotificationJSON struct {
 	// Delta corresponds to the JSON schema field "delta".
 	Delta string `json:"delta"`
@@ -3910,6 +3983,7 @@ type SanitizedReasoningSummaryTextDeltaNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use ReasoningTextDeltaNotification.
 type SanitizedReasoningTextDeltaNotificationJSON struct {
 	// ContentIndex corresponds to the JSON schema field "contentIndex".
 	ContentIndex int `json:"contentIndex"`
@@ -3928,6 +4002,7 @@ type SanitizedReasoningTextDeltaNotificationJSON struct {
 }
 
 // Current remote-control connection status and remote identity exposed to clients.
+// Deprecated: use RemoteControlStatusChangedNotification.
 type SanitizedRemoteControlStatusChangedNotificationJSON struct {
 	// EnvironmentID corresponds to the JSON schema field "environmentId".
 	EnvironmentID SanitizedRemoteControlStatusChangedNotificationJSONEnvironmentID `json:"environmentId,omitempty,omitzero"`
@@ -3961,11 +4036,13 @@ type SanitizedSendAddCreditsNudgeEmailParamsJSON struct {
 	CreditType AddCreditsNudgeCreditType `json:"creditType"`
 }
 
+// Deprecated: use SendAddCreditsNudgeEmailResponse.
 type SanitizedSendAddCreditsNudgeEmailResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status AddCreditsNudgeEmailStatus `json:"status"`
 }
 
+// Deprecated: use ServerRequestResolvedNotification.
 type SanitizedServerRequestResolvedNotificationJSON struct {
 	// RequestID corresponds to the JSON schema field "requestId".
 	RequestID RequestID `json:"requestId"`
@@ -3978,13 +4055,16 @@ type SanitizedServerRequestResolvedNotificationJSON struct {
 //
 // Treat this as an invalidation signal and re-run `skills/list` with the client's
 // current parameters when refreshed skill metadata is needed.
+// Deprecated: use SkillsChangedNotification.
 type SanitizedSkillsChangedNotificationJSON map[string]interface{}
 
+// Deprecated: use SkillsConfigWriteResponse.
 type SanitizedSkillsConfigWriteResponseJSON struct {
 	// EffectiveEnabled corresponds to the JSON schema field "effectiveEnabled".
 	EffectiveEnabled bool `json:"effectiveEnabled"`
 }
 
+// Deprecated: use SkillsExtraRootsSetResponse.
 type SanitizedSkillsExtraRootsSetResponseJSON map[string]interface{}
 
 type SanitizedSkillsListParamsJSON struct {
@@ -3995,6 +4075,7 @@ type SanitizedSkillsListParamsJSON struct {
 	ForceReload *bool `json:"forceReload,omitempty,omitzero"`
 }
 
+// Deprecated: use TerminalInteractionNotification.
 type SanitizedTerminalInteractionNotificationJSON struct {
 	// ItemID corresponds to the JSON schema field "itemId".
 	ItemID string `json:"itemId"`
@@ -4020,6 +4101,7 @@ type SanitizedThreadApproveGuardianDeniedActionParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadApproveGuardianDeniedActionResponse.
 type SanitizedThreadApproveGuardianDeniedActionResponseJSON map[string]interface{}
 
 type SanitizedThreadArchiveParamsJSON struct {
@@ -4027,13 +4109,16 @@ type SanitizedThreadArchiveParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadArchiveResponse.
 type SanitizedThreadArchiveResponseJSON map[string]interface{}
 
+// Deprecated: use ThreadArchivedNotification.
 type SanitizedThreadArchivedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadClosedNotification.
 type SanitizedThreadClosedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4044,6 +4129,7 @@ type SanitizedThreadCompactStartParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadCompactStartResponse.
 type SanitizedThreadCompactStartResponseJSON map[string]interface{}
 
 type SanitizedThreadDeleteParamsJSON struct {
@@ -4051,8 +4137,10 @@ type SanitizedThreadDeleteParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadDeleteResponse.
 type SanitizedThreadDeleteResponseJSON map[string]interface{}
 
+// Deprecated: use ThreadDeletedNotification.
 type SanitizedThreadDeletedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4063,11 +4151,13 @@ type SanitizedThreadGoalClearParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadGoalClearResponse.
 type SanitizedThreadGoalClearResponseJSON struct {
 	// Cleared corresponds to the JSON schema field "cleared".
 	Cleared bool `json:"cleared"`
 }
 
+// Deprecated: use ThreadGoalClearedNotification.
 type SanitizedThreadGoalClearedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4104,6 +4194,7 @@ type SanitizedThreadInjectItemsParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadInjectItemsResponse.
 type SanitizedThreadInjectItemsResponseJSON map[string]interface{}
 
 type SanitizedThreadListParamsJSON struct {
@@ -4178,6 +4269,7 @@ type SanitizedThreadLoadedListParamsJSONCursor *string
 // Optional page size; defaults to no limit.
 type SanitizedThreadLoadedListParamsJSONLimit *int
 
+// Deprecated: use ThreadLoadedListResponse.
 type SanitizedThreadLoadedListResponseJSON struct {
 	// Thread ids for sessions currently loaded in memory.
 	Data []string `json:"data"`
@@ -4201,6 +4293,7 @@ type SanitizedThreadMetadataUpdateParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadNameUpdatedNotification.
 type SanitizedThreadNameUpdatedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4220,6 +4313,7 @@ type SanitizedThreadReadParamsJSON struct {
 }
 
 // EXPERIMENTAL - emitted when thread realtime transport closes.
+// Deprecated: use ThreadRealtimeClosedNotification.
 type SanitizedThreadRealtimeClosedNotificationJSON struct {
 	// Reason corresponds to the JSON schema field "reason".
 	Reason SanitizedThreadRealtimeClosedNotificationJSONReason `json:"reason,omitempty,omitzero"`
@@ -4231,6 +4325,7 @@ type SanitizedThreadRealtimeClosedNotificationJSON struct {
 type SanitizedThreadRealtimeClosedNotificationJSONReason *string
 
 // EXPERIMENTAL - emitted when thread realtime encounters an error.
+// Deprecated: use ThreadRealtimeErrorNotification.
 type SanitizedThreadRealtimeErrorNotificationJSON struct {
 	// Message corresponds to the JSON schema field "message".
 	Message string `json:"message"`
@@ -4240,6 +4335,7 @@ type SanitizedThreadRealtimeErrorNotificationJSON struct {
 }
 
 // EXPERIMENTAL - raw non-audio thread realtime item emitted by the backend.
+// Deprecated: use ThreadRealtimeItemAddedNotification.
 type SanitizedThreadRealtimeItemAddedNotificationJSON struct {
 	// Item corresponds to the JSON schema field "item".
 	Item interface{} `json:"item"`
@@ -4249,6 +4345,7 @@ type SanitizedThreadRealtimeItemAddedNotificationJSON struct {
 }
 
 // EXPERIMENTAL - streamed output audio emitted by thread realtime.
+// Deprecated: use ThreadRealtimeOutputAudioDeltaNotification.
 type SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON struct {
 	// Audio corresponds to the JSON schema field "audio".
 	Audio ThreadRealtimeAudioChunk `json:"audio"`
@@ -4258,6 +4355,7 @@ type SanitizedThreadRealtimeOutputAudioDeltaNotificationJSON struct {
 }
 
 // EXPERIMENTAL - emitted with the remote SDP for a WebRTC realtime session.
+// Deprecated: use ThreadRealtimeSdpNotification.
 type SanitizedThreadRealtimeSdpNotificationJSON struct {
 	// Sdp corresponds to the JSON schema field "sdp".
 	Sdp string `json:"sdp"`
@@ -4267,6 +4365,7 @@ type SanitizedThreadRealtimeSdpNotificationJSON struct {
 }
 
 // EXPERIMENTAL - emitted when thread realtime startup is accepted.
+// Deprecated: use ThreadRealtimeStartedNotification.
 type SanitizedThreadRealtimeStartedNotificationJSON struct {
 	// RealtimeSessionID corresponds to the JSON schema field "realtimeSessionId".
 	RealtimeSessionID SanitizedThreadRealtimeStartedNotificationJSONRealtimeSessionID `json:"realtimeSessionId,omitempty,omitzero"`
@@ -4282,6 +4381,7 @@ type SanitizedThreadRealtimeStartedNotificationJSONRealtimeSessionID *string
 
 // EXPERIMENTAL - flat transcript delta emitted whenever realtime transcript text
 // changes.
+// Deprecated: use ThreadRealtimeTranscriptDeltaNotification.
 type SanitizedThreadRealtimeTranscriptDeltaNotificationJSON struct {
 	// Live transcript delta from the realtime event.
 	Delta string `json:"delta"`
@@ -4295,6 +4395,7 @@ type SanitizedThreadRealtimeTranscriptDeltaNotificationJSON struct {
 
 // EXPERIMENTAL - final transcript text emitted when realtime completes a
 // transcript part.
+// Deprecated: use ThreadRealtimeTranscriptDoneNotification.
 type SanitizedThreadRealtimeTranscriptDoneNotificationJSON struct {
 	// Role corresponds to the JSON schema field "role".
 	Role string `json:"role"`
@@ -4327,6 +4428,7 @@ type SanitizedThreadSetNameParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadSetNameResponse.
 type SanitizedThreadSetNameResponseJSON map[string]interface{}
 
 type SanitizedThreadShellCommandParamsJSON struct {
@@ -4340,8 +4442,10 @@ type SanitizedThreadShellCommandParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadShellCommandResponse.
 type SanitizedThreadShellCommandResponseJSON map[string]interface{}
 
+// Deprecated: use ThreadStatusChangedNotification.
 type SanitizedThreadStatusChangedNotificationJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status ThreadStatus `json:"status"`
@@ -4350,6 +4454,7 @@ type SanitizedThreadStatusChangedNotificationJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadTokenUsageUpdatedNotification.
 type SanitizedThreadTokenUsageUpdatedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4366,6 +4471,7 @@ type SanitizedThreadUnarchiveParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadUnarchivedNotification.
 type SanitizedThreadUnarchivedNotificationJSON struct {
 	// ThreadID corresponds to the JSON schema field "threadId".
 	ThreadID string `json:"threadId"`
@@ -4376,6 +4482,7 @@ type SanitizedThreadUnsubscribeParamsJSON struct {
 	ThreadID string `json:"threadId"`
 }
 
+// Deprecated: use ThreadUnsubscribeResponse.
 type SanitizedThreadUnsubscribeResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status ThreadUnsubscribeStatus `json:"status"`
@@ -4411,6 +4518,7 @@ type SanitizedToolRequestUserInputResponseJSONAnswers map[string]ToolRequestUser
 
 // Notification that the turn-level unified diff has changed. Contains the latest
 // aggregated diff across all file changes in the turn.
+// Deprecated: use TurnDiffUpdatedNotification.
 type SanitizedTurnDiffUpdatedNotificationJSON struct {
 	// Diff corresponds to the JSON schema field "diff".
 	Diff string `json:"diff"`
@@ -4430,8 +4538,10 @@ type SanitizedTurnInterruptParamsJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use TurnInterruptResponse.
 type SanitizedTurnInterruptResponseJSON map[string]interface{}
 
+// Deprecated: use TurnModerationMetadataNotification.
 type SanitizedTurnModerationMetadataNotificationJSON struct {
 	// Metadata corresponds to the JSON schema field "metadata".
 	Metadata interface{} `json:"metadata"`
@@ -4443,6 +4553,7 @@ type SanitizedTurnModerationMetadataNotificationJSON struct {
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use TurnPlanUpdatedNotification.
 type SanitizedTurnPlanUpdatedNotificationJSON struct {
 	// Explanation corresponds to the JSON schema field "explanation".
 	Explanation SanitizedTurnPlanUpdatedNotificationJSONExplanation `json:"explanation,omitempty,omitzero"`
@@ -4459,11 +4570,13 @@ type SanitizedTurnPlanUpdatedNotificationJSON struct {
 
 type SanitizedTurnPlanUpdatedNotificationJSONExplanation *string
 
+// Deprecated: use TurnSteerResponse.
 type SanitizedTurnSteerResponseJSON struct {
 	// TurnID corresponds to the JSON schema field "turnId".
 	TurnID string `json:"turnId"`
 }
 
+// Deprecated: use WarningNotification.
 type SanitizedWarningNotificationJSON struct {
 	// Concise warning message for the user.
 	Message string `json:"message"`
@@ -4475,11 +4588,13 @@ type SanitizedWarningNotificationJSON struct {
 // Optional thread target when the warning applies to a specific thread.
 type SanitizedWarningNotificationJSONThreadID *string
 
+// Deprecated: use WindowsSandboxReadinessResponse.
 type SanitizedWindowsSandboxReadinessResponseJSON struct {
 	// Status corresponds to the JSON schema field "status".
 	Status WindowsSandboxReadiness `json:"status"`
 }
 
+// Deprecated: use WindowsSandboxSetupCompletedNotification.
 type SanitizedWindowsSandboxSetupCompletedNotificationJSON struct {
 	// Error corresponds to the JSON schema field "error".
 	Error SanitizedWindowsSandboxSetupCompletedNotificationJSONError `json:"error,omitempty,omitzero"`
@@ -4493,11 +4608,13 @@ type SanitizedWindowsSandboxSetupCompletedNotificationJSON struct {
 
 type SanitizedWindowsSandboxSetupCompletedNotificationJSONError *string
 
+// Deprecated: use WindowsSandboxSetupStartResponse.
 type SanitizedWindowsSandboxSetupStartResponseJSON struct {
 	// Started corresponds to the JSON schema field "started".
 	Started bool `json:"started"`
 }
 
+// Deprecated: use WindowsWorldWritableWarningNotification.
 type SanitizedWindowsWorldWritableWarningNotificationJSON struct {
 	// ExtraCount corresponds to the JSON schema field "extraCount".
 	ExtraCount int `json:"extraCount"`
@@ -4754,43 +4871,6 @@ type ThreadInjectItemsParams struct {
 }
 
 type ThreadListCwdFilter interface{}
-
-type ThreadListParams struct {
-	// Optional archived filter; when set to true, only archived threads are returned.
-	// If false or null, only non-archived threads are returned.
-	Archived ThreadListParamsArchived `json:"archived,omitempty,omitzero"`
-
-	// Opaque pagination cursor returned by a previous call.
-	Cursor ThreadListParamsCursor `json:"cursor,omitempty,omitzero"`
-
-	// Optional cwd filter or filters; when set, only threads whose session cwd
-	// exactly matches one of these paths are returned.
-	Cwd interface{} `json:"cwd,omitempty,omitzero"`
-
-	// Optional page size; defaults to a reasonable server-side value.
-	Limit ThreadListParamsLimit `json:"limit,omitempty,omitzero"`
-
-	// Optional provider filter; when set, only sessions recorded under these
-	// providers are returned. When present but empty, includes all providers.
-	ModelProviders *ThreadListParamsModelProviders `json:"modelProviders,omitempty,omitzero"`
-
-	// Optional substring filter for the extracted thread title.
-	SearchTerm ThreadListParamsSearchTerm `json:"searchTerm,omitempty,omitzero"`
-
-	// Optional sort direction; defaults to descending (newest first).
-	SortDirection interface{} `json:"sortDirection,omitempty,omitzero"`
-
-	// Optional sort key; defaults to created_at.
-	SortKey interface{} `json:"sortKey,omitempty,omitzero"`
-
-	// Optional source filter; when set, only sessions from these source kinds are
-	// returned. When omitted or empty, defaults to interactive sources.
-	SourceKinds *ThreadListParamsSourceKinds `json:"sourceKinds,omitempty,omitzero"`
-
-	// If true, return from the state DB without scanning JSONL rollouts to repair
-	// thread metadata. Omitted or false preserves scan-and-repair behavior.
-	UseStateDbOnly *bool `json:"useStateDbOnly,omitempty,omitzero"`
-}
 
 // Optional archived filter; when set to true, only archived threads are returned.
 // If false or null, only non-archived threads are returned.
@@ -5167,8 +5247,6 @@ type TurnInterruptParams struct {
 	// TurnID corresponds to the JSON schema field "turnId".
 	TurnID string `json:"turnId"`
 }
-
-type TurnItemsView interface{}
 
 type TurnPlanStep struct {
 	// Status corresponds to the JSON schema field "status".

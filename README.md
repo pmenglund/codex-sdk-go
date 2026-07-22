@@ -73,11 +73,18 @@ defer stream.Close()
 for {
     note, err := stream.Next(ctx)
     if err != nil {
-        break
+		panic(err)
     }
     fmt.Printf("%s\n", note.Method)
-    if note.Method == "turn/completed" {
-        break
+	if note.Method == "turn/failed" {
+		panic("turn failed")
+	}
+	if note.Method == "turn/completed" {
+		if completed, ok := note.Params.(protocol.TurnCompletedNotification); ok &&
+			completed.Turn != nil && completed.Turn.Status == protocol.TurnStatusFailed {
+			panic(fmt.Errorf("turn failed: %v", completed.Turn.Error))
+		}
+		break
     }
 }
 ```
@@ -108,6 +115,28 @@ fmt.Println(result.FinalResponse)
 
 `TurnHandle` owns its notification subscription. Call `Close` if you stop before `Run` returns.
 
+Choose exactly one consumption style per handle: `Run`, repeated `Next` calls,
+or the stream returned by `Stream`. Mixing styles or consuming concurrently
+returns `codex.ErrTurnConsumptionMode` immediately.
+
+If a turn fails, `Run` returns both the partial result and a `*codex.TurnError`.
+Use `errors.Is(err, codex.ErrTurnFailed)` to classify the failure and
+`errors.As` to inspect its structured details, retry metadata, and raw payload:
+
+```go
+result, err := handle.Run(ctx)
+if errors.Is(err, codex.ErrTurnFailed) {
+    var turnErr *codex.TurnError
+    if errors.As(err, &turnErr) {
+        fmt.Printf("received %d items before failure: %v\n", len(result.Items), turnErr.Detail)
+    }
+}
+```
+
+`FinalResponse` is populated only by completed `agentMessage` items. Plan,
+reasoning, and commentary items remain available in `Items` but are never
+reported as the final assistant answer.
+
 Canceling or expiring the context passed to `Run`, `RunInputs`, or
 `TurnHandle.Run` best-effort interrupts the remote turn before returning the
 original context error. Cleanup is bounded to two seconds. To detach without
@@ -137,6 +166,10 @@ account, err := client.Account(ctx, codex.AccountOptions{})
 models, err := client.ListModels(ctx, codex.ListModelsOptions{})
 threads, err := client.ListThreads(ctx, codex.ThreadListOptions{})
 ```
+
+Thread list, read, fork, and unarchive helpers return concrete protocol values.
+List sorting uses `protocol.SortDirection` and `protocol.ThreadSortKey` rather
+than arbitrary strings.
 
 Thread values also expose lifecycle helpers:
 
@@ -190,31 +223,64 @@ fallback appears. The 31 affected wrappers—including `UserInput`,
 `ResponseItem`, `SandboxPolicy`, `ThreadStatus`, and `LoginAccountParams`—are
 listed in `protocol/unions_gen.go`.
 
-This low-level source change requires SDK version `v0.145.0`
-or newer; `protocol.GeneratedCodexVersion` continues to describe the upstream
-wire schema, not the SDK release number. The same release adds
-`Options.CompatibilityPolicy` and changes `StartLogin` to accept JSON-marshalable
-login parameters; code using unkeyed `Options` literals, interface method sets,
-or assigned `StartLogin` method values must be updated.
+Generated protocol declarations use Go initialisms consistently, including
+`MCP`, `OAuth`, `ID`, `URL`, and `JSON`. Older `Mcp...`/`Oauth...` spellings and
+`Sanitized...JSON` implementation names remain deprecated aliases for a
+migration window. Prefer canonical declarations such as
+`protocol.MCPServerOAuthLoginParams` and canonical methods such as
+`rpc.Client.MCPServerOAuthLogin`.
+
+These API changes are currently unreleased and require the first SDK release
+after `v0.145.0`; `protocol.GeneratedCodexVersion` continues to describe the
+upstream wire schema, not the SDK release number. This API-hardening work also
+includes `Options.CompatibilityPolicy` and changes `StartLogin` to accept
+JSON-marshalable login parameters; code using unkeyed `Options` literals,
+interface method sets, or assigned `StartLogin` method values must be updated.
 
 ## Approvals
 
-Configure approval handling by supplying a handler when constructing the client.
+Configure app-server requests with optional callbacks. Unset callbacks return
+`rpc.ErrServerRequestUnsupported`, so adding a future server request does not
+break existing applications at compile time.
 
 ```go
 logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 client, err := codex.New(ctx, codex.Options{
-    Logger:          logger,
-    ApprovalHandler: codex.RejectingApprovalHandler{},
+    Logger:         logger,
+    RequestHandler: codex.RejectingApprovalCallbacks(),
 })
 ```
 
-For custom approval logic, implement `rpc.ServerRequestHandler` (from `rpc`).
+For custom logic, set only the callbacks your application supports:
+
+```go
+callbacks := &codex.ServerRequestCallbacks{
+    ApproveFileChange: func(ctx context.Context, request protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
+        return &protocol.FileChangeRequestApprovalResponse{
+            Decision: protocol.FileChangeApprovalDecisionDecline,
+        }, nil
+    },
+}
+client, err := codex.New(ctx, codex.Options{RequestHandler: callbacks})
+```
+
+`Options.ApprovalHandler` and the broad generated `rpc.ServerRequestHandler`
+remain as deprecated compatibility surfaces. Low-level handlers that must
+implement only selected methods can embed `rpc.UnimplementedServerRequestHandler`.
+For methods whose historical Go spelling used non-canonical initialisms, such
+as `McpServerElicitationRequest`, implement the exported canonical capability
+interface (for example, `rpc.MCPServerElicitationRequestHandler`); dispatch
+prefers that method over the legacy spelling. The client may invoke different
+server-request callbacks concurrently, so callbacks that share state must be
+concurrency-safe.
 
 `AutoApproveHandler` accepts command, file-change, and permission requests and
 must only be used in a trusted environment. Its default logs are redacted. If
 sensitive command and path logging is explicitly required, construct
 `NewUnsafeLoggingAutoApproveHandler(logger)` and protect those logs accordingly.
+Use `codex.AutoApproveCallbacks(codex.AutoApproveHandler{Logger: logger})` to
+attach a safe auto-approver through the preferred callback API. The unsafe
+handler can be passed to the same adapter when explicitly required.
 
 ## Codex CLI compatibility
 
@@ -288,3 +354,24 @@ Use the RPC client directly for full control.
 rpcClient := client.Client()
 models, err := rpcClient.ModelList(ctx, protocol.ModelListParams{})
 ```
+
+Use checked constructors such as `rpc.NewClientChecked`,
+`rpc.NewConnTransportChecked`, and `rpc.NewReplayTransportChecked` when a
+dependency is dynamic. Their legacy counterparts panic immediately on invalid
+programmer input instead of failing later in a background goroutine.
+
+All outbound writes are serialized through a bounded queue. `Call` and
+`Notify` return when their contexts end; with a legacy `rpc.Transport`, the
+underlying write may remain blocked until `Close`. Implement
+`rpc.ContextTransport` when writes themselves must observe cancellation.
+App-server request handling defaults to four workers and a queue of 64; tune
+`rpc.ClientOptions.ServerRequestWorkers` and
+`ServerRequestQueueCapacity` when using the low-level client.
+
+Inbound JSON-RPC messages are limited to 8 MiB by default. Set
+`rpc.ClientOptions.MaxMessageBytes` to apply a smaller client-side acceptance
+limit. Built-in line transports retain the 8 MiB allocation ceiling even if
+the client option is larger. Custom transports return an already allocated
+string, so they must enforce their own read/allocation limit; the client option
+then rejects oversized returned values. Oversized messages close the client
+with an error matching `rpc.ErrMessageTooLarge`.

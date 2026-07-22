@@ -40,11 +40,11 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
 - [x] (2026-07-22 09:04Z) Completed the required independent planner pass and validated its proposed milestones against the current repository.
 - [x] (2026-07-22 09:20Z) Created and switched to local branch `codex/api-usability-hardening`; committed this plan as `e46e828`; kept `GC.md` untracked.
 - [x] (2026-07-22 09:38Z) Completed Milestone 1 and committed it as `1567973`: corrected the mention wire key, normalized typed-nil handlers, narrowed retry classification, added checked constructors and closure sentinels, validated replay input without losing large integers, and marked compatibility names deprecated. Focused root/RPC race tests passed.
-- [x] (2026-07-22 10:07Z) Completed Milestone 2: serialized all outbound writes through a bounded writer, added optional context-aware transport writes, bounded server requests with configurable workers and queue capacity, classified dispatch failures, contained handler panics, and made reply failures terminal. Focused tests passed under `-race -count=100`; the milestone commit remains.
-- [ ] Complete Milestone 3: canonical complete protocol generation and upgrade-safe handler/client interfaces from pinned `rust-v0.144.6`.
-- [ ] Complete Milestone 4: dependable high-level lifecycle and turn behavior with typed results, errors, and single-consumer enforcement.
-- [ ] Complete Milestone 5: migration documentation, examples, external-package compile fixtures, full local quality gate, and final independent reviews.
-- [ ] Update this plan's outcomes, ensure all 17 tracker headings are addressed, and leave only intended committed changes plus untracked `GC.md`.
+- [x] (2026-07-22 10:07Z) Completed Milestone 2 and committed it as `8cb23a3`: serialized all outbound writes through a bounded writer, added optional context-aware transport writes, bounded server requests with configurable workers and queue capacity, classified dispatch failures, contained handler panics, and made reply failures terminal. Focused tests passed under `-race -count=100`.
+- [x] (2026-07-22 11:05Z) Completed Milestone 3: generated canonical initialisms, typed lifecycle responses and constrained values, deprecated compatibility spellings and sanitized implementation targets, an embeddable default server handler, and concrete client methods from pinned `rust-v0.144.6`. The final two consecutive generation passes produced the identical SHA-256 aggregate `bc5f151b660ccfa09386ddc7ec907c5cb42937eb78998ebd3d7b92f217383d9f`.
+- [x] (2026-07-22 11:05Z) Completed Milestone 4: lifecycle helpers consume concrete protocol values; `TurnHandle` enforces one consumption mode; failed turns retain partial results and typed details; only completed agent messages populate `FinalResponse`; preferred optional request callbacks replace the broad handler path.
+- [x] (2026-07-22 10:59Z) Completed Milestone 5: migration documentation, examples, external-package compile fixtures, deterministic generation, the complete secretless local quality gate, and independent security, QA, architecture, and UX review passes.
+- [x] (2026-07-22 10:59Z) Confirmed all 17 tracker headings are addressed, updated this plan, and retained `GC.md` as the only unrelated untracked artifact.
 
 ## Surprises & Discoveries
 
@@ -58,6 +58,16 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
   Evidence: The first post-fix `go test . ./rpc` failed with `operation not permitted` under `~/Library/Caches/go-build`; rerunning the same tests with the approved Go test escalation passed.
 - Observation: Pinned schema export builds Codex in a fresh temporary worktree and therefore takes more than the normal 30-second command yield even with local caches.
   Evidence: The `rust-v0.144.6` generation completed successfully after continuing its unified command session; generated metadata remained at version `0.144.6` and commit `5d1fbf26c43abc65a203928b2e31561cb039e06d`.
+- Observation: The legacy `ReviewDecision` path was another constrained approval union hidden by schema sanitization.
+  Evidence: It covered five string choices plus two structured amendment variants but was generated as `interface{}`. It now uses the same validated, raw-preserving checked-constructor pattern as command-execution decisions.
+- Observation: Canonical fallback aliases alone did not remove generated implementation names from package documentation.
+  Evidence: The generator now adds Go `Deprecated:` annotations only to top-level `Sanitized...JSON` declarations that have canonical fallback aliases, while leaving nested implementation types untouched.
+- Observation: A complete schema check must inventory every hand-written protocol struct, not only a curated list.
+  Evidence: The final generator validates all schema-backed structs in `protocol/manual_types.go`, fails on every missing property and on required fields tagged `omitempty`, and passes against the pinned upstream schema directory.
+- Observation: Post-implementation review found edge cases that the first gate did not expose.
+  Evidence: Follow-up fixes reject oversized whitespace-only frames before trimming, preserve unsuffixed deprecated OAuth aliases, distinguish string-only and object-only approval variants, assert exact JSON-RPC errors, and make canonical MCP server-handler overrides reachable through an embedded legacy default.
+- Observation: The local Go 1.26.4 toolchain is affected by standard-library advisory GO-2026-5856, fixed in Go 1.26.5.
+  Evidence: `govulncheck ./...` identified only the local toolchain issue; the repository's `GOTOOLCHAIN=go1.25.12 govulncheck ./...` gate reported no vulnerabilities, and CI is pinned to patched Go 1.26.5 as well as Go 1.25.12.
 
 ## Decision Log
 
@@ -82,10 +92,23 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
 - Decision: Make `TurnHandle` single-consumer by mode and return partial `TurnResult` values with typed terminal errors.
   Rationale: Competing drains are inherently ambiguous, while partial results contain useful IDs, items, usage, timestamps, and error details that should not be discarded.
   Date/Author: 2026-07-22 / Codex
+- Decision: Keep the built-in inbound frame ceiling at 8 MiB and require custom transports to bound allocation inside `ReadLine`.
+  Rationale: A client can reject the returned string but cannot undo an allocation already performed by a custom transport; `rpc.ReadLineLimited` gives custom line transports the same bounded implementation path as the built-ins.
+  Date/Author: 2026-07-22 / Codex
+- Decision: Preserve unknown future approval variants during JSON decoding while rejecting known variants in the wrong wire representation.
+  Rationale: Forward compatibility requires retaining future values, but accepting a known structured amendment as a string (or a simple decision as an object) would emit schema-invalid protocol data.
+  Date/Author: 2026-07-22 / Codex
+- Decision: Add canonical-initialism server-handler capability interfaces and prefer them during dispatch without adding canonical methods to the embedded legacy default.
+  Rationale: This makes canonical overrides effective while keeping existing legacy overrides source-compatible and avoiding default-method shadowing.
+  Date/Author: 2026-07-22 / Codex
 
 ## Outcomes & Retrospective
 
-Implementation has not started. At completion, this section will record the user-visible API changes, compatibility shims, generator changes, test evidence, review findings, commits, and any deliberately deferred cleanup.
+All 17 review findings are addressed. The public API now uses exact mention JSON, concrete lifecycle responses, named fixed choices, checked/raw-preserving unions, canonical Go initialisms with deprecated aliases, stable optional request callbacks, bounded and classified low-level RPC behavior, single-consumer turn handles, partial typed turn failures, and assistant-message-only final responses. Documentation and examples describe the migration and error contracts, and an external-package fixture protects the consumer-facing surface.
+
+Pinned `rust-v0.144.6` generation was deterministic across two final passes with aggregate SHA-256 `bc5f151b660ccfa09386ddc7ec907c5cb42937eb78998ebd3d7b92f217383d9f`. Formatting, installer fixtures, Actionlint, vet, unit tests, race tests, repeated concurrency tests, Staticcheck v0.7.0, the Go 1.25.12 vulnerability scan and compatibility suite, upstream manual-schema coverage, and compile-only tagged E2E validation passed. Credential-backed live E2E was not run locally; it remains restricted to the protected trusted workflow with the pinned verified CLI.
+
+Independent security, QA, architecture, and UX reviewers identified actionable gaps after the first implementation pass. Those gaps were corrected and the focused follow-up reviews reported no remaining findings. `GC.md` remains untracked and outside the commit.
 
 ## Context and Orientation
 
@@ -172,7 +195,7 @@ For pinned regeneration, run twice and inspect the second result:
 Run concurrency tests repeatedly using the exact test names introduced by Milestones 2 and 4:
 
     go test -race -count=100 ./rpc -run 'BlockedWrite|ServerRequest|ReplyFailure'
-    go test -race -count=100 . -run 'TurnHandleConsumption|TurnFailure'
+    go test -race -count=100 -v . -run 'TurnHandle(RejectsMixedConsumptionModes|RunRejectsConcurrentConsumers|StreamUpdatesStateAndRejectsConcurrentConsumers|FailedResultRetainsAccumulatedDetails)|ThreadRunFailsOn'
 
 Run the full local quality gate before completion:
 

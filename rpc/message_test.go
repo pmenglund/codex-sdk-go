@@ -163,6 +163,9 @@ func TestCheckedConstructorsRejectInvalidDependencies(t *testing.T) {
 	if _, err := NewClientChecked(&stubTransport{}, ClientOptions{ServerRequestQueueCapacity: -1}); err == nil {
 		t.Fatalf("expected negative server request queue capacity error")
 	}
+	if _, err := NewClientChecked(&stubTransport{}, ClientOptions{MaxMessageBytes: -1}); err == nil {
+		t.Fatalf("expected negative max message bytes error")
+	}
 }
 
 type testReadWriteCloser struct{}

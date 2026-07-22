@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+// ErrServerRequestUnsupported is returned by default handler methods that an
+// application has not overridden.
+var ErrServerRequestUnsupported = errors.New("server request is unsupported")
+
 const (
 	// ServerRequestMethodNotFoundCode is the JSON-RPC code for an unknown method.
 	ServerRequestMethodNotFoundCode int64 = -32601
@@ -48,6 +52,9 @@ func (e *ServerRequestHandlerError) Error() string {
 func (e *ServerRequestHandlerError) Unwrap() error { return e.Err }
 
 func classifyServerRequestError(err error) (int64, string) {
+	if errors.Is(err, ErrServerRequestUnsupported) {
+		return ServerRequestMethodNotFoundCode, "method not found"
+	}
 	var methodErr *ServerRequestMethodError
 	if errors.As(err, &methodErr) {
 		return ServerRequestMethodNotFoundCode, "method not found"
