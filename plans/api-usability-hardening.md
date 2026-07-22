@@ -39,8 +39,8 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
 - [x] (2026-07-22 09:04Z) Rechecked the repository instructions, current `main` at `31fb6e9`, existing plans, generated version metadata, untracked `GC.md`, and the 17 finding locations.
 - [x] (2026-07-22 09:04Z) Completed the required independent planner pass and validated its proposed milestones against the current repository.
 - [x] (2026-07-22 09:20Z) Created and switched to local branch `codex/api-usability-hardening`; committed this plan as `e46e828`; kept `GC.md` untracked.
-- [ ] Complete Milestone 1: patch-safe wire, panic, retry, constructor, replay, deprecation, and error-sentinel fixes with tests. Regression tests failed for the intended pre-fix reasons and focused tests now pass; race validation and the milestone commit remain.
-- [ ] Complete Milestone 2: context-bounded outbound writes and bounded, correctly classified server-request dispatch with concurrency tests.
+- [x] (2026-07-22 09:38Z) Completed Milestone 1 and committed it as `1567973`: corrected the mention wire key, normalized typed-nil handlers, narrowed retry classification, added checked constructors and closure sentinels, validated replay input without losing large integers, and marked compatibility names deprecated. Focused root/RPC race tests passed.
+- [x] (2026-07-22 10:07Z) Completed Milestone 2: serialized all outbound writes through a bounded writer, added optional context-aware transport writes, bounded server requests with configurable workers and queue capacity, classified dispatch failures, contained handler panics, and made reply failures terminal. Focused tests passed under `-race -count=100`; the milestone commit remains.
 - [ ] Complete Milestone 3: canonical complete protocol generation and upgrade-safe handler/client interfaces from pinned `rust-v0.144.6`.
 - [ ] Complete Milestone 4: dependable high-level lifecycle and turn behavior with typed results, errors, and single-consumer enforcement.
 - [ ] Complete Milestone 5: migration documentation, examples, external-package compile fixtures, full local quality gate, and final independent reviews.
@@ -56,6 +56,8 @@ Workflow: `WORKFLOW.md`, with the explicit local-tracking exception recorded bel
   Evidence: `ListThreads`, `ReadThread`, `ForkThread`, and `UnarchiveThread` refer to named `protocol.Thread*Response` declarations. Replacing those declarations from empty interfaces with structs preserves the method names and source shape for callers that did not depend on the old dynamic values.
 - Observation: The sandboxed Go test process cannot read the user's Go build cache.
   Evidence: The first post-fix `go test . ./rpc` failed with `operation not permitted` under `~/Library/Caches/go-build`; rerunning the same tests with the approved Go test escalation passed.
+- Observation: Pinned schema export builds Codex in a fresh temporary worktree and therefore takes more than the normal 30-second command yield even with local caches.
+  Evidence: The `rust-v0.144.6` generation completed successfully after continuing its unified command session; generated metadata remained at version `0.144.6` and commit `5d1fbf26c43abc65a203928b2e31561cb039e06d`.
 
 ## Decision Log
 

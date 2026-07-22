@@ -12,10 +12,25 @@ import (
 	"sync/atomic"
 )
 
+// ClientOptions configures a low-level JSON-RPC client.
 type ClientOptions struct {
-	Logger         *slog.Logger
+	Logger *slog.Logger
+	// RequestHandler handles app-server initiated requests. A typed-nil handler
+	// is treated as nil.
 	RequestHandler ServerRequestHandler
+	// ServerRequestWorkers bounds concurrent app-server request handlers. Zero
+	// uses the default of four.
+	ServerRequestWorkers int
+	// ServerRequestQueueCapacity bounds queued app-server requests. Zero uses
+	// the default of 64. A full queue receives JSON-RPC code -32001.
+	ServerRequestQueueCapacity int
 }
+
+const (
+	defaultWriteQueueCapacity         = 64
+	defaultServerRequestWorkers       = 4
+	defaultServerRequestQueueCapacity = 64
+)
 
 // ErrClientClosed identifies a client closed by its caller.
 var ErrClientClosed = errors.New("rpc client closed")
@@ -23,6 +38,10 @@ var ErrClientClosed = errors.New("rpc client closed")
 // ErrConnectionClosed identifies a client whose connection closed without a
 // more specific transport error.
 var ErrConnectionClosed = errors.New("rpc connection closed")
+
+// ErrOutboundQueueFull identifies a client whose bounded outbound write queue
+// could not accept an asynchronous protocol reply.
+var ErrOutboundQueueFull = errors.New("rpc outbound write queue is full")
 
 // Client manages JSON-RPC requests over a Transport.
 type Client struct {
@@ -40,12 +59,22 @@ type Client struct {
 
 	handlerMu sync.RWMutex
 	handler   ServerRequestHandler
+	requests  chan JSONRPCRequest
+
+	writes chan writeRequest
 
 	lifecycle context.Context
 	cancel    context.CancelFunc
 	done      chan struct{}
 	doneOnce  sync.Once
+	errMu     sync.RWMutex
 	err       error
+}
+
+type writeRequest struct {
+	ctx  context.Context
+	line string
+	done chan error
 }
 
 // NewClient creates a JSON-RPC client over a Transport. It panics if transport
@@ -63,6 +92,23 @@ func NewClientChecked(transport Transport, options ClientOptions) (*Client, erro
 	if isNilInterface(transport) {
 		return nil, errors.New("rpc transport is nil")
 	}
+	if options.ServerRequestWorkers < 0 {
+		return nil, errors.New("server request workers cannot be negative")
+	}
+	if options.ServerRequestQueueCapacity < 0 {
+		return nil, errors.New("server request queue capacity cannot be negative")
+	}
+	workers := options.ServerRequestWorkers
+	if workers == 0 {
+		workers = defaultServerRequestWorkers
+	}
+	queueCapacity := options.ServerRequestQueueCapacity
+	if queueCapacity == 0 {
+		queueCapacity = defaultServerRequestQueueCapacity
+	}
+	if isNilInterface(options.RequestHandler) {
+		options.RequestHandler = nil
+	}
 	logger := options.Logger
 	if logger == nil {
 		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -76,11 +122,17 @@ func NewClientChecked(transport Transport, options ClientOptions) (*Client, erro
 		pending:   make(map[string]chan response),
 		subs:      make(map[int]*notificationSubscription),
 		handler:   options.RequestHandler,
+		requests:  make(chan JSONRPCRequest, queueCapacity),
+		writes:    make(chan writeRequest, defaultWriteQueueCapacity),
 		lifecycle: lifecycle,
 		cancel:    cancel,
 		done:      make(chan struct{}),
 	}
 
+	go client.writeLoop()
+	for range workers {
+		go client.serverRequestWorker()
+	}
 	go client.readLoop()
 
 	return client, nil
@@ -94,6 +146,9 @@ func (c *Client) Close() error {
 
 // SetRequestHandler replaces the server request handler.
 func (c *Client) SetRequestHandler(handler ServerRequestHandler) {
+	if isNilInterface(handler) {
+		handler = nil
+	}
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
 	c.handler = handler
@@ -125,7 +180,7 @@ func (c *Client) Call(ctx context.Context, method string, params any, result any
 		c.deletePending(id)
 		return err
 	}
-	if err := c.send(payload); err != nil {
+	if err := c.send(ctx, payload); err != nil {
 		c.deletePending(id)
 		return err
 	}
@@ -168,14 +223,7 @@ func (c *Client) Notify(ctx context.Context, method string, params any) error {
 		return err
 	}
 
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-c.done:
-		return c.errOrClosed()
-	default:
-		return c.transport.WriteLine(string(data))
-	}
+	return c.write(ctx, string(data))
 }
 
 // SubscribeNotifications creates an iterator over server notifications.
@@ -241,7 +289,7 @@ func (c *Client) readLoop() {
 		case messageError:
 			c.handleError(msg.error)
 		case messageRequest:
-			go c.handleServerRequest(msg.request)
+			c.enqueueServerRequest(msg.request)
 		case messageNotification:
 			c.handleNotification(msg.notification)
 		}
@@ -311,32 +359,79 @@ func (c *Client) handleNotification(note JSONRPCNotification) {
 	}
 }
 
+func (c *Client) serverRequestWorker() {
+	for {
+		select {
+		case <-c.done:
+			return
+		case req := <-c.requests:
+			c.handleServerRequest(req)
+		}
+	}
+}
+
+func (c *Client) enqueueServerRequest(req JSONRPCRequest) {
+	select {
+	case <-c.done:
+		return
+	case c.requests <- req:
+	default:
+		response := JSONRPCError{
+			ID: req.ID,
+			Error: JSONRPCErrorDetail{
+				Code:    ServerRequestBusyCode,
+				Message: "server request queue is full",
+			},
+		}
+		if err := c.sendAsync(c.requestContext(), response); err != nil {
+			c.finish(err)
+		}
+	}
+}
+
 func (c *Client) handleServerRequest(req JSONRPCRequest) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			c.logger.Error("server request handler panicked", slog.String("method", req.Method), slog.Any("panic", recovered))
+			if err := c.replyError(c.requestContext(), req.ID, ServerRequestInternalErrorCode, "server request handler panicked", nil); err != nil {
+				c.finish(err)
+			}
+		}
+	}()
+
 	handler := c.currentHandler()
 	if handler == nil {
-		_ = c.replyError(req.ID, -32601, "no handler configured", nil)
+		if err := c.replyError(c.requestContext(), req.ID, ServerRequestMethodNotFoundCode, "no handler configured", nil); err != nil {
+			c.finish(err)
+		}
 		return
 	}
 
 	result, err := dispatchServerRequest(c.requestContext(), handler, req)
 	if err != nil {
-		_ = c.replyError(req.ID, -32602, err.Error(), nil)
+		code, message := classifyServerRequestError(err)
+		c.logger.Warn("server request failed", slog.String("method", req.Method), slog.Any("error", err))
+		if replyErr := c.replyError(c.requestContext(), req.ID, code, message, nil); replyErr != nil {
+			c.finish(replyErr)
+		}
 		return
 	}
 
-	_ = c.replyResult(req.ID, result)
+	if err := c.replyResult(c.requestContext(), req.ID, result); err != nil {
+		c.finish(err)
+	}
 }
 
-func (c *Client) replyResult(id RequestID, result any) error {
+func (c *Client) replyResult(ctx context.Context, id RequestID, result any) error {
 	data, err := json.Marshal(result)
 	if err != nil {
 		return err
 	}
 	resp := JSONRPCResponse{ID: id, Result: data}
-	return c.send(resp)
+	return c.send(ctx, resp)
 }
 
-func (c *Client) replyError(id RequestID, code int64, message string, data json.RawMessage) error {
+func (c *Client) replyError(ctx context.Context, id RequestID, code int64, message string, data json.RawMessage) error {
 	resp := JSONRPCError{
 		ID: id,
 		Error: JSONRPCErrorError{
@@ -345,15 +440,78 @@ func (c *Client) replyError(id RequestID, code int64, message string, data json.
 			Data:    data,
 		},
 	}
-	return c.send(resp)
+	return c.send(ctx, resp)
 }
 
-func (c *Client) send(payload any) error {
+func (c *Client) send(ctx context.Context, payload any) error {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
-	return c.transport.WriteLine(string(data))
+	return c.write(ctx, string(data))
+}
+
+func (c *Client) write(ctx context.Context, line string) error {
+	request := writeRequest{ctx: ctx, line: line, done: make(chan error, 1)}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-c.done:
+		return c.errOrClosed()
+	case c.writes <- request:
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-c.done:
+		return c.errOrClosed()
+	case err := <-request.done:
+		return err
+	}
+
+}
+
+func (c *Client) sendAsync(ctx context.Context, payload any) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	request := writeRequest{ctx: ctx, line: string(data), done: make(chan error, 1)}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-c.done:
+		return c.errOrClosed()
+	case c.writes <- request:
+		return nil
+	default:
+		return ErrOutboundQueueFull
+	}
+}
+
+func (c *Client) writeLoop() {
+	for {
+		select {
+		case <-c.done:
+			return
+		case request := <-c.writes:
+			if err := request.ctx.Err(); err != nil {
+				request.done <- err
+				continue
+			}
+			var err error
+			if transport, ok := c.transport.(ContextTransport); ok {
+				err = transport.WriteLineContext(request.ctx, request.line)
+			} else {
+				err = c.transport.WriteLine(request.line)
+			}
+			request.done <- err
+			if err != nil && request.ctx.Err() == nil {
+				c.finish(err)
+				return
+			}
+		}
+	}
 }
 
 func (c *Client) nextRequestID() RequestID {
@@ -390,6 +548,8 @@ func (c *Client) ensureOpen() error {
 }
 
 func (c *Client) errOrClosed() error {
+	c.errMu.RLock()
+	defer c.errMu.RUnlock()
 	if c.err != nil {
 		return c.err
 	}
@@ -398,7 +558,9 @@ func (c *Client) errOrClosed() error {
 
 func (c *Client) finish(err error) {
 	c.doneOnce.Do(func() {
+		c.errMu.Lock()
 		c.err = err
+		c.errMu.Unlock()
 		if c.cancel != nil {
 			c.cancel()
 		}

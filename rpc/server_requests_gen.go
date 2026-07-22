@@ -7,7 +7,6 @@ package rpc
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
@@ -26,89 +25,129 @@ type ServerRequestHandler interface {
 	McpServerElicitationRequest(ctx context.Context, params protocol.McpServerElicitationRequestParams) (*protocol.McpServerElicitationRequestResponse, error)
 }
 
-func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, req JSONRPCRequest) (any, error) {
+func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, req JSONRPCRequest) (result any, err error) {
 	switch req.Method {
 	case "account/chatgptAuthTokens/refresh":
 		var params protocol.ChatgptAuthTokensRefreshParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.AccountChatgptAuthTokensRefresh(ctx, params)
+		result, err = handler.AccountChatgptAuthTokensRefresh(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "applyPatchApproval":
 		var params protocol.ApplyPatchApprovalParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ApplyPatchApproval(ctx, params)
+		result, err = handler.ApplyPatchApproval(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "attestation/generate":
 		var params protocol.AttestationGenerateParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.AttestationGenerate(ctx, params)
+		result, err = handler.AttestationGenerate(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "execCommandApproval":
 		var params protocol.ExecCommandApprovalParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ExecCommandApproval(ctx, params)
+		result, err = handler.ExecCommandApproval(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "item/commandExecution/requestApproval":
 		var params protocol.CommandExecutionRequestApprovalParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ItemCommandExecutionRequestApproval(ctx, params)
+		result, err = handler.ItemCommandExecutionRequestApproval(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "item/fileChange/requestApproval":
 		var params protocol.FileChangeRequestApprovalParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ItemFileChangeRequestApproval(ctx, params)
+		result, err = handler.ItemFileChangeRequestApproval(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "item/permissions/requestApproval":
 		var params protocol.PermissionsRequestApprovalParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ItemPermissionsRequestApproval(ctx, params)
+		result, err = handler.ItemPermissionsRequestApproval(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "item/tool/call":
 		var params protocol.DynamicToolCallParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ItemToolCall(ctx, params)
+		result, err = handler.ItemToolCall(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "item/tool/requestUserInput":
 		var params protocol.ToolRequestUserInputParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.ItemToolRequestUserInput(ctx, params)
+		result, err = handler.ItemToolRequestUserInput(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	case "mcpServer/elicitation/request":
 		var params protocol.McpServerElicitationRequestParams
 		if len(req.Params) > 0 {
 			if err := json.Unmarshal(req.Params, &params); err != nil {
-				return nil, err
+				return nil, &ServerRequestParamsError{Method: req.Method, Err: err}
 			}
 		}
-		return handler.McpServerElicitationRequest(ctx, params)
+		result, err = handler.McpServerElicitationRequest(ctx, params)
+		if err != nil {
+			return nil, &ServerRequestHandlerError{Method: req.Method, Err: err}
+		}
+		return result, nil
 	default:
-		return nil, fmt.Errorf("unsupported server request %q", req.Method)
+		return nil, &ServerRequestMethodError{Method: req.Method}
 	}
 }

@@ -157,6 +157,12 @@ func TestCheckedConstructorsRejectInvalidDependencies(t *testing.T) {
 	if _, err := NewConnTransportChecked(typedNilConn); err == nil {
 		t.Fatalf("expected typed-nil connection error")
 	}
+	if _, err := NewClientChecked(&stubTransport{}, ClientOptions{ServerRequestWorkers: -1}); err == nil {
+		t.Fatalf("expected negative server request workers error")
+	}
+	if _, err := NewClientChecked(&stubTransport{}, ClientOptions{ServerRequestQueueCapacity: -1}); err == nil {
+		t.Fatalf("expected negative server request queue capacity error")
+	}
 }
 
 type testReadWriteCloser struct{}

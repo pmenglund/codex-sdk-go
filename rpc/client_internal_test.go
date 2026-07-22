@@ -18,8 +18,10 @@ func TestClientInternals(t *testing.T) {
 		logger:    slog.New(slog.NewTextHandler(io.Discard, nil)),
 		pending:   make(map[string]chan response),
 		subs:      make(map[int]*notificationSubscription),
+		writes:    make(chan writeRequest, 1),
 		done:      make(chan struct{}),
 	}
+	go client.writeLoop()
 
 	handler := &recordingHandler{}
 	client.SetRequestHandler(handler)
@@ -35,17 +37,17 @@ func TestClientInternals(t *testing.T) {
 		t.Fatalf("expected pending to be deleted")
 	}
 
-	if err := client.replyError(NewIntRequestID(2), -1, "oops", nil); err != nil {
+	if err := client.replyError(context.Background(), NewIntRequestID(2), -1, "oops", nil); err != nil {
 		t.Fatalf("replyError error: %v", err)
 	}
 	if !strings.Contains(transport.last, "\"error\"") {
 		t.Fatalf("expected error response, got %q", transport.last)
 	}
 
-	if err := client.replyResult(NewIntRequestID(3), map[string]any{"bad": func() {}}); err == nil {
+	if err := client.replyResult(context.Background(), NewIntRequestID(3), map[string]any{"bad": func() {}}); err == nil {
 		t.Fatalf("expected replyResult error")
 	}
-	if err := client.send(map[string]any{"bad": func() {}}); err == nil {
+	if err := client.send(context.Background(), map[string]any{"bad": func() {}}); err == nil {
 		t.Fatalf("expected send error")
 	}
 
@@ -69,8 +71,11 @@ func TestHandleServerRequestErrors(t *testing.T) {
 		logger:    slog.New(slog.NewTextHandler(io.Discard, nil)),
 		pending:   make(map[string]chan response),
 		subs:      make(map[int]*notificationSubscription),
+		writes:    make(chan writeRequest, 2),
 		done:      make(chan struct{}),
 	}
+	go client.writeLoop()
+	defer close(client.done)
 
 	req := JSONRPCRequest{ID: NewIntRequestID(1), Method: "applyPatchApproval"}
 	client.handleServerRequest(req)

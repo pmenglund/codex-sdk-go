@@ -25,6 +25,15 @@ type Transport interface {
 	Close() error
 }
 
+// ContextTransport is an optional Transport capability for writes that can be
+// interrupted when their request context ends. Client also bounds callers that
+// use a legacy Transport, but the underlying legacy write can remain blocked
+// until Transport.Close unblocks it.
+type ContextTransport interface {
+	Transport
+	WriteLineContext(ctx context.Context, line string) error
+}
+
 // StdioTransport wraps a spawned process using stdin/stdout JSONL.
 type StdioTransport struct {
 	cmd    *exec.Cmd

@@ -1017,7 +1017,7 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 	var b strings.Builder
 	b.WriteString(generatedHeader(codexCommit))
 	b.WriteString("package rpc\n\n")
-	b.WriteString("import (\n\t\"context\"\n\t\"encoding/json\"\n\t\"fmt\"\n\n\t\"github.com/pmenglund/codex-sdk-go/protocol\"\n)\n\n")
+	b.WriteString("import (\n\t\"context\"\n\t\"encoding/json\"\n\n\t\"github.com/pmenglund/codex-sdk-go/protocol\"\n)\n\n")
 
 	b.WriteString("// ServerRequestHandler handles requests initiated by the app-server.\n")
 	b.WriteString("type ServerRequestHandler interface {\n")
@@ -1030,25 +1030,26 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 	}
 	b.WriteString("}\n\n")
 
-	b.WriteString("func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, req JSONRPCRequest) (any, error) {\n")
+	b.WriteString("func dispatchServerRequest(ctx context.Context, handler ServerRequestHandler, req JSONRPCRequest) (result any, err error) {\n")
 	b.WriteString("\tswitch req.Method {\n")
 	for _, method := range methods {
 		b.WriteString(fmt.Sprintf("\tcase %q:\n", method.Method))
 		if method.ParamsType == "" {
-			b.WriteString("\t\treturn handler.")
+			b.WriteString("\t\tresult, err = handler.")
 			b.WriteString(methodName(method.Method))
 			b.WriteString("(ctx)\n")
 		} else {
 			b.WriteString("\t\tvar params protocol.")
 			b.WriteString(method.ParamsType)
 			b.WriteString("\n")
-			b.WriteString("\t\tif len(req.Params) > 0 {\n\t\t\tif err := json.Unmarshal(req.Params, &params); err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n\t\t}\n")
-			b.WriteString("\t\treturn handler.")
+			b.WriteString("\t\tif len(req.Params) > 0 {\n\t\t\tif err := json.Unmarshal(req.Params, &params); err != nil {\n\t\t\t\treturn nil, &ServerRequestParamsError{Method: req.Method, Err: err}\n\t\t\t}\n\t\t}\n")
+			b.WriteString("\t\tresult, err = handler.")
 			b.WriteString(methodName(method.Method))
 			b.WriteString("(ctx, params)\n")
 		}
+		b.WriteString("\t\tif err != nil {\n\t\t\treturn nil, &ServerRequestHandlerError{Method: req.Method, Err: err}\n\t\t}\n\t\treturn result, nil\n")
 	}
-	b.WriteString("\tdefault:\n\t\treturn nil, fmt.Errorf(\"unsupported server request %q\", req.Method)\n\t}\n}\n")
+	b.WriteString("\tdefault:\n\t\treturn nil, &ServerRequestMethodError{Method: req.Method}\n\t}\n}\n")
 
 	return []byte(b.String())
 }
