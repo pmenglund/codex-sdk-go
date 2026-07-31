@@ -32,7 +32,7 @@ The tracked task is the user's direct request on 2026-07-31 to finish the curren
 - [x] (2026-07-31) Aligned the protected trusted-E2E CLI pin and four official release-archive checksums with 0.146.0; the secretless installer and release-tag fixtures passed.
 - [x] (2026-07-31) Ran focused tests and the updater's complete deterministic quality gate with Go 1.26.5; the final run passed every gate.
 - [x] (2026-07-31) Ran independent architecture, QA, and security reviews after local verification; resolved every QA finding and completed clean follow-up reviews.
-- [ ] Update this plan's outcomes and evidence, commit the reviewed branch, and push the feature branch without creating a release tag.
+- [x] (2026-07-31) Updated this plan's outcomes and evidence, committed the reviewed branch as `705c240`, and pushed `codex/awesome-go-quality` to `origin` without creating a release tag.
 
 ## Surprises & Discoveries
 
@@ -89,7 +89,9 @@ The 0.146 implementation and local verification are complete. Generated metadata
 
 The CLI pin is `0.146.0`, with all four archive digests taken from the official release assets. The live metadata validator, its negative fixture suite, the installer fixture, and `validate-release-tag.sh v0.146.0` passed. The authoritative updater completed two byte-identical generations and passed formatting, metadata and installer fixtures, vet, all unit tests, race tests, Staticcheck v0.7.0, govulncheck v1.3.0, and `git diff --check` with Go 1.26.5; govulncheck reported no vulnerabilities. The modified workflows also passed actionlint v1.7.7.
 
-Architecture review found no actionable issues in the manual/generated boundary or compatibility sanitizer. QA initially found missing live-metadata validation, incomplete legacy command coverage, and a missing high-level pinned-thread replay assertion; all were implemented, and follow-up QA found no remaining actionable issue. Security independently reconciled the tag, commit, and four archive hashes with GitHub's official APIs, found no actionable security issue, and confirmed the new validator fails closed. Final commit, push, and hosted CI remain to be recorded.
+Architecture review found no actionable issues in the manual/generated boundary or compatibility sanitizer. QA initially found missing live-metadata validation, incomplete legacy command coverage, and a missing high-level pinned-thread replay assertion; all were implemented, and follow-up QA found no remaining actionable issue. Security independently reconciled the tag, commit, and four archive hashes with GitHub's official APIs, found no actionable security issue, and confirmed the new validator fails closed.
+
+The reviewed implementation was committed as `705c240` (`Update Codex protocol from rust-v0.146.0`) and pushed to `origin/codex/awesome-go-quality`. No local or remote release tag was created. Hosted CI, credentialed trusted E2E, pull-request approval, merge, and protected release dispatch remain external acceptance steps.
 
 ## Context and Orientation
 
