@@ -345,6 +345,103 @@ func TestRawResponseCompletedNotificationUsage(t *testing.T) {
 	}
 }
 
+func TestCodex0146Compatibility(t *testing.T) {
+	for name, test := range map[string]struct {
+		payload        string
+		wantBrowserUse bool
+		wantFeedback   bool
+	}{
+		"absent":    {payload: `{}`},
+		"null":      {payload: `{"browserUse":null,"feedback":null}`},
+		"populated": {payload: `{"browserUse":{"disableAutoReview":true},"feedback":{"enabled":false}}`, wantBrowserUse: true, wantFeedback: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var requirements ConfigRequirements
+			if err := json.Unmarshal([]byte(test.payload), &requirements); err != nil {
+				t.Fatalf("unmarshal config requirements: %v", err)
+			}
+			if (requirements.BrowserUse != nil) != test.wantBrowserUse {
+				t.Fatalf("browser use = %#v", requirements.BrowserUse)
+			}
+			if (requirements.Feedback != nil) != test.wantFeedback {
+				t.Fatalf("feedback = %#v", requirements.Feedback)
+			}
+			if test.wantBrowserUse && (requirements.BrowserUse.DisableAutoReview == nil || !*requirements.BrowserUse.DisableAutoReview) {
+				t.Fatalf("disable auto review = %#v", requirements.BrowserUse.DisableAutoReview)
+			}
+			if test.wantFeedback && (requirements.Feedback.Enabled == nil || *requirements.Feedback.Enabled) {
+				t.Fatalf("feedback enabled = %#v", requirements.Feedback.Enabled)
+			}
+		})
+	}
+
+	for name, commandJSON := range map[string]string{
+		"legacy": `{"type":"commandExecution","id":"item","command":"run","cwd":"/tmp","status":"completed","commandActions":[]}`,
+		"plugin": `{"type":"commandExecution","id":"item","pluginId":"plugin@openai-curated","scriptPath":"scripts/run.sh","command":"run","cwd":"/tmp","status":"completed","commandActions":[]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var command ThreadItem
+			if err := json.Unmarshal([]byte(commandJSON), &command); err != nil {
+				t.Fatalf("unmarshal command: %v", err)
+			}
+			if command.Kind() != ThreadItemKindCommandExecution || !command.IsKnown() {
+				t.Fatalf("command kind = %q, known = %t", command.Kind(), command.IsKnown())
+			}
+			roundTrip, err := json.Marshal(command)
+			if err != nil {
+				t.Fatalf("marshal command: %v", err)
+			}
+			if string(roundTrip) != commandJSON {
+				t.Fatalf("command round trip = %s, want %s", roundTrip, commandJSON)
+			}
+		})
+	}
+	var incompleteCommand ThreadItem
+	if err := json.Unmarshal([]byte(`{"type":"commandExecution","id":"item","command":"run","cwd":"/tmp","status":"completed"}`), &incompleteCommand); err == nil {
+		t.Fatal("command without commandActions was accepted")
+	}
+
+	const importHistoryRequestJSON = `{"id":1,"method":"externalAgentConfig/import/recordHistory","params":{"itemTypeResults":[],"providerId":"provider-one"}}`
+	var importHistoryRequest ClientRequest
+	if err := json.Unmarshal([]byte(importHistoryRequestJSON), &importHistoryRequest); err != nil {
+		t.Fatalf("unmarshal import history request: %v", err)
+	}
+	if importHistoryRequest.Kind() != ClientRequestKindExternalAgentConfigImportRecordHistory || !importHistoryRequest.IsKnown() {
+		t.Fatalf("import history kind = %q, known = %t", importHistoryRequest.Kind(), importHistoryRequest.IsKnown())
+	}
+	requestRoundTrip, err := json.Marshal(importHistoryRequest)
+	if err != nil {
+		t.Fatalf("marshal import history request: %v", err)
+	}
+	if string(requestRoundTrip) != importHistoryRequestJSON {
+		t.Fatalf("import history round trip = %s, want %s", requestRoundTrip, importHistoryRequestJSON)
+	}
+	if err := json.Unmarshal([]byte(`{"id":1,"method":"externalAgentConfig/import/recordHistory"}`), &importHistoryRequest); err == nil {
+		t.Fatal("import history request without params was accepted")
+	}
+
+	if PlanTypeEnt26 != "ent26" {
+		t.Fatalf("PlanTypeEnt26 = %q", PlanTypeEnt26)
+	}
+	legacyText := "first-party"
+	legacyType := AppMetadataFirstPartyType(&legacyText)
+	legacyJSON, err := json.Marshal(AppMetadata{FirstPartyType: legacyType})
+	if err != nil {
+		t.Fatalf("marshal legacy app metadata: %v", err)
+	}
+	if string(legacyJSON) != `{"firstPartyType":"first-party"}` {
+		t.Fatalf("legacy app metadata = %s", legacyJSON)
+	}
+
+	var thread Thread
+	if err := json.Unmarshal([]byte(`{"isPinned":true}`), &thread); err != nil {
+		t.Fatalf("unmarshal pinned thread: %v", err)
+	}
+	if !thread.IsPinned {
+		t.Fatal("pinned thread field was not decoded")
+	}
+}
+
 func jsonEqual(left, right any) bool {
 	leftJSON, _ := json.Marshal(left)
 	rightJSON, _ := json.Marshal(right)

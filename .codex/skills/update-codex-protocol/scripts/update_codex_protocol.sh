@@ -132,6 +132,9 @@ if [[ -n "$unformatted" ]]; then
   echo "$unformatted"
   exit 1
 fi
+.github/scripts/validate-codex-metadata.sh
+.github/scripts/test-validate-codex-metadata.sh
+.github/scripts/test-install-codex-cli.sh
 go vet ./...
 go test ./...
 go test -race ./...

@@ -13,6 +13,7 @@ type ThreadListOptions struct {
 	Archived       *bool
 	Cursor         string
 	Cwd            any
+	IsPinned       *bool
 	Limit          *int
 	ModelProviders []string
 	SearchTerm     string
@@ -34,6 +35,7 @@ func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
 	params := protocol.ThreadListParams{
 		Archived:       o.Archived,
 		Cwd:            o.Cwd,
+		IsPinned:       o.IsPinned,
 		Limit:          o.Limit,
 		SortDirection:  o.SortDirection,
 		SortKey:        o.SortKey,

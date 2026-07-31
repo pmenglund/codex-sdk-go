@@ -28,7 +28,7 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "80fb7367165ee22e9e50553f7d6463ce0667e029c91b58950b6fa63d6e8ffcab"
+	approvedUnionInventorySHA256 = "a3739c2d1017118cbdcac9469cfd770cc2947893fbef4fb12500ee38b6c43aba"
 )
 
 var approvedOpaqueInterfaceInventorySHA256 = "c6fa5c442b4de0dc9cc3000f0adf757a9a891b83b88c69199b4247a7c180be5c"
@@ -2061,6 +2061,7 @@ func sanitizeSchemaFile(path string) (string, func(), error) {
 	if err := json.Unmarshal(data, &node); err != nil {
 		return "", nil, err
 	}
+	preserveRemovedProtocolFields(node)
 	stripSubschemas(node)
 	out, err := json.Marshal(node)
 	if err != nil {
@@ -2075,6 +2076,41 @@ func sanitizeSchemaFile(path string) (string, func(), error) {
 		_ = os.Remove(sanitizedPath)
 	}
 	return sanitizedPath, cleanup, nil
+}
+
+func preserveRemovedProtocolFields(node any) {
+	switch value := node.(type) {
+	case map[string]any:
+		if value["title"] == "AppMetadata" {
+			preserveAppMetadataFirstPartyType(value)
+		}
+		if definitions, ok := value["definitions"].(map[string]any); ok {
+			if appMetadata, ok := definitions["AppMetadata"].(map[string]any); ok {
+				preserveAppMetadataFirstPartyType(appMetadata)
+			}
+		}
+		for _, child := range value {
+			preserveRemovedProtocolFields(child)
+		}
+	case []any:
+		for _, child := range value {
+			preserveRemovedProtocolFields(child)
+		}
+	}
+}
+
+func preserveAppMetadataFirstPartyType(appMetadata map[string]any) {
+	properties, ok := appMetadata["properties"].(map[string]any)
+	if !ok {
+		return
+	}
+	if _, exists := properties["firstPartyType"]; exists {
+		return
+	}
+	properties["firstPartyType"] = map[string]any{
+		"description": "Deprecated: Codex 0.146 removed this field; retained for Go SDK source compatibility.",
+		"type":        []any{"string", "null"},
+	}
 }
 
 func stripSubschemas(node any) {

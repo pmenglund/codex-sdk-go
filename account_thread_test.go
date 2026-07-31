@@ -110,6 +110,7 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 	ctx := context.Background()
 	info := protocol.ClientInfo{Name: "codex-go-test", Version: "test"}
 	archived := false
+	pinned := false
 	limit := 10
 
 	client, err := New(ctx, Options{
@@ -119,8 +120,8 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "thread/start", Params: mustRaw(map[string]any{})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123"}})}),
-			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "thread/list", Params: mustRaw(map[string]any{"archived": false, "limit": 10, "searchTerm": "sdk"})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"data": []any{map[string]any{"id": "thr_123", "sessionId": "session_1", "preview": "SDK preview", "modelProvider": "openai", "createdAt": 1, "updatedAt": 2, "cwd": "/tmp/project", "cliVersion": "0.144.6", "turns": []any{}}}, "nextCursor": "next_1"})}),
+			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "thread/list", Params: mustRaw(map[string]any{"archived": false, "isPinned": false, "limit": 10, "searchTerm": "sdk"})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"data": []any{map[string]any{"id": "thr_123", "sessionId": "session_1", "preview": "SDK preview", "isPinned": true, "modelProvider": "openai", "createdAt": 1, "updatedAt": 2, "cwd": "/tmp/project", "cliVersion": "0.144.6", "turns": []any{}}}, "nextCursor": "next_1"})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(4), Method: "thread/read", Params: mustRaw(map[string]any{"threadId": "thr_123", "includeTurns": true})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(4), Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123", "name": "SDK work", "turns": []any{map[string]any{"id": "turn_1", "items": []any{}, "itemsView": "full", "status": "completed"}}}})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(5), Method: "thread/name/set", Params: mustRaw(map[string]any{"threadId": "thr_123", "name": "SDK work"})}),
@@ -145,11 +146,11 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 	if err != nil {
 		t.Fatalf("start thread error: %v", err)
 	}
-	page, err := client.ListThreads(ctx, ThreadListOptions{Archived: &archived, Limit: &limit, SearchTerm: "sdk"})
+	page, err := client.ListThreads(ctx, ThreadListOptions{Archived: &archived, IsPinned: &pinned, Limit: &limit, SearchTerm: "sdk"})
 	if err != nil {
 		t.Fatalf("list threads error: %v", err)
 	}
-	if len(page.Data) != 1 || page.Data[0].Preview != "SDK preview" || page.NextCursor == nil || *page.NextCursor != "next_1" {
+	if len(page.Data) != 1 || page.Data[0].Preview != "SDK preview" || !page.Data[0].IsPinned || page.NextCursor == nil || *page.NextCursor != "next_1" {
 		t.Fatalf("unexpected typed thread page: %#v", page)
 	}
 	read, err := thread.Read(ctx, ThreadReadOptions{IncludeTurns: true})
@@ -201,10 +202,15 @@ func TestThreadListOptionsToParamsPreservesExplicitEmptyFilters(t *testing.T) {
 	if params.SourceKinds != nil {
 		t.Fatalf("expected omitted source kinds for zero-value options")
 	}
+	if params.IsPinned != nil {
+		t.Fatalf("expected omitted pinned filter for zero-value options")
+	}
 
+	pinned := false
 	params, err = (ThreadListOptions{
 		ModelProviders: []string{},
 		SourceKinds:    []protocol.ThreadSourceKind{},
+		IsPinned:       &pinned,
 		SortDirection:  protocol.SortDirectionAsc,
 		SortKey:        protocol.ThreadSortKeyUpdatedAt,
 	}).toParams()
@@ -223,8 +229,30 @@ func TestThreadListOptionsToParamsPreservesExplicitEmptyFilters(t *testing.T) {
 	if len(*params.SourceKinds) != 0 {
 		t.Fatalf("expected empty source kinds filter, got %#v", *params.SourceKinds)
 	}
+	if params.IsPinned == nil || *params.IsPinned {
+		t.Fatalf("expected explicit false pinned filter, got %#v", params.IsPinned)
+	}
+	wire, err := json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	if !strings.Contains(string(wire), `"isPinned":false`) {
+		t.Fatalf("pinned filter missing from wire params: %s", wire)
+	}
 	if params.SortDirection != protocol.SortDirectionAsc || params.SortKey != protocol.ThreadSortKeyUpdatedAt {
 		t.Fatalf("typed sort options were not preserved: %#v", params)
+	}
+	pinned = true
+	params, err = (ThreadListOptions{IsPinned: &pinned}).toParams()
+	if err != nil {
+		t.Fatalf("to params with true pinned filter: %v", err)
+	}
+	wire, err = json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal true pinned filter: %v", err)
+	}
+	if !strings.Contains(string(wire), `"isPinned":true`) {
+		t.Fatalf("true pinned filter missing from wire params: %s", wire)
 	}
 	if _, err := (ThreadListOptions{SortDirection: "sideways"}).toParams(); err == nil {
 		t.Fatal("invalid sort direction was accepted")

@@ -313,6 +313,14 @@ func TestStripAndSanitize(t *testing.T) {
 				map[string]any{"type": "null"},
 			},
 		},
+		"definitions": map[string]any{
+			"AppMetadata": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"developer": map[string]any{"type": []any{"string", "null"}},
+				},
+			},
+		},
 	}
 	stripSubschemas(input)
 	if _, ok := input["oneOf"]; ok {
@@ -346,6 +354,20 @@ func TestStripAndSanitize(t *testing.T) {
 	}
 	if strings.Contains(string(data), "oneOf") || strings.Contains(string(data), "anyOf") {
 		t.Fatalf("expected oneOf/anyOf stripped from sanitized file")
+	}
+	var sanitizedSchema map[string]any
+	if err := json.Unmarshal(data, &sanitizedSchema); err != nil {
+		t.Fatalf("decode sanitized file: %v", err)
+	}
+	definitions := sanitizedSchema["definitions"].(map[string]any)
+	appMetadata := definitions["AppMetadata"].(map[string]any)
+	properties := appMetadata["properties"].(map[string]any)
+	firstPartyType, ok := properties["firstPartyType"].(map[string]any)
+	if !ok {
+		t.Fatalf("removed AppMetadata.firstPartyType compatibility field was not restored")
+	}
+	if description, _ := firstPartyType["description"].(string); !strings.HasPrefix(description, "Deprecated:") {
+		t.Fatalf("compatibility field description = %q, want deprecation", description)
 	}
 }
 

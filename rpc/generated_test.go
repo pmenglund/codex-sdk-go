@@ -111,6 +111,32 @@ func TestGeneratedAppRequestWireMethods(t *testing.T) {
 	}
 }
 
+func TestGeneratedExternalImportHistoryRequestWireMethod(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+
+	transport.enqueueResult(protocol.ExternalAgentConfigImportHistoryRecordResponse{ImportID: "import-one"})
+	result, err := client.ExternalAgentConfigImportRecordHistory(context.Background(), protocol.ExternalAgentConfigImportHistoryRecordParams{
+		ItemTypeResults: []protocol.ExternalAgentConfigImportTypeResult{},
+		ProviderID:      "provider-one",
+	})
+	if err != nil {
+		t.Fatalf("externalAgentConfig/import/recordHistory: %v", err)
+	}
+	if result.ImportID != "import-one" {
+		t.Fatalf("result = %#v", result)
+	}
+
+	requests := transport.writtenRequests()
+	if len(requests) != 1 {
+		t.Fatalf("captured %d requests, want 1", len(requests))
+	}
+	if requests[0].Method != "externalAgentConfig/import/recordHistory" || string(requests[0].Params) != `{"itemTypeResults":[],"providerId":"provider-one"}` {
+		t.Fatalf("unexpected import history request: %#v", requests[0])
+	}
+}
+
 func TestGeneratedEnvironmentConnectionNotifications(t *testing.T) {
 	for _, method := range []string{"thread/environment/connected", "thread/environment/disconnected"} {
 		note, err := parseServerNotification(method, json.RawMessage(`{"environmentId":"environment","threadId":"thread"}`))

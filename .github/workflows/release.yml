@@ -67,13 +67,8 @@ jobs:
             exit 1
           fi
           .github/scripts/validate-release-tag.sh "$REQUESTED_TAG"
+          .github/scripts/validate-codex-metadata.sh
           .github/scripts/test-install-codex-cli.sh
-          generated_version="$(sed -n 's/^const GeneratedCodexVersion = "\([0-9.]*\)"/\1/p' protocol/metadata_gen.go)"
-          cli_version="$(tr -d '[:space:]' < .github/codex/version)"
-          if [[ -z "$generated_version" || "${generated_version%.*}" != "${cli_version%.*}" ]]; then
-            echo "Pinned Codex CLI ${cli_version} does not match generated protocol ${generated_version} at major/minor." >&2
-            exit 1
-          fi
 
       - name: Create and push immutable tag only
         shell: bash

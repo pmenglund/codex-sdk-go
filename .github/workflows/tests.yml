@@ -40,6 +40,8 @@ jobs:
 
       - name: Test verified Codex installer
         run: |
+          .github/scripts/validate-codex-metadata.sh
+          .github/scripts/test-validate-codex-metadata.sh
           .github/scripts/test-install-codex-cli.sh
           .github/scripts/test-validate-release-tag.sh
           .github/scripts/test-content-manifest.sh

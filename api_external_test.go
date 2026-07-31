@@ -33,6 +33,7 @@ var (
 	_ protocol.SanitizedMCPServerOauthLoginResponse
 	//lint:ignore SA1019 compatibility fixture proves former union constants remain available
 	_ = protocol.ThreadItemKindMcpToolCall
+	_ protocol.AppMetadataFirstPartyType
 )
 
 func TestPreferredAPISurfaceCompilesExternally(t *testing.T) {

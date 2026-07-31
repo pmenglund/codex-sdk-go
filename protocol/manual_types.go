@@ -371,6 +371,7 @@ type Thread struct {
 	ParentThreadID *string           `json:"parentThreadId,omitempty"`
 	Preview        string            `json:"preview"`
 	Ephemeral      bool              `json:"ephemeral"`
+	IsPinned       bool              `json:"isPinned,omitempty"`
 	HistoryMode    ThreadHistoryMode `json:"historyMode,omitempty"`
 	ModelProvider  string            `json:"modelProvider"`
 	CreatedAt      int64             `json:"createdAt"`
@@ -484,6 +485,7 @@ type ThreadListParams struct {
 	Archived       *bool                           `json:"archived,omitempty"`
 	Cursor         *string                         `json:"cursor,omitempty"`
 	Cwd            any                             `json:"cwd,omitempty"`
+	IsPinned       *bool                           `json:"isPinned,omitempty"`
 	Limit          *int                            `json:"limit,omitempty"`
 	ModelProviders *ThreadListParamsModelProviders `json:"modelProviders,omitempty"`
 	SearchTerm     *string                         `json:"searchTerm,omitempty"`
