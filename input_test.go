@@ -35,3 +35,26 @@ func TestMentionInputUsesProtocolTextElementsKey(t *testing.T) {
 		}
 	}
 }
+
+func TestAudioInputsUseProtocolFields(t *testing.T) {
+	start, err := buildTurnParams("thr_1", []Input{
+		AudioInput("https://example.com/audio.mp3"),
+		LocalAudioInput("/tmp/audio.mp3"),
+	}, nil)
+	if err != nil {
+		t.Fatalf("build turn params: %v", err)
+	}
+	data, err := json.Marshal(start)
+	if err != nil {
+		t.Fatalf("marshal turn params: %v", err)
+	}
+	encoded := string(data)
+	for _, want := range []string{
+		`{"type":"audio","url":"https://example.com/audio.mp3"}`,
+		`{"type":"localAudio","path":"/tmp/audio.mp3"}`,
+	} {
+		if !strings.Contains(encoded, want) {
+			t.Fatalf("turn/start payload omitted %s: %s", want, encoded)
+		}
+	}
+}

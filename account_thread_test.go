@@ -24,7 +24,7 @@ func TestAccountAndModelHelpersWithReplay(t *testing.T) {
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "account/read", Params: mustRaw(map[string]any{"refreshToken": true})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"requiresOpenaiAuth": false, "account": map[string]any{"email": "dev@example.com"}})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"requiresOpenaiAuth": false, "account": map[string]any{"type": "chatgpt", "email": "dev@example.com", "planType": "plus"}})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "model/list", Params: mustRaw(map[string]any{"cursor": "cur_1", "includeHidden": true, "limit": 2})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"data": []any{}, "nextCursor": nil})}),
 		}),

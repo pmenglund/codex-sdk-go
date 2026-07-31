@@ -87,7 +87,14 @@ func (d *ReviewDecision) decode(data []byte, requireKnown bool) error {
 			if kind == ReviewDecisionKindNetworkPolicyAmendment {
 				required = "network_policy_amendment"
 			}
-			if err := requireDecisionObjectField(body, required); err != nil {
+			var err error
+			if kind == ReviewDecisionKindDenied {
+				required = "rejection"
+				err = requireDecisionStringField(body, required)
+			} else {
+				err = requireDecisionObjectField(body, required)
+			}
+			if err != nil {
 				return fmt.Errorf("review decision %q: %w", kind, err)
 			}
 		}
@@ -103,7 +110,7 @@ func isKnownReviewDecisionKind(kind ReviewDecisionKind) bool {
 func isSimpleReviewDecisionKind(kind ReviewDecisionKind) bool {
 	switch kind {
 	case ReviewDecisionKindApproved, ReviewDecisionKindApprovedForSession,
-		ReviewDecisionKindDenied, ReviewDecisionKindTimedOut, ReviewDecisionKindAbort:
+		ReviewDecisionKindTimedOut, ReviewDecisionKindAbort:
 		return true
 	default:
 		return false
@@ -112,7 +119,8 @@ func isSimpleReviewDecisionKind(kind ReviewDecisionKind) bool {
 
 func isStructuredReviewDecisionKind(kind ReviewDecisionKind) bool {
 	switch kind {
-	case ReviewDecisionKindApprovedExecpolicyAmendment, ReviewDecisionKindNetworkPolicyAmendment:
+	case ReviewDecisionKindApprovedExecpolicyAmendment, ReviewDecisionKindNetworkPolicyAmendment,
+		ReviewDecisionKindDenied:
 		return true
 	default:
 		return false
@@ -259,6 +267,22 @@ func requireDecisionObjectField(body json.RawMessage, field string) error {
 	value, ok := object[field]
 	if !ok || string(value) == "null" {
 		return fmt.Errorf("required field %q is missing", field)
+	}
+	return nil
+}
+
+func requireDecisionStringField(body json.RawMessage, field string) error {
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(body, &object); err != nil {
+		return errors.New("variant payload must be an object")
+	}
+	value, ok := object[field]
+	if !ok {
+		return fmt.Errorf("required field %q is missing", field)
+	}
+	var text string
+	if err := json.Unmarshal(value, &text); err != nil || text == "" {
+		return fmt.Errorf("required field %q must be a non-empty string", field)
 	}
 	return nil
 }

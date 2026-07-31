@@ -178,6 +178,8 @@ func TestBuildTurnParamsRejectInvalidInputs(t *testing.T) {
 		{name: "empty text", input: Input{Type: InputTypeText}},
 		{name: "empty image url", input: ImageInput("")},
 		{name: "empty local image path", input: LocalImageInput("")},
+		{name: "empty audio url", input: AudioInput("")},
+		{name: "empty local audio path", input: LocalAudioInput("")},
 		{name: "empty skill name", input: SkillInput("", "/tmp/skill")},
 		{name: "empty skill path", input: SkillInput("skill", "")},
 	}
@@ -870,6 +872,12 @@ func TestInputHelpers(t *testing.T) {
 	}
 	if input := LocalImageInput("/tmp/img.png"); input.Type != InputTypeLocalImage || input.Path != "/tmp/img.png" {
 		t.Fatalf("unexpected local image input: %#v", input)
+	}
+	if input := AudioInput("https://example.com/audio.mp3"); input.Type != InputTypeAudio || input.URL != "https://example.com/audio.mp3" {
+		t.Fatalf("unexpected audio input: %#v", input)
+	}
+	if input := LocalAudioInput("/tmp/audio.mp3"); input.Type != InputTypeLocalAudio || input.Path != "/tmp/audio.mp3" {
+		t.Fatalf("unexpected local audio input: %#v", input)
 	}
 	if input := SkillInput("skill", "/tmp/skill"); input.Type != InputTypeSkill || input.Name != "skill" || input.Path != "/tmp/skill" {
 		t.Fatalf("unexpected skill input: %#v", input)

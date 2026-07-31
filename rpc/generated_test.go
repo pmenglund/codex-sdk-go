@@ -85,6 +85,48 @@ func TestGeneratedNotificationFallbackAndDecodeError(t *testing.T) {
 	}
 }
 
+func TestGeneratedAppRequestWireMethods(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+
+	transport.enqueueResult(protocol.AppsReadResponse{})
+	if _, err := client.AppRead(context.Background(), protocol.AppsReadParams{AppIds: []string{"app-one"}}); err != nil {
+		t.Fatalf("app/read: %v", err)
+	}
+	transport.enqueueResult(protocol.AppsInstalledResponse{})
+	if _, err := client.AppInstalled(context.Background(), protocol.AppsInstalledParams{}); err != nil {
+		t.Fatalf("app/installed: %v", err)
+	}
+
+	requests := transport.writtenRequests()
+	if len(requests) != 2 {
+		t.Fatalf("captured %d requests, want 2", len(requests))
+	}
+	if requests[0].Method != "app/read" || string(requests[0].Params) != `{"appIds":["app-one"]}` {
+		t.Fatalf("unexpected app/read request: %#v", requests[0])
+	}
+	if requests[1].Method != "app/installed" || string(requests[1].Params) != `{}` {
+		t.Fatalf("unexpected app/installed request: %#v", requests[1])
+	}
+}
+
+func TestGeneratedEnvironmentConnectionNotifications(t *testing.T) {
+	for _, method := range []string{"thread/environment/connected", "thread/environment/disconnected"} {
+		note, err := parseServerNotification(method, json.RawMessage(`{"environmentId":"environment","threadId":"thread"}`))
+		if err != nil {
+			t.Fatalf("%s: %v", method, err)
+		}
+		params, ok := note.Params.(protocol.EnvironmentConnectionNotification)
+		if !ok {
+			t.Fatalf("%s params type = %T", method, note.Params)
+		}
+		if params.EnvironmentID != "environment" || params.ThreadID != "thread" {
+			t.Fatalf("%s params = %#v", method, params)
+		}
+	}
+}
+
 func TestDispatchServerRequests(t *testing.T) {
 	methods := extractCaseMethods(t, "server_requests_gen.go")
 	if len(methods) == 0 {
@@ -171,6 +213,7 @@ func extractCaseMethods(t *testing.T, filename string) []string {
 type scriptedTransport struct {
 	mu        sync.Mutex
 	queue     []scriptedResponse
+	writes    []JSONRPCRequest
 	responses chan string
 	closed    chan struct{}
 }
@@ -221,8 +264,13 @@ func (t *scriptedTransport) WriteLine(line string) error {
 	if err != nil {
 		return err
 	}
+	var request JSONRPCRequest
+	if err := json.Unmarshal([]byte(line), &request); err != nil {
+		return err
+	}
 
 	t.mu.Lock()
+	t.writes = append(t.writes, request)
 	if len(t.queue) == 0 {
 		t.mu.Unlock()
 		return errors.New("missing scripted result")
@@ -246,6 +294,12 @@ func (t *scriptedTransport) WriteLine(line string) error {
 	}
 	t.responses <- string(data)
 	return nil
+}
+
+func (t *scriptedTransport) writtenRequests() []JSONRPCRequest {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return append([]JSONRPCRequest(nil), t.writes...)
 }
 
 func (t *scriptedTransport) Close() error {

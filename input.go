@@ -15,6 +15,10 @@ const (
 	InputTypeImage = "image"
 	// InputTypeLocalImage represents a local image input.
 	InputTypeLocalImage = "localImage"
+	// InputTypeAudio represents a remote audio input.
+	InputTypeAudio = "audio"
+	// InputTypeLocalAudio represents a local audio input.
+	InputTypeLocalAudio = "localAudio"
 	// InputTypeSkill represents a skill invocation input.
 	InputTypeSkill = "skill"
 )
@@ -43,6 +47,16 @@ func ImageInput(url string) Input {
 // LocalImageInput creates a local image input entry.
 func LocalImageInput(path string) Input {
 	return Input{Type: InputTypeLocalImage, Path: path}
+}
+
+// AudioInput creates a remote audio input entry.
+func AudioInput(url string) Input {
+	return Input{Type: InputTypeAudio, URL: url}
+}
+
+// LocalAudioInput creates a local audio input entry.
+func LocalAudioInput(path string) Input {
+	return Input{Type: InputTypeLocalAudio, Path: path}
 }
 
 // SkillInput creates a skill input entry.
@@ -87,6 +101,14 @@ func (i Input) validate() error {
 	case InputTypeLocalImage:
 		if i.Path == "" {
 			return errors.New("local image input path is empty")
+		}
+	case InputTypeAudio:
+		if i.URL == "" {
+			return errors.New("audio input URL is empty")
+		}
+	case InputTypeLocalAudio:
+		if i.Path == "" {
+			return errors.New("local audio input path is empty")
 		}
 	case InputTypeSkill:
 		if i.Name == "" {

@@ -307,6 +307,12 @@ func TestStripAndSanitize(t *testing.T) {
 		"nested": map[string]any{
 			"oneOf": []any{map[string]any{"type": "object"}},
 		},
+		"nullableReference": map[string]any{
+			"anyOf": []any{
+				map[string]any{"$ref": "#/definitions/TokenUsageBreakdown"},
+				map[string]any{"type": "null"},
+			},
+		},
 	}
 	stripSubschemas(input)
 	if _, ok := input["oneOf"]; ok {
@@ -318,6 +324,10 @@ func TestStripAndSanitize(t *testing.T) {
 	nested := input["nested"].(map[string]any)
 	if _, ok := nested["oneOf"]; ok {
 		t.Fatalf("expected nested oneOf removed")
+	}
+	nullableReference := input["nullableReference"].(map[string]any)
+	if got := nullableReference["$ref"]; got != "#/definitions/TokenUsageBreakdown" {
+		t.Fatalf("nullable reference = %v, want preserved reference", got)
 	}
 
 	dir := t.TempDir()
@@ -372,6 +382,9 @@ func TestWriteCompatibilityAliases(t *testing.T) {
 	for _, want := range []string{
 		"type MCPServerOauthLoginParams = MCPServerOAuthLoginParams",
 		"type SanitizedMCPServerOauthLoginResponse = SanitizedMCPServerOAuthLoginResponse",
+		"type AmazonBedrockCredentialSource string",
+		"const AmazonBedrockCredentialSourceAwsManaged AmazonBedrockCredentialSource = \"awsManaged\"",
+		"const AmazonBedrockCredentialSourceCodexManaged AmazonBedrockCredentialSource = \"codexManaged\"",
 		"const ClientRequestKindMcpServerOauthLogin = ClientRequestKindMCPServerOAuthLogin",
 		"Deprecated: use MCPServerOAuthLoginParams.",
 	} {
@@ -512,6 +525,20 @@ func TestRejectsUnreviewedInterfaceFallbacks(t *testing.T) {
 	}
 	if err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": []byte("package protocol\ntype NewOpaqueType interface{}\n")}); err == nil {
 		t.Fatalf("expected unreviewed generated interface to fail")
+	}
+	originalDigest := approvedOpaqueInterfaceInventorySHA256
+	t.Cleanup(func() { approvedOpaqueInterfaceInventorySHA256 = originalDigest })
+	approvedOpaqueInterfaceInventorySHA256 = "not-the-current-inventory"
+	for name, source := range map[string]string{
+		"struct field":    "package protocol\ntype Example struct { Value interface{} }\n",
+		"collection type": "package protocol\ntype Example map[string]interface{}\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": []byte(source)})
+			if err == nil || !strings.Contains(err.Error(), "opaque generated interface inventory changed") {
+				t.Fatalf("expected unreviewed opaque inventory to fail, got %v", err)
+			}
+		})
 	}
 }
 
@@ -983,6 +1010,7 @@ func TestParamsType(t *testing.T) {
 }
 
 func TestGenerateProtocolTypes(t *testing.T) {
+	approveEmptyOpaqueInventory(t)
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
 	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
@@ -1022,6 +1050,7 @@ func TestGenerateProtocolTypes(t *testing.T) {
 }
 
 func TestGenerateProtocolTypesSkipsManualTypes(t *testing.T) {
+	approveEmptyOpaqueInventory(t)
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
 	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
@@ -1078,6 +1107,7 @@ type Foo struct {
 }
 
 func TestGenerateProtocolTypesSkipsProtocolSchemas(t *testing.T) {
+	approveEmptyOpaqueInventory(t)
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
 	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
@@ -1092,6 +1122,13 @@ func TestGenerateProtocolTypesSkipsProtocolSchemas(t *testing.T) {
 	if err := generateProtocolTypes(schemaDir, root, testCodexCommit, testCodexVersion); err != nil {
 		t.Fatalf("generateProtocolTypes error: %v", err)
 	}
+}
+
+func approveEmptyOpaqueInventory(t *testing.T) {
+	t.Helper()
+	originalDigest := approvedOpaqueInterfaceInventorySHA256
+	approvedOpaqueInterfaceInventorySHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	t.Cleanup(func() { approvedOpaqueInterfaceInventorySHA256 = originalDigest })
 }
 
 func TestGenerateProtocolTypesInvalidSchema(t *testing.T) {

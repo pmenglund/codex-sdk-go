@@ -64,11 +64,11 @@ func TestRejectingApprovalHandler(t *testing.T) {
 		t.Fatalf("unexpected file rejection: %#v err=%v", file, err)
 	}
 	patch, err := handler.ApplyPatchApproval(ctx, protocol.ApplyPatchApprovalParams{})
-	if err != nil || string(patch.Decision.RawJSON()) != `"denied"` {
+	if err != nil || string(patch.Decision.RawJSON()) != `{"denied":{"rejection":"approval rejected by policy"}}` {
 		t.Fatalf("unexpected patch rejection: %#v err=%v", patch, err)
 	}
 	legacy, err := handler.ExecCommandApproval(ctx, protocol.ExecCommandApprovalParams{})
-	if err != nil || string(legacy.Decision.RawJSON()) != `"denied"` {
+	if err != nil || string(legacy.Decision.RawJSON()) != `{"denied":{"rejection":"approval rejected by policy"}}` {
 		t.Fatalf("unexpected legacy rejection: %#v err=%v", legacy, err)
 	}
 	permissions, err := handler.ItemPermissionsRequestApproval(ctx, protocol.PermissionsRequestApprovalParams{})

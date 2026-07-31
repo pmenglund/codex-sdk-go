@@ -133,6 +133,14 @@ func (h AutoApproveHandler) ExecCommandApproval(ctx context.Context, params prot
 // value is ready for use.
 type RejectingApprovalHandler struct{}
 
+const rejectingApprovalReason = "approval rejected by policy"
+
+func rejectingReviewDecision() protocol.ReviewDecision {
+	return protocol.MustReviewDecision(map[string]any{
+		"denied": map[string]string{"rejection": rejectingApprovalReason},
+	})
+}
+
 func (RejectingApprovalHandler) ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	return &protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("decline")}, nil
 }
@@ -146,11 +154,11 @@ func (RejectingApprovalHandler) ItemPermissionsRequestApproval(context.Context, 
 }
 
 func (RejectingApprovalHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
-	return &protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("denied")}, nil
+	return &protocol.ApplyPatchApprovalResponse{Decision: rejectingReviewDecision()}, nil
 }
 
 func (RejectingApprovalHandler) ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
-	return &protocol.ExecCommandApprovalResponse{Decision: protocol.MustReviewDecision("denied")}, nil
+	return &protocol.ExecCommandApprovalResponse{Decision: rejectingReviewDecision()}, nil
 }
 
 // ApprovalCallbackHandler is the stable subset needed to adapt approval
