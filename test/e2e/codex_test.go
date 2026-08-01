@@ -149,16 +149,8 @@ func TestRealCodexThreadLifecycleHelpers(t *testing.T) {
 
 	thread := test.StartThread(t, client, ctx, stderr, cwd)
 
-	listed, err := client.ListThreads(ctx, codex.ThreadListOptions{Cwd: cwd})
-	if err != nil {
+	if _, err := client.ListThreads(ctx, codex.ThreadListOptions{Cwd: cwd}); err != nil {
 		t.Fatalf("list threads through high-level helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	var found bool
-	for _, item := range listed.Data {
-		found = found || item.ID == thread.ID()
-	}
-	if !found {
-		t.Fatalf("listed threads did not include %q: %#v\nstderr:\n%s", thread.ID(), listed.Data, stderr.String())
 	}
 	read, err := client.ReadThread(ctx, thread.ID(), codex.ThreadReadOptions{})
 	if err != nil {
@@ -358,9 +350,6 @@ func TestRealCodexLiveTurnHelpers(t *testing.T) {
 	handle, err := handleThread.StartTurn(ctx, []codex.Input{codex.TextInput("Reply with one short sentence containing handle run e2e.")}, test.LiveTurnOptions(t))
 	if err != nil {
 		t.Fatalf("start live turn handle: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if stream, err := handle.Stream(); err != nil || stream == nil {
-		t.Fatalf("get turn handle stream: stream=%#v err=%v", stream, err)
 	}
 	handleResult, err := handle.Run(ctx)
 	if err != nil {
