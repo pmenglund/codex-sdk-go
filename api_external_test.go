@@ -2,7 +2,9 @@ package codex_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/pmenglund/codex-sdk-go"
@@ -49,9 +51,21 @@ func TestPreferredAPISurfaceCompilesExternally(t *testing.T) {
 		SortKey:       protocol.ThreadSortKeyUpdatedAt,
 	}
 	oauth := protocol.MCPServerOAuthLoginParams{}
+	pinned := true
+	metadata := protocol.ThreadMetadataUpdateParams{
+		IsPinned: protocol.ThreadMetadataUpdateParamsIsPinned(&pinned),
+		ThreadID: "thread-one",
+	}
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		t.Fatalf("marshal legacy thread metadata fixture: %v", err)
+	}
+	if strings.Contains(string(metadataJSON), `"isPinned"`) {
+		t.Fatalf("legacy pin field reached the 0.147 wire: %s", metadataJSON)
+	}
 
 	var turnErr *codex.TurnError
-	err := error(&codex.TurnError{})
+	err = error(&codex.TurnError{})
 	if !errors.Is(err, codex.ErrTurnFailed) || !errors.As(err, &turnErr) {
 		t.Fatal("TurnError must support errors.Is and errors.As")
 	}

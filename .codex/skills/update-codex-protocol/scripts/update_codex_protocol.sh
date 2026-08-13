@@ -7,7 +7,8 @@ Usage: update_codex_protocol.sh [--allow-dirty]
 
 Fetch upstream openai/codex tags, choose the highest stable rust-vMAJOR.MINOR.PATCH
 tag, generate twice to prove determinism, and run the complete local quality gate.
-The script never commits, tags, stages, or pushes changes.
+The script prepares changes for the skill's reviewed pull-request handoff; it never
+commits, tags, stages, or pushes changes itself.
 Staticcheck v0.7.0 and govulncheck v1.3.0 are run through Go's pinned module
 tool support, so no separately installed analyzer binary is required.
 
@@ -112,8 +113,17 @@ if [[ -z "$latest_tag" ]]; then
 fi
 echo "Selected upstream Codex tag: $latest_tag"
 
+generation_tmp="$(mktemp -d "${TMPDIR:-/tmp}/codex-sdk-go-upstream.XXXXXX")"
+generation_root="$generation_tmp/codex-source"
+cleanup_generation() {
+  git -C "$codex_root" worktree remove --force "$generation_root" >/dev/null 2>&1 || true
+  rm -rf "$generation_tmp"
+}
+trap cleanup_generation EXIT
+git -C "$codex_root" worktree add --detach "$generation_root" "$latest_tag"
+
 generate() {
-  CODEX_REPO_ROOT="$codex_root" CODEX_REPO_REF="$latest_tag" go generate ./...
+  CODEX_REPO_ROOT="$generation_root" go generate ./...
 }
 
 echo "Running first deterministic generation"
@@ -142,5 +152,5 @@ go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
 go run golang.org/x/vuln/cmd/govulncheck@v1.3.0 ./...
 git diff --check
 
-echo "Generation and all quality gates passed. Changes remain unstaged for review."
+echo "Generation and all quality gates passed. Changes are ready for the skill's reviewed pull-request handoff."
 git status --short

@@ -18,7 +18,7 @@ func TestManualThreadResumeResponseRoundTripsCompletePayload(t *testing.T) {
             "cliVersion":"0.144.6","source":{"type":"cli"},"threadSource":"cli",
             "agentNickname":"Ada","agentRole":"reviewer",
             "gitInfo":{"sha":"abc","branch":"main","originUrl":"https://example.test/repo"},
-            "name":"Full payload","turns":[{
+            "name":"Full payload","section":{"id":"section_1","name":"Work"},"sectionEnteredAt":18,"turns":[{
                 "id":"turn_1","items":[{"type":"agentMessage","id":"item_1","text":"done"}],
                 "itemsView":"full","status":"failed",
                 "error":{"message":"boom","additionalDetails":"details","codexErrorInfo":{"code":"future"}},
@@ -37,7 +37,7 @@ func TestManualThreadResumeResponseRoundTripsCompletePayload(t *testing.T) {
 	if err := json.Unmarshal(payload, &response); err != nil {
 		t.Fatalf("decode complete response: %v", err)
 	}
-	if response.Thread == nil || len(response.Thread.Turns) != 1 || response.InitialTurnsPage == nil || len(response.InitialTurnsPage.Data) != 1 {
+	if response.Thread == nil || response.Thread.Section == nil || response.Thread.Section.ID != "section_1" || response.Thread.SectionEnteredAt == nil || *response.Thread.SectionEnteredAt != 18 || len(response.Thread.Turns) != 1 || response.InitialTurnsPage == nil || len(response.InitialTurnsPage.Data) != 1 {
 		t.Fatalf("complete typed fields were not retained: %#v", response)
 	}
 	roundTrip, err := json.Marshal(response)

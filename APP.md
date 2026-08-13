@@ -70,7 +70,7 @@ running generation.
 
 This runs:
 
-- `cargo run -p codex-app-server-protocol --bin export`
+- `cargo run -p codex-cli --bin codex -- app-server generate-json-schema`
 - `go-jsonschema` (via `internal/codegen`)
 
 The generator needs a checkout of `openai/codex` to export schemas.
