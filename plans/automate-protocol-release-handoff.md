@@ -45,6 +45,9 @@ The user's direct request on 2026-08-12 to make one skill invocation perform as 
 - Observation: GitHub concurrency retains at most one pending run per group even when `cancel-in-progress` is false; it has no supported unlimited-queue setting.
   Evidence: A second pending SDK release could be replaced by a third while the first awaits approval. The protected PR Quality gate now rejects a new `.github/sdk-version` bump until the previous declared version has an annotated tag in the base branch history, so another release candidate cannot merge into `main` during that window.
 
+- Observation: The first hosted pilot started duplicate Quality runs for the feature branch and pull request.
+  Evidence: PR #3 showed two pending copies of each Go matrix job because `tests.yml` still used an unrestricted `push` trigger alongside `pull_request`. Push-triggered Quality is now limited to `main`; pull requests and reusable release candidates each run once.
+
 ## Decision Log
 
 - Decision: Add `.github/sdk-version` as the authoritative SDK tag version.
