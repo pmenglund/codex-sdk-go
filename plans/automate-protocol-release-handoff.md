@@ -19,7 +19,8 @@ The user's direct request on 2026-08-12 to make one skill invocation perform as 
 - [x] (2026-08-12) Revised the skill, UI metadata, workflow documentation, and the 0.147.0 plan handoff.
 - [x] (2026-08-12) Passed shell fixtures, official skill validation, Actionlint 1.7.7, focused Go tests, and the final authoritative deterministic updater with the complete repository gate.
 - [x] (2026-08-12) Completed security, QA, and SRE reviews. Fixed canonical version parsing, required-check provenance, candidate-SHA races, idempotent annotated-tag verification, approval ordering/identity, mandatory retry identity, and overlapping release prevention. Retained the documented single-maintainer approval model because an independent reviewer does not yet exist.
-- [ ] Use the revised flow to create and merge the 0.147.0 pull request, then hand off the protected GitHub approvals.
+- [x] (2026-08-12) Created `codex/update-protocol-v0.147.0` and committed the reviewed protocol update as `a731491` and release automation as `c37d76c`.
+- [ ] Push the branch, open and merge the protected 0.147.0 pull request, then hand off the GitHub environment approvals.
 
 ## Surprises & Discoveries
 
@@ -70,7 +71,7 @@ The user's direct request on 2026-08-12 to make one skill invocation perform as 
 
 The implementation and local validation are complete. The official skill validator, all release and transition fixtures, shell syntax checks, Actionlint 1.7.7, focused Go packages, two deterministic exact-0.147.0 generations, formatting, metadata and installer fixtures, vet, all tests, race tests, Staticcheck 0.7.0, govulncheck 1.3.0, and `git diff --check` pass. Independent QA and SRE re-reviews found no unresolved correctness or operability issue after fixes. Security review's unbound-check finding was fixed by binding all three required checks to GitHub Actions app ID 15368. Its independent-human-review recommendation is intentionally deferred until a second trusted maintainer exists; the skill cannot approve GitHub environments and stops for the user's approval.
 
-No repository commit, push, merge, or release has yet been made under this plan. Hosted PR checks, the automatic Release trigger, protected E2E, release approval, and final tag identity remain the pilot acceptance steps.
+The reviewed changes are committed on `codex/update-protocol-v0.147.0` as `a731491` and `c37d76c`. No push, merge, or release has yet been made under this plan. Hosted PR checks, the automatic Release trigger, protected E2E, release approval, and final tag identity remain the pilot acceptance steps.
 
 ## Context and Orientation
 
