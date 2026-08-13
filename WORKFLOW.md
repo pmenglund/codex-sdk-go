@@ -64,20 +64,28 @@ percent while excluding generated files, executable examples, and credentialed
 test support. The workflow must be safe for fork pull requests: it receives no
 API credential and does not download or execute Codex.
 
-The `Trusted E2E` workflow runs only on protected `main` pushes, manual
-dispatch, or as a reusable release gate. Its `e2e` GitHub Environment must
-require an approver and hold `OPENAI_API_KEY`. The workflow installs the exact
-Codex release recorded in `.github/codex/version`, verifies the archive against
+The `Trusted E2E` workflow runs by manual dispatch or as the reusable release
+gate. Its `e2e` GitHub Environment must require an approver and the reusable
+caller must provide `OPENAI_API_KEY`. The workflow installs the exact Codex
+release recorded in `.github/codex/version`, verifies the archive against
 `.github/codex/checksums.txt`, then scopes the API key to the single step that
 constructs `CODEX_E2E_LOGIN_PARAMS_JSON` and runs
 `go test -tags=e2e ./test/e2e`.
 
-The manual `Release` workflow must run from `main`, pass both reusable quality
-and trusted e2e workflows, and receive approval from the protected `release`
-environment. Its publish job has only `contents: write`, refuses existing or
-non-increasing tags, requires at least v0.145.0 for the typed-union migration,
-and pushes only the new annotated tag. Local update scripts must never stage,
-commit, tag, or push.
+`.github/sdk-version` is the authoritative SDK release version and is separate
+from the pinned Codex CLI version. A protected `main` merge that changes this
+file automatically starts `Release`; manual dispatch must name the exact merged
+`main` commit from the failed run. The workflow derives the tag from that commit, passes reusable
+quality and trusted e2e workflows, and receives approval from the protected
+`release` environment. Its publish job has only `contents: write`, refuses
+conflicting or non-increasing tags, treats an existing tag at the exact gated
+commit as an idempotent success, requires at least v0.145.0 for the typed-union
+migration, and pushes only the new annotated tag.
+
+The local updater script must never stage, commit, tag, or push. The
+`update-codex-protocol` skill may stage reviewed paths by name, commit and push
+a feature branch, open and merge a protected pull request, and monitor the
+automatic Release run. It must never push `main` directly or create a tag.
 
 Repository settings must require the `Quality` checks on `main`, prevent force
 pushes and tag deletion, and configure required reviewers for both `e2e` and

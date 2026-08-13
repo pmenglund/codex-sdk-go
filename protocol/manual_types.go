@@ -364,30 +364,36 @@ type Turn struct {
 
 // Thread represents the complete thread summary returned by the app-server.
 type Thread struct {
-	ID             string            `json:"id"`
-	Extra          *ThreadExtra      `json:"extra,omitempty"`
-	SessionID      string            `json:"sessionId"`
-	ForkedFromID   *string           `json:"forkedFromId,omitempty"`
-	ParentThreadID *string           `json:"parentThreadId,omitempty"`
-	Preview        string            `json:"preview"`
-	Ephemeral      bool              `json:"ephemeral"`
-	IsPinned       bool              `json:"isPinned,omitempty"`
-	HistoryMode    ThreadHistoryMode `json:"historyMode,omitempty"`
-	ModelProvider  string            `json:"modelProvider"`
-	CreatedAt      int64             `json:"createdAt"`
-	UpdatedAt      int64             `json:"updatedAt"`
-	RecencyAt      *int64            `json:"recencyAt,omitempty"`
-	Status         ThreadStatus      `json:"status"`
-	Path           *string           `json:"path,omitempty"`
-	Cwd            string            `json:"cwd"`
-	CLIVersion     string            `json:"cliVersion"`
-	Source         json.RawMessage   `json:"source"`
-	ThreadSource   *ThreadSource     `json:"threadSource,omitempty"`
-	AgentNickname  *string           `json:"agentNickname,omitempty"`
-	AgentRole      *string           `json:"agentRole,omitempty"`
-	GitInfo        *GitInfo          `json:"gitInfo,omitempty"`
-	Name           *string           `json:"name,omitempty"`
-	Turns          []Turn            `json:"turns"`
+	ID             string       `json:"id"`
+	Extra          *ThreadExtra `json:"extra,omitempty"`
+	SessionID      string       `json:"sessionId"`
+	ForkedFromID   *string      `json:"forkedFromId,omitempty"`
+	ParentThreadID *string      `json:"parentThreadId,omitempty"`
+	Preview        string       `json:"preview"`
+	Ephemeral      bool         `json:"ephemeral"`
+	// IsPinned is retained for source compatibility with Codex versions before
+	// 0.147. Codex 0.147 replaces pinned-thread organization with sections.
+	//
+	// Deprecated: use Section and section-aware thread listing.
+	IsPinned         bool              `json:"isPinned,omitempty"`
+	HistoryMode      ThreadHistoryMode `json:"historyMode,omitempty"`
+	ModelProvider    string            `json:"modelProvider"`
+	CreatedAt        int64             `json:"createdAt"`
+	UpdatedAt        int64             `json:"updatedAt"`
+	RecencyAt        *int64            `json:"recencyAt,omitempty"`
+	Status           ThreadStatus      `json:"status"`
+	Path             *string           `json:"path,omitempty"`
+	Cwd              string            `json:"cwd"`
+	CLIVersion       string            `json:"cliVersion"`
+	Source           json.RawMessage   `json:"source"`
+	ThreadSource     *ThreadSource     `json:"threadSource,omitempty"`
+	AgentNickname    *string           `json:"agentNickname,omitempty"`
+	AgentRole        *string           `json:"agentRole,omitempty"`
+	GitInfo          *GitInfo          `json:"gitInfo,omitempty"`
+	Name             *string           `json:"name,omitempty"`
+	Section          *ThreadSection    `json:"section,omitempty"`
+	SectionEnteredAt *int64            `json:"sectionEnteredAt,omitempty"`
+	Turns            []Turn            `json:"turns"`
 }
 
 // ThreadStartResponse is the response payload for thread/start.
@@ -482,17 +488,47 @@ type TurnStartResponse struct {
 
 // ThreadListParams configures thread/list using typed sort values.
 type ThreadListParams struct {
-	Archived       *bool                           `json:"archived,omitempty"`
-	Cursor         *string                         `json:"cursor,omitempty"`
-	Cwd            any                             `json:"cwd,omitempty"`
-	IsPinned       *bool                           `json:"isPinned,omitempty"`
+	Archived *bool   `json:"archived,omitempty"`
+	Cursor   *string `json:"cursor,omitempty"`
+	Cwd      any     `json:"cwd,omitempty"`
+	// IsPinned is retained for source compatibility with Codex versions before
+	// 0.147. Codex 0.147 ignores this filter and uses SectionID instead.
+	//
+	// Deprecated: use SectionID.
+	IsPinned       *bool                           `json:"-"`
 	Limit          *int                            `json:"limit,omitempty"`
 	ModelProviders *ThreadListParamsModelProviders `json:"modelProviders,omitempty"`
 	SearchTerm     *string                         `json:"searchTerm,omitempty"`
-	SortDirection  SortDirection                   `json:"sortDirection,omitempty"`
-	SortKey        ThreadSortKey                   `json:"sortKey,omitempty"`
-	SourceKinds    *ThreadListParamsSourceKinds    `json:"sourceKinds,omitempty"`
-	UseStateDbOnly *bool                           `json:"useStateDbOnly,omitempty"`
+	// SectionID distinguishes omitted (all sections), pointer-to-nil
+	// (unsectioned), and pointer-to-string (one section).
+	SectionID      **string                     `json:"sectionId,omitempty"`
+	SortDirection  SortDirection                `json:"sortDirection,omitempty"`
+	SortKey        ThreadSortKey                `json:"sortKey,omitempty"`
+	SourceKinds    *ThreadListParamsSourceKinds `json:"sourceKinds,omitempty"`
+	UseStateDbOnly *bool                        `json:"useStateDbOnly,omitempty"`
+}
+
+// ThreadMetadataUpdateParams updates supported thread metadata.
+type ThreadMetadataUpdateParams struct {
+	GitInfo *ThreadMetadataGitInfoUpdateParams `json:"gitInfo,omitempty"`
+	// IsPinned is retained for source compatibility with Codex versions before
+	// 0.147. It is not sent to Codex 0.147, which uses thread sections.
+	//
+	// Deprecated: use thread/section/move.
+	IsPinned ThreadMetadataUpdateParamsIsPinned `json:"-"`
+	ThreadID string                             `json:"threadId"`
+}
+
+// SanitizedThreadMetadataUpdateParamsJSON preserves the former sanitized
+// generated spelling while keeping the removed pin field off the 0.147 wire.
+type SanitizedThreadMetadataUpdateParamsJSON struct {
+	GitInfo *ThreadMetadataGitInfoUpdateParams `json:"gitInfo,omitempty"`
+	// IsPinned is retained for source compatibility with Codex versions before
+	// 0.147. It is not sent to Codex 0.147, which uses thread sections.
+	//
+	// Deprecated: use thread/section/move.
+	IsPinned SanitizedThreadMetadataUpdateParamsJSONIsPinned `json:"-"`
+	ThreadID string                                          `json:"threadId"`
 }
 
 // ThreadStartParams is maintained manually because the raw schema currently

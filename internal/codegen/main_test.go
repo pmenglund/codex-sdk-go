@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -320,6 +321,12 @@ func TestStripAndSanitize(t *testing.T) {
 					"developer": map[string]any{"type": []any{"string", "null"}},
 				},
 			},
+			"ThreadMetadataUpdateParams": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"threadId": map[string]any{"type": "string"},
+				},
+			},
 		},
 	}
 	stripSubschemas(input)
@@ -369,6 +376,15 @@ func TestStripAndSanitize(t *testing.T) {
 	if description, _ := firstPartyType["description"].(string); !strings.HasPrefix(description, "Deprecated:") {
 		t.Fatalf("compatibility field description = %q, want deprecation", description)
 	}
+	metadataParams := definitions["ThreadMetadataUpdateParams"].(map[string]any)
+	metadataProperties := metadataParams["properties"].(map[string]any)
+	isPinned, ok := metadataProperties["isPinned"].(map[string]any)
+	if !ok {
+		t.Fatal("removed ThreadMetadataUpdateParams.isPinned compatibility field was not restored")
+	}
+	if description, _ := isPinned["description"].(string); !strings.HasPrefix(description, "Deprecated:") {
+		t.Fatalf("isPinned compatibility description = %q, want deprecation", description)
+	}
 }
 
 func TestDeprecateSanitizedFallbacks(t *testing.T) {
@@ -387,8 +403,10 @@ func TestDeprecateSanitizedFallbacks(t *testing.T) {
 func TestWriteCompatibilityAliases(t *testing.T) {
 	dir := t.TempDir()
 	generated := map[string]struct{}{
-		"MCPServerOAuthLoginParams":                {},
-		"SanitizedMCPServerOAuthLoginResponseJSON": {},
+		"ExternalAgentConfigImportHistoryRecordSuccessParams":    {},
+		"ExternalAgentConfigImportHistoryRecordTypeResultParams": {},
+		"MCPServerOAuthLoginParams":                              {},
+		"SanitizedMCPServerOAuthLoginResponseJSON":               {},
 	}
 	for name := range protocolAliasNames(generated, nil) {
 		generated[name] = struct{}{}
@@ -1271,6 +1289,33 @@ func TestExportSchemasError(t *testing.T) {
 	dir := t.TempDir()
 	if err := exportSchemas(dir, filepath.Join(dir, "out")); err == nil {
 		t.Fatalf("expected exportSchemas error")
+	}
+}
+
+func TestSchemaExportCommandUsesCodexCLI(t *testing.T) {
+	codexRoot := t.TempDir()
+	codexRSRoot := filepath.Join(codexRoot, "codex-rs")
+	if err := os.MkdirAll(filepath.Join(codexRSRoot, "cli"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(codexRSRoot, "cli", "Cargo.toml"), []byte("[package]\nname = \"codex-cli\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	outDir := filepath.Join(t.TempDir(), "schemas")
+
+	cmd, err := schemaExportCommand(codexRoot, outDir)
+	if err != nil {
+		t.Fatalf("schemaExportCommand error: %v", err)
+	}
+	wantArgs := []string{
+		"cargo", "run", "-p", "codex-cli", "--bin", "codex", "--",
+		"app-server", "generate-json-schema", "--out", outDir,
+	}
+	if !reflect.DeepEqual(cmd.Args, wantArgs) {
+		t.Fatalf("schema exporter args = %#v, want %#v", cmd.Args, wantArgs)
+	}
+	if cmd.Dir != codexRSRoot {
+		t.Fatalf("schema exporter dir = %q, want %q", cmd.Dir, codexRSRoot)
 	}
 }
 

@@ -28,10 +28,10 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "a3739c2d1017118cbdcac9469cfd770cc2947893fbef4fb12500ee38b6c43aba"
+	approvedUnionInventorySHA256 = "8a749e9a763542233e9e554ebe560e1c180338d10a33006f5dfcd637887dbfd4"
 )
 
-var approvedOpaqueInterfaceInventorySHA256 = "c6fa5c442b4de0dc9cc3000f0adf757a9a891b83b88c69199b4247a7c180be5c"
+var approvedOpaqueInterfaceInventorySHA256 = "364e37d37ba2acc20715aafc38daa785ba3527eeed29e6aaad056ff5f48e5af7"
 
 func main() {
 	sdkRoot, err := repoRoot()
@@ -91,11 +91,30 @@ func main() {
 }
 
 func exportSchemas(codexRoot, outDir string) error {
-	cmd := exec.Command("cargo", "run", "-p", "codex-app-server-protocol", "--bin", "export", "--", "--out", outDir)
-	cmd.Dir = filepath.Join(codexRoot, "codex-rs")
+	cmd, err := schemaExportCommand(codexRoot, outDir)
+	if err != nil {
+		return err
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("export Codex app-server schemas: %w", err)
+	}
+	return nil
+}
+
+func schemaExportCommand(codexRoot, outDir string) (*exec.Cmd, error) {
+	codexRSRoot := filepath.Join(codexRoot, "codex-rs")
+	cliManifest := filepath.Join(codexRSRoot, "cli", "Cargo.toml")
+	if !exists(cliManifest) {
+		return nil, fmt.Errorf("codex CLI manifest not found at %s", cliManifest)
+	}
+	cmd := exec.Command(
+		"cargo", "run", "-p", "codex-cli", "--bin", "codex", "--",
+		"app-server", "generate-json-schema", "--out", outDir,
+	)
+	cmd.Dir = codexRSRoot
+	return cmd, nil
 }
 
 func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string) error {
@@ -249,6 +268,7 @@ var requiredManualSchemaCoverage = map[string]struct{}{
 	"ThreadForkResponse":                      {},
 	"ThreadListParams":                        {},
 	"ThreadListResponse":                      {},
+	"ThreadMetadataUpdateParams":              {},
 	"ThreadReadResponse":                      {},
 	"ThreadResumeParams":                      {},
 	"ThreadResumeResponse":                    {},
@@ -1705,12 +1725,14 @@ func manualProtocolTypes() map[string]struct{} {
 		"ThreadForkResponse":                      {},
 		"ThreadListParams":                        {},
 		"ThreadListResponse":                      {},
+		"ThreadMetadataUpdateParams":              {},
 		"ThreadReadResponse":                      {},
 		"ThreadResumeParams":                      {},
 		"ThreadStartParams":                       {},
 		"ThreadStartResponse":                     {},
 		"ThreadStatus":                            {},
 		"ThreadUnarchiveResponse":                 {},
+		"SanitizedThreadMetadataUpdateParamsJSON": {},
 		"ToolRequestUserInputParams":              {},
 		"ToolRequestUserInputResponse":            {},
 		"TurnStartParams":                         {},
@@ -2084,9 +2106,15 @@ func preserveRemovedProtocolFields(node any) {
 		if value["title"] == "AppMetadata" {
 			preserveAppMetadataFirstPartyType(value)
 		}
+		if value["title"] == "ThreadMetadataUpdateParams" {
+			preserveThreadMetadataUpdateIsPinned(value)
+		}
 		if definitions, ok := value["definitions"].(map[string]any); ok {
 			if appMetadata, ok := definitions["AppMetadata"].(map[string]any); ok {
 				preserveAppMetadataFirstPartyType(appMetadata)
+			}
+			if params, ok := definitions["ThreadMetadataUpdateParams"].(map[string]any); ok {
+				preserveThreadMetadataUpdateIsPinned(params)
 			}
 		}
 		for _, child := range value {
@@ -2110,6 +2138,20 @@ func preserveAppMetadataFirstPartyType(appMetadata map[string]any) {
 	properties["firstPartyType"] = map[string]any{
 		"description": "Deprecated: Codex 0.146 removed this field; retained for Go SDK source compatibility.",
 		"type":        []any{"string", "null"},
+	}
+}
+
+func preserveThreadMetadataUpdateIsPinned(params map[string]any) {
+	properties, ok := params["properties"].(map[string]any)
+	if !ok {
+		return
+	}
+	if _, exists := properties["isPinned"]; exists {
+		return
+	}
+	properties["isPinned"] = map[string]any{
+		"description": "Deprecated: Codex 0.147 removed this field in favor of thread sections; retained for Go SDK source compatibility.",
+		"type":        []any{"boolean", "null"},
 	}
 }
 

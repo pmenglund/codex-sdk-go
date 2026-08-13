@@ -10,16 +10,26 @@ import (
 
 // ThreadListOptions configures a thread/list request.
 type ThreadListOptions struct {
-	Archived       *bool
-	Cursor         string
-	Cwd            any
+	Archived *bool
+	Cursor   string
+	Cwd      any
+	// IsPinned is retained for source compatibility with Codex versions before
+	// 0.147. Codex 0.147 replaces pinned-thread organization with sections.
+	//
+	// Deprecated: use SectionID or Unsectioned.
 	IsPinned       *bool
 	Limit          *int
 	ModelProviders []string
 	SearchTerm     string
-	SortDirection  protocol.SortDirection
-	SortKey        protocol.ThreadSortKey
-	SourceKinds    []protocol.ThreadSourceKind
+	// SectionID limits results to one persisted section. It cannot be combined
+	// with Unsectioned.
+	SectionID     string
+	SortDirection protocol.SortDirection
+	SortKey       protocol.ThreadSortKey
+	SourceKinds   []protocol.ThreadSourceKind
+	// Unsectioned limits results to threads that do not belong to a section. It
+	// cannot be combined with SectionID.
+	Unsectioned    bool
 	UseStateDBOnly *bool
 }
 
@@ -28,18 +38,28 @@ func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
 		return protocol.ThreadListParams{}, fmt.Errorf("invalid thread sort direction %q", o.SortDirection)
 	}
 	switch o.SortKey {
-	case "", protocol.ThreadSortKeyCreatedAt, protocol.ThreadSortKeyUpdatedAt, protocol.ThreadSortKeyRecencyAt:
+	case "", protocol.ThreadSortKeyCreatedAt, protocol.ThreadSortKeyUpdatedAt, protocol.ThreadSortKeyRecencyAt, protocol.ThreadSortKeySectionPosition:
 	default:
 		return protocol.ThreadListParams{}, fmt.Errorf("invalid thread sort key %q", o.SortKey)
+	}
+	if o.SectionID != "" && o.Unsectioned {
+		return protocol.ThreadListParams{}, errors.New("thread section id and unsectioned filter cannot both be set")
 	}
 	params := protocol.ThreadListParams{
 		Archived:       o.Archived,
 		Cwd:            o.Cwd,
-		IsPinned:       o.IsPinned,
 		Limit:          o.Limit,
 		SortDirection:  o.SortDirection,
 		SortKey:        o.SortKey,
 		UseStateDbOnly: o.UseStateDBOnly,
+	}
+	if o.Unsectioned {
+		var unsectioned *string
+		params.SectionID = &unsectioned
+	} else if o.SectionID != "" {
+		sectionID := o.SectionID
+		sectionValue := &sectionID
+		params.SectionID = &sectionValue
 	}
 	if o.ModelProviders != nil {
 		modelProviders := protocol.ThreadListParamsModelProviders(o.ModelProviders)

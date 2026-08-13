@@ -118,7 +118,7 @@ func TestGeneratedExternalImportHistoryRequestWireMethod(t *testing.T) {
 
 	transport.enqueueResult(protocol.ExternalAgentConfigImportHistoryRecordResponse{ImportID: "import-one"})
 	result, err := client.ExternalAgentConfigImportRecordHistory(context.Background(), protocol.ExternalAgentConfigImportHistoryRecordParams{
-		ItemTypeResults: []protocol.ExternalAgentConfigImportTypeResult{},
+		ItemTypeResults: []protocol.ExternalAgentConfigImportHistoryRecordTypeResultParams{},
 		ProviderID:      "provider-one",
 	})
 	if err != nil {
@@ -134,6 +134,69 @@ func TestGeneratedExternalImportHistoryRequestWireMethod(t *testing.T) {
 	}
 	if requests[0].Method != "externalAgentConfig/import/recordHistory" || string(requests[0].Params) != `{"itemTypeResults":[],"providerId":"provider-one"}` {
 		t.Fatalf("unexpected import history request: %#v", requests[0])
+	}
+}
+
+func TestGeneratedThreadSectionRequestWireMethods(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+
+	transport.enqueueResult(protocol.ThreadSectionCreateResponse{Section: protocol.ThreadSection{ID: "section-one", Name: "Work"}})
+	if _, err := client.ThreadSectionCreate(context.Background(), protocol.ThreadSectionCreateParams{Name: "Work"}); err != nil {
+		t.Fatalf("threadSection/create: %v", err)
+	}
+	transport.enqueueResult(protocol.ThreadSectionDeleteResponse{})
+	if _, err := client.ThreadSectionDelete(context.Background(), protocol.ThreadSectionDeleteParams{SectionID: "section-one"}); err != nil {
+		t.Fatalf("threadSection/delete: %v", err)
+	}
+	cursor := "cursor-one"
+	limit := 2
+	transport.enqueueResult(protocol.ThreadSectionListResponse{Data: []protocol.ThreadSection{{ID: "section-one", Name: "Work"}}})
+	if _, err := client.ThreadSectionList(context.Background(), protocol.ThreadSectionListParams{
+		Cursor: protocol.ThreadSectionListParamsCursor(&cursor),
+		Limit:  protocol.ThreadSectionListParamsLimit(&limit),
+	}); err != nil {
+		t.Fatalf("threadSection/list: %v", err)
+	}
+	beforeThreadID := "thread-two"
+	sectionID := "section-one"
+	transport.enqueueResult(protocol.ThreadSectionMoveResponse{})
+	if _, err := client.ThreadSectionMove(context.Background(), protocol.ThreadSectionMoveParams{
+		BeforeThreadID: protocol.ThreadSectionMoveParamsBeforeThreadID(&beforeThreadID),
+		SectionID:      protocol.ThreadSectionMoveParamsSectionID(&sectionID),
+		ThreadID:       "thread-one",
+	}); err != nil {
+		t.Fatalf("thread/section/move: %v", err)
+	}
+	transport.enqueueResult(protocol.ThreadSectionMoveResponse{})
+	if _, err := client.ThreadSectionMove(context.Background(), protocol.ThreadSectionMoveParams{ThreadID: "thread-one"}); err != nil {
+		t.Fatalf("thread/section/move out: %v", err)
+	}
+	transport.enqueueResult(protocol.ThreadSectionUpdateResponse{Section: protocol.ThreadSection{ID: "section-one", Name: "Projects"}})
+	if _, err := client.ThreadSectionUpdate(context.Background(), protocol.ThreadSectionUpdateParams{Name: "Projects", SectionID: "section-one"}); err != nil {
+		t.Fatalf("threadSection/update: %v", err)
+	}
+
+	want := []struct {
+		method string
+		params string
+	}{
+		{method: "threadSection/create", params: `{"name":"Work"}`},
+		{method: "threadSection/delete", params: `{"sectionId":"section-one"}`},
+		{method: "threadSection/list", params: `{"cursor":"cursor-one","limit":2}`},
+		{method: "thread/section/move", params: `{"beforeThreadId":"thread-two","sectionId":"section-one","threadId":"thread-one"}`},
+		{method: "thread/section/move", params: `{"sectionId":null,"threadId":"thread-one"}`},
+		{method: "threadSection/update", params: `{"name":"Projects","sectionId":"section-one"}`},
+	}
+	requests := transport.writtenRequests()
+	if len(requests) != len(want) {
+		t.Fatalf("captured %d requests, want %d", len(requests), len(want))
+	}
+	for i := range want {
+		if requests[i].Method != want[i].method || string(requests[i].Params) != want[i].params {
+			t.Fatalf("request %d = %#v, want method %q params %s", i, requests[i], want[i].method, want[i].params)
+		}
 	}
 }
 
