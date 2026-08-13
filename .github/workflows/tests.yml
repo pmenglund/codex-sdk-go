@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
   workflow_call:
+    inputs:
+      candidate_sha:
+        description: Exact commit to validate for a release
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -20,6 +25,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.candidate_sha || github.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Go
@@ -44,7 +51,16 @@ jobs:
           .github/scripts/test-validate-codex-metadata.sh
           .github/scripts/test-install-codex-cli.sh
           .github/scripts/test-validate-release-tag.sh
+          .github/scripts/test-sdk-release-tag.sh
+          .github/scripts/test-release-tag-state.sh
+          .github/scripts/test-validate-sdk-version-transition.sh
           .github/scripts/test-content-manifest.sh
+
+      - name: Validate SDK version transition
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: .github/scripts/validate-sdk-version-transition.sh "$BASE_SHA" HEAD
 
       - name: Validate workflows
         if: matrix.go-version == '1.25.12'
@@ -96,6 +112,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.candidate_sha || github.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Download coverage profile

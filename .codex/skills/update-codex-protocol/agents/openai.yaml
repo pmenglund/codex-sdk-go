@@ -1,4 +1,4 @@
 interface:
   display_name: "Update Codex Protocol"
-  short_description: "Regenerate and validate protocol changes for review."
-  default_prompt: "Use $update-codex-protocol to regenerate codex-sdk-go protocol files from the latest stable upstream Codex Rust release, prove deterministic output, run all quality gates, and leave the changes unstaged for review."
+  short_description: "Update, review, and hand off an SDK release."
+  default_prompt: "Use $update-codex-protocol to update codex-sdk-go from the latest stable Codex Rust release and carry the reviewed change through its protected GitHub release handoff."
