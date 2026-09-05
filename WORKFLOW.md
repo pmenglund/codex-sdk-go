@@ -78,8 +78,9 @@ from the pinned Codex CLI version. A protected `main` merge that changes this
 file automatically starts `Release`. Manual dispatch must name the exact failed
 candidate for an unchanged retry or the exact merged corrective commit after
 fixing a failed release. The workflow derives the tag from that commit, passes reusable
-quality and trusted e2e workflows, and receives approval from the protected
-`release` environment. Its publish job has only `contents: write`, refuses
+quality and trusted e2e workflows, then publishes automatically after E2E
+succeeds. Human approval is required before E2E runs; the protected `release`
+environment requires no second approval. Its publish job has only `contents: write`, refuses
 conflicting or non-increasing tags, treats an existing tag at the exact gated
 commit as an idempotent success, requires at least v0.145.0 for the typed-union
 migration, and pushes only the new annotated tag.
@@ -90,8 +91,10 @@ a feature branch, open and merge a protected pull request, and monitor the
 automatic Release run. It must never push `main` directly or create a tag.
 
 Repository settings must require the `Quality` checks on `main`, prevent force
-pushes and tag deletion, and configure required reviewers for both `e2e` and
-`release` environments. Until those settings are confirmed in GitHub, release
+pushes and tag deletion, and configure required reviewers for `e2e`. Both
+`e2e` and `release` must allow deployments only from protected branches;
+`release` must have no required reviewers so publication follows successful E2E
+automatically. Until those settings are confirmed in GitHub, release
 publication is blocked; a local direct push is not a fallback.
 
 If a bad Go module version is published, never move its tag. Tell consumers to

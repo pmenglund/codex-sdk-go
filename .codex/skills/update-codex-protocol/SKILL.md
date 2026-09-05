@@ -1,6 +1,6 @@
 ---
 name: update-codex-protocol
-description: Update codex-sdk-go from the latest stable upstream openai/codex Rust release, review compatibility, prove deterministic generation, run the complete local gate, and carry the reviewed change through a protected pull request to GitHub's release approvals. Use for protocol refreshes or when preparing a new codex-sdk-go release from an upstream rust-vMAJOR.MINOR.PATCH tag.
+description: Update codex-sdk-go from the latest stable upstream openai/codex Rust release, review compatibility, prove deterministic generation, run the complete local gate, and carry the reviewed change through a protected pull request to GitHub's E2E approval and automatic publication. Use for protocol refreshes or when preparing a new codex-sdk-go release from an upstream rust-vMAJOR.MINOR.PATCH tag.
 ---
 
 # Update Codex Protocol
@@ -34,7 +34,7 @@ An explicit invocation authorizes the skill to prepare and publish the reviewed 
 2. Recheck `git status`, `git diff`, and `git diff --check`. Stage only the reviewed paths by name; never use `git add .`. Verify the staged diff contains no unrelated file or secret.
 3. Commit in imperative mood, push the feature branch, and open a pull request to `main`. Include the upstream tag, SDK version, compatibility decisions, ExecPlan, and validation evidence.
 4. Watch the required pull-request checks. Fix failures on the branch. When checks pass and branch protection permits, merge through the pull request and delete the remote feature branch. If a reviewer is required, leave the pull request pending for that review rather than bypassing it.
-5. The merge of `.github/sdk-version` starts `.github/workflows/release.yml`. Find that run and report its URL. Hand control to the user when GitHub requests approval for `e2e` or `release`; resume monitoring if the user approves during the task.
+5. The merge of `.github/sdk-version` starts `.github/workflows/release.yml`. Find that run and report its URL. Hand control to the user when GitHub requests approval for `e2e`; resume monitoring if the user approves during the task. Publication must run automatically after E2E succeeds. Keep both environments restricted to protected branches, with required reviewers on `e2e` and none on `release`. If GitHub requests a second approval for `release`, report configuration drift rather than approving it on the user's behalf.
 6. Confirm the completed run created the expected immutable tag from the merged `main` commit. Never create or move a local tag, push `main` directly, bypass a failed gate, or publish by another path.
 
 The bundled updater remains deliberately non-publishing because generation may require handwritten compatibility work. The skill performs Git and pull-request operations only after reviewing the result. GitHub Actions alone creates and pushes the release tag. Manual Release dispatch requires the exact failed candidate SHA for an unchanged retry, or the exact reviewed corrective merge SHA after fixing a failed release. Retain the unpublished SDK version for a correction. The workflow still derives the SDK tag from the selected protected-main commit rather than accepting a tag input, and reruns every release gate.
