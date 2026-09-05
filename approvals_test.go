@@ -3,12 +3,94 @@ package codex
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"log/slog"
 	"strings"
 	"testing"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
+
+func TestUnsafeApprovalLoggingAndDecisions(t *testing.T) {
+	const marker = "explicit-sensitive-payload"
+	ctx := context.Background()
+	for _, tt := range []struct {
+		name string
+		call func(UnsafeLoggingAutoApproveHandler) (any, error)
+		want string
+	}{
+		{"file change", func(h UnsafeLoggingAutoApproveHandler) (any, error) {
+			path := marker
+			return h.ItemFileChangeRequestApproval(ctx, protocol.FileChangeRequestApprovalParams{GrantRoot: &path})
+		}, `{"decision":"accept"}`},
+		{"permissions", func(h UnsafeLoggingAutoApproveHandler) (any, error) {
+			return h.ItemPermissionsRequestApproval(ctx, protocol.PermissionsRequestApprovalParams{Permissions: map[string]any{"path": marker}})
+		}, `{"permissions":{"path":"explicit-sensitive-payload"}}`},
+		{"patch", func(h UnsafeLoggingAutoApproveHandler) (any, error) {
+			return h.ApplyPatchApproval(ctx, protocol.ApplyPatchApprovalParams{FileChanges: map[string]any{marker: "add"}})
+		}, `{"decision":"approved"}`},
+		{"command", func(h UnsafeLoggingAutoApproveHandler) (any, error) {
+			return h.ExecCommandApproval(ctx, protocol.ExecCommandApprovalParams{Command: []string{"echo", marker}})
+		}, `{"decision":"approved"}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var logs bytes.Buffer
+			result, err := tt.call(NewUnsafeLoggingAutoApproveHandler(slog.New(slog.NewTextHandler(&logs, nil))))
+			if err != nil {
+				t.Fatal(err)
+			}
+			data, err := json.Marshal(result)
+			if err != nil || string(data) != tt.want {
+				t.Fatalf("approval=%s err=%v, want %s", data, err, tt.want)
+			}
+			if !strings.Contains(logs.String(), marker) {
+				t.Fatalf("explicit unsafe logger omitted payload: %s", logs.String())
+			}
+		})
+	}
+	result, err := NewUnsafeLoggingAutoApproveHandler(nil).ItemFileChangeRequestApproval(ctx, protocol.FileChangeRequestApprovalParams{})
+	if err != nil || result.Decision != protocol.FileChangeApprovalDecisionAccept {
+		t.Fatalf("nil logger and grant root: %#v, %v", result, err)
+	}
+}
+
+func TestRejectingHandlerRequiresCustomInteractivePolicy(t *testing.T) {
+	h := RejectingApprovalHandler{}
+	ctx := context.Background()
+	for _, tt := range []struct {
+		name string
+		call func() (bool, error)
+		want string
+	}{
+		{"tool", func() (bool, error) {
+			r, e := h.ItemToolCall(ctx, protocol.DynamicToolCallParams{})
+			return r == nil, e
+		}, "tool calls require a custom handler"},
+		{"input", func() (bool, error) {
+			r, e := h.ItemToolRequestUserInput(ctx, protocol.ToolRequestUserInputParams{})
+			return r == nil, e
+		}, "tool user input requires a custom handler"},
+		{"elicitation", func() (bool, error) {
+			r, e := h.MCPServerElicitationRequest(ctx, protocol.MCPServerElicitationRequestParams{})
+			return r == nil, e
+		}, "mcp elicitation requires a custom handler"},
+		{"auth", func() (bool, error) {
+			r, e := h.AccountChatgptAuthTokensRefresh(ctx, protocol.ChatgptAuthTokensRefreshParams{})
+			return r == nil, e
+		}, "chatgpt auth token refresh requires a custom handler"},
+		{"attestation", func() (bool, error) {
+			r, e := h.AttestationGenerate(ctx, protocol.AttestationGenerateParams{})
+			return r == nil, e
+		}, "attestation generation requires a custom handler"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			empty, err := tt.call()
+			if !empty || err == nil || err.Error() != tt.want {
+				t.Fatalf("empty response=%v, err=%v, want %s", empty, err, tt.want)
+			}
+		})
+	}
+}
 
 func TestAutoApproveHandlerRedactsSensitivePayloads(t *testing.T) {
 	const marker = "TOP-SECRET-MARKER"

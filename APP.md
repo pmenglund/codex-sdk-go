@@ -47,7 +47,7 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 - Run the local quality gate: formatting, installer fixtures, `go vet ./...`,
   `go test ./...`, `go test -race ./...`, `staticcheck ./...`,
   `govulncheck ./...`, and `git diff --check`.
-- Use Staticcheck v0.7.0 and govulncheck v1.3.0, matching CI.
+- Use Staticcheck v0.8.1 and govulncheck v1.3.0, matching CI.
 
 ### Code Generation
 

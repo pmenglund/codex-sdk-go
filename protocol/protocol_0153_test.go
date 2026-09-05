@@ -144,10 +144,43 @@ func TestApprovalKindDefaults(t *testing.T) {
 }
 
 func TestApprovalKindRejectsInvalidValues(t *testing.T) {
-	for _, payload := range []string{`{"kind":null}`, `{"kind":false}`, `{"kind":42}`, `{"kind":""}`} {
-		var params CommandExecutionRequestApprovalParams
+	for _, payload := range []string{`{"kind":null}`, `{"kind":false}`, `{"kind":42}`, `{"kind":""}`, `{"threadId":false}`, `[]`} {
+		params := CommandExecutionRequestApprovalParams{ThreadID: "previous", Kind: CommandExecutionApprovalKindWriteStdin}
 		if err := json.Unmarshal([]byte(payload), &params); err == nil {
 			t.Errorf("accepted %s", payload)
+		}
+		if params.ThreadID != "previous" || params.Kind != CommandExecutionApprovalKindWriteStdin {
+			t.Errorf("failed decode changed receiver for %s: %#v", payload, params)
+		}
+	}
+}
+
+func TestStaticApprovalDecisions(t *testing.T) {
+	for _, tt := range []struct {
+		name         string
+		makeDecision func(string) json.Marshaler
+		valid        string
+	}{
+		{"review", func(value string) json.Marshaler { return MustReviewDecision(value) }, "approved"},
+		{"command", func(value string) json.Marshaler { return MustCommandExecutionApprovalDecision(value) }, "accept"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.makeDecision(tt.valid))
+			if err != nil || string(data) != `"`+tt.valid+`"` {
+				t.Fatalf("static decision = %s, err=%v", data, err)
+			}
+			defer func() {
+				if recover() == nil {
+					t.Error("unknown static decision did not panic")
+				}
+			}()
+			tt.makeDecision("unknown-future-decision")
+		})
+	}
+	for _, zero := range []json.Marshaler{ReviewDecision{}, CommandExecutionApprovalDecision{}} {
+		data, err := json.Marshal(zero)
+		if err != nil || string(data) != "null" {
+			t.Fatalf("zero decision = %s, err=%v", data, err)
 		}
 	}
 }

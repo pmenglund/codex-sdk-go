@@ -12,6 +12,11 @@ Workflow: `WORKFLOW.md`. This plan records the direct maintenance request of 202
 
 ## Progress
 
+- [x] (2026-09-05) Published reviewed protocol commit c581768 in PR #4; both Go jobs and the coverage-upload job passed. The later Codecov report failed project coverage at 74.7%, despite 95.5% patch coverage.
+- [x] (2026-09-05) Inspected the user's Go 1.26/1.27 and Codecov-comment follow-up, obtained the required focused planner proposal, and verified its named functions and fixtures locally.
+- [x] (2026-09-05) Added stable Go 1.26/1.27 checks with exact toolchains 1.26.8/1.27.1 and Staticcheck 0.8.1; expanded lifecycle, schema, approval, and overload tests without changing coverage policy. Both full Go gates passed; final added tests passed race/static analysis on both families. Go 1.25.14 unit/race compatibility checks also passed.
+- [ ] Verify both new Go families and hosted Codecov project/patch status, update authorized required checks, then merge through PR #4 and monitor Release.
+
 - [x] (2026-09-05 UTC) Verified clean main and origin/main at `6a14316cd1a6a2cc206b7d91b49b043dc3524d57`; fetched upstream and confirmed latest stable rust-v0.153.4 and latest SDK v0.147.0.
 - [x] (2026-09-05 UTC) Completed the required planner pass; verified its generator, metadata, compatibility, and release commands against current files. Created `codex/update-protocol-v0.153.4` before generation.
 - [x] (2026-09-05 UTC) Exported exact 0.153.4 schemas; reviewed all 407 printed union hashes/JSON and approved the union digest.
@@ -19,12 +24,13 @@ Workflow: `WORKFLOW.md`. This plan records the direct maintenance request of 202
 - [x] (2026-09-05 UTC) Updated CLI metadata and SDK version; two generations were byte-identical. Formatting, fixtures, vet, unit/race tests, and Staticcheck passed.
 - [x] (2026-09-05 UTC) Complete updater passed with Go 1.26.8: deterministic generation, formatting, installer/metadata fixtures, vet, unit/race tests, Staticcheck, govulncheck, and diff check. Go 1.25.14 independently passed coverage/unit/race tests, vet, Staticcheck, govulncheck, and actionlint. Release metadata fixtures also passed.
 - [x] (2026-09-05 UTC) QA, architecture, and security reviews completed; all findings fixed and independently confirmed closed. The reviewed updater passed; all Go gates passed again after the final empty-approval-kind guard, with a focused minimum-Go race check.
-- [ ] Commit reviewed paths, push, open and merge the protected PR after checks pass and required status names are updated by an authorized administrator.
+- [x] (2026-09-05) Committed and published original protocol update in PR #4.
+- [ ] Publish reviewed follow-up, confirm hosted Codecov thresholds, replace the two required Go names as authorized, and merge PR #4.
 - [ ] Monitor Release through required human approval and verify the immutable tag and merged commit.
 
 ## Surprises & Discoveries
 
-Live main branch protection requires version-specific checks `Go 1.25.12`, `Go 1.26.5`, and `Coverage report`, with strict up-to-date enforcement and administrator enforcement. The patched matrix emits `Go 1.25.14` and `Go 1.26.8`. Prepare and validate the PR, then request an authorized update of those two required check names if they remain stale; preserve all other protection settings and never bypass the gate.
+Live main branch protection requires version-specific checks `Go 1.25.12`, `Go 1.26.5`, and `Coverage report`, with strict up-to-date enforcement and administrator enforcement. The patched matrix emits `Go 1.25.14` and `Go 1.26.8`. The later user follow-up authorizes replacing those two required check names with stable Go 1.26 and Go 1.27; preserve all other protection settings and never bypass the gate.
 
 The current skill permits the protected PR handoff and stops at E2E or release environment approval. Its former dedicated-credential prerequisite is absent from current main. No credential configuration is part of this update.
 
@@ -35,6 +41,10 @@ Upstream declares Rust 1.95.0, but the installed Homebrew Rust 1.94.0 successful
 The new manual wire regression tests first failed on thread model/project/effort, resume/fork excludeTurns, per-turn service tier and trigger, approval kind, and the MCP policy amendment constructor. Generator regression tests also failed because single-variant unions were skipped and shared required fields were not included in variant validation. Both generator fixes now pass the complete generator test package.
 
 ## Decision Log
+
+The 2026-09-05 user follow-up explicitly authorizes updating required Go checks to families 1.26 and 1.27 and addressing Codecov comment 5549891090 on PR #4. Use stable check names with exact current toolchain pins 1.26.8 and 1.27.1. Preserve the SDK minimum in go.mod because this request concerns CI. Staticcheck v0.7.0 cannot decode Go 1.27 export data; v0.8.1 passed both CI toolchains and is pinned in CI, the updater, and contributor guidance. Preserve Coverage report, strict checking, app bindings, and all other branch protections when replacing the old Go contexts.
+
+Extend the existing plan with replay-backed direct lifecycle/validation/fork-error tests in account_thread_test.go or a focused thread_lifecycle_test.go, composed-schema/ref/cycle and RPC schema/output failure tests in internal/codegen/schema_coverage_test.go, and malformed approval JSON tests in protocol/protocol_0153_test.go. If needed, add approval/error-classification tests for real uncovered behavior. Codecov counts 2,952 fully covered lines out of 3,948; recover at least 207 lines to pass 80%, aiming for 82% headroom. Go statement percentages are supporting evidence; the hosted Codecov project and patch checks are authoritative. Do not lower targets or expand exclusions. GitHub browser settings verified Codecov installed with repository access on September 5; its old installation warning requires no additional grant.
 
 Independent architecture review identified stale opaque allowances and fail-open parsing of unrecognized RPC params. Remove all five wrapper fallback allowances (including ClientNotification), share a params parser that rejects unsupported present schemas, and use pointer-aware type rendering for nullable inbound params. QA and security review identified omitted approval kind not receiving the upstream command default; apply that default during decoding, retain explicit writeStdin/future string kinds, reject null, non-string, and empty kinds, and verify legacy RPC dispatch. QA also requested successful single-variant constructor round trips and exact pagination request bodies; added both. The new regression tests failed before the fixes and pass afterward. The final updater rerun passed after the generator/default/test corrections. The subsequent explicit-empty-kind guard changed only handwritten decoding; the full Go gate and focused minimum-Go race checks passed afterward, while generated output remained unchanged.
 
@@ -53,6 +63,8 @@ Use the exact detached worktree `/private/tmp/codex-sdk-01534-upstream` and Carg
 Use one flat release plan, matching repository convention. Keep large schema inventories and build logs in temporary storage; retain only decisions and validation evidence in this file. The maintenance invocation authorizes implementation and the skill's protected publication workflow without another plan approval.
 
 ## Outcomes & Retrospective
+
+PR #4 contains the reviewed protocol update. The requested follow-up has passed local Go 1.26.8/1.27.1 gates and minimum Go 1.25.14 unit/race checks. Follow-up QA found a POSIX fixture portability gap (fixed with a Windows skip) and future minimum-version CI coverage gap. Keep the two explicitly requested CI families and unchanged SDK minimum; the separate minimum-version run establishes compatibility for this change. Security review corrected stale analyzer guidance and confirmed unchanged CI permissions. The upload job does not enforce Codecov thresholds, so separately require both exact-head Codecov project and patch statuses before this merge. Adding those statuses to permanent branch protection remains outside the scoped two-name update. Hosted follow-up acceptance and release remain pending.
 
 Generation and compatibility work are complete for protocol/SDK 0.153.4. Deterministic generation, focused regressions, full unit/race tests, and Staticcheck passed. Both patched Go toolchains passed all local gates with no vulnerabilities found. QA, architecture, and security review findings are resolved and confirmed closed. The local update is ready for its protected PR; live branch protection still refers to the old version-specific check names. GitHub checks, merge, human environment approval, and immutable tag publication remain delivery gates.
 
@@ -94,7 +106,7 @@ Obtain CLI archive digests from the official `openai/codex` GitHub release API f
 
 All generated headers must name `3d2ee51ca2d5db578f328aa75e20aa22c0197c9a` and GeneratedCodexVersion must be 0.153.4. Every inventory change needs a documented decision. Known variants must decode to concrete types and unknown variants must preserve raw JSON. Tests must cover changed adapter mappings, omission/null behavior, and intentional source compatibility.
 
-The updater must pass two byte-identical generations, formatting, metadata/installer fixtures, vet, unit tests, race tests, Staticcheck v0.7.0, govulncheck v1.3.0, and diff hygiene. Required hosted Quality and E2E checks must pass before GitHub publishes v0.153.4 at the merged candidate. Local gates and hosted acceptance must be reported separately.
+The updater must pass two byte-identical generations, formatting, metadata/installer fixtures, vet, unit tests, race tests, Staticcheck v0.8.1, govulncheck v1.3.0, and diff hygiene. Required hosted Quality and E2E checks must pass before GitHub publishes v0.153.4 at the merged candidate. Local gates and hosted acceptance must be reported separately.
 
 ## Idempotence and Recovery
 
@@ -106,6 +118,6 @@ The official release API returned all four required archive digests for 0.153.4.
 
 ## Interfaces and Dependencies
 
-Keep runtime concerns in the root package, transport in rpc, and wire data in protocol. Reuse the existing go-jsonschema dependency and generator mechanisms. No new runtime dependency is planned. Schema compilation requires the upstream Rust toolchain and source checkout; local Go validation uses CI-aligned Go 1.26.8 and minimum Go 1.25.14.
+Keep runtime concerns in the root package, transport in rpc, and wire data in protocol. Reuse the existing go-jsonschema dependency and generator mechanisms. No new runtime dependency is planned. Schema compilation requires the upstream Rust toolchain and source checkout; local Go validation uses CI-aligned Go 1.26.8 and Go 1.27.1, with a separate Go 1.25.14 unit/race compatibility check.
 
 Revision note: Created after live baseline inspection and the required planner review, before schema generation or code changes.
