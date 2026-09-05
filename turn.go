@@ -19,7 +19,11 @@ type TurnOptions struct {
 	// Prefer ApprovalPolicy* constants for simple policies.
 	ApprovalPolicy any
 	// SandboxPolicy is marshaled as JSON and sent as "sandboxPolicy".
-	// Prefer SandboxMode* constants for simple policies.
+	// Pass a policy object with a "type" field, e.g.
+	// map[string]any{"type": "workspaceWrite", "networkAccess": true}
+	// or map[string]any{"type": "readOnly"}.
+	// See protocol.SandboxPolicyKind for the valid "type" values.
+	// SandboxMode strings ("workspace-write") are not accepted here.
 	SandboxPolicy any
 	Model         string
 	ServiceTier   string
