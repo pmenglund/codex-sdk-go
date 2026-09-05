@@ -28,10 +28,10 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "8a749e9a763542233e9e554ebe560e1c180338d10a33006f5dfcd637887dbfd4"
+	approvedUnionInventorySHA256 = "aa19cfcd55fcee125e20373138c395e420a673088dc3bb039d372e8d4b726fe2"
 )
 
-var approvedOpaqueInterfaceInventorySHA256 = "364e37d37ba2acc20715aafc38daa785ba3527eeed29e6aaad056ff5f48e5af7"
+var approvedOpaqueInterfaceInventorySHA256 = "a6f55f1b748d2bce87b46d67d107373fe4ffa17d13a8e20603a4e58d3d3c9319"
 
 func main() {
 	sdkRoot, err := repoRoot()
@@ -266,14 +266,22 @@ var requiredManualSchemaCoverage = map[string]struct{}{
 	"Thread":                                  {},
 	"ThreadForkParams":                        {},
 	"ThreadForkResponse":                      {},
+	"ThreadItemsListResponse":                 {},
 	"ThreadListParams":                        {},
 	"ThreadListResponse":                      {},
 	"ThreadMetadataUpdateParams":              {},
 	"ThreadReadResponse":                      {},
 	"ThreadResumeParams":                      {},
 	"ThreadResumeResponse":                    {},
+	"ThreadRevertResponse":                    {},
+	"ThreadSection":                           {},
+	"ThreadSectionCreateResponse":             {},
+	"ThreadSectionListResponse":               {},
+	"ThreadSectionUpdateParams":               {},
+	"ThreadSectionUpdateResponse":             {},
 	"ThreadStartParams":                       {},
 	"ThreadStartResponse":                     {},
+	"ThreadTurnsListResponse":                 {},
 	"ThreadUnarchiveResponse":                 {},
 	"Turn":                                    {},
 	"TurnStartParams":                         {},
@@ -579,9 +587,10 @@ type schemaVariant struct {
 }
 
 type schemaProperty struct {
-	Enum  []string `json:"enum"`
-	Ref   string   `json:"$ref"`
-	Type  string   `json:"type"`
+	Enum  []string         `json:"enum"`
+	Ref   string           `json:"$ref"`
+	Type  string           `json:"type"`
+	AnyOf []schemaProperty `json:"anyOf,omitempty"`
 	Items *struct {
 		Ref string `json:"$ref"`
 	} `json:"items"`
@@ -607,7 +616,8 @@ var opaqueDiscriminatedUnionAllowlist = map[string]struct{}{
 }
 
 type discriminatedUnionSchema struct {
-	OneOf []struct {
+	Required []string `json:"required"`
+	OneOf    []struct {
 		Properties map[string]json.RawMessage `json:"properties"`
 		Required   []string                   `json:"required"`
 	} `json:"oneOf"`
@@ -680,7 +690,7 @@ func parseDiscriminatedUnion(name string, data []byte) (discriminatedUnion, bool
 	if err := json.Unmarshal(data, &schema); err != nil {
 		return discriminatedUnion{}, false, err
 	}
-	if len(schema.OneOf) < 2 {
+	if len(schema.OneOf) == 0 {
 		return discriminatedUnion{}, false, nil
 	}
 
@@ -738,7 +748,8 @@ func parseDiscriminatedUnion(name string, data []byte) (discriminatedUnion, bool
 		if json.Unmarshal(variant.Properties[discriminator], &discriminatorProperty) != nil || len(discriminatorProperty.Enum) != 1 {
 			continue
 		}
-		fields := append([]string(nil), variant.Required...)
+		fields := append([]string(nil), schema.Required...)
+		fields = append(fields, variant.Required...)
 		sort.Strings(fields)
 		required[discriminatorProperty.Enum[0]] = fields
 	}
@@ -964,7 +975,6 @@ func writeFallbackTypes(outDir string, titles []string, generated map[string]str
 }
 
 var opaqueFallbackTypeAllowlist = map[string]struct{}{
-	"ClientNotification":                              {},
 	"CodexAppServerProtocolV2":                        {},
 	"ConfigReadResponse":                              {},
 	"ConfigWriteResponse":                             {},
@@ -1001,16 +1011,13 @@ var opaqueFallbackTypeAllowlist = map[string]struct{}{
 var opaqueGeneratedInterfaceAllowlist = map[string]struct{}{
 	"AskForApproval":                            {},
 	"AuthMode":                                  {},
-	"CapabilityRootLocation":                    {},
 	"ChatgptAuthTokensRefreshReason":            {},
 	"CodexErrorInfo":                            {},
 	"CommandExecOutputStream":                   {},
 	"ConsumeAccountRateLimitResetCreditOutcome": {},
-	"DynamicToolNamespaceTool":                  {},
 	"ExperimentalFeatureStage":                  {},
 	"FunctionCallOutputBody":                    {},
 	"InputModality":                             {},
-	"LocalShellAction":                          {},
 	"MCPElicitationEnumSchema":                  {},
 	"MCPElicitationMultiSelectEnumSchema":       {},
 	"MCPElicitationPrimitiveSchema":             {},
@@ -1018,7 +1025,6 @@ var opaqueGeneratedInterfaceAllowlist = map[string]struct{}{
 	"MessagePhase":                              {},
 	"MultiAgentMode":                            {},
 	"ProcessOutputStream":                       {},
-	"ReasoningItemReasoningSummary":             {},
 	"ReasoningSummary":                          {},
 	"RequestID":                                 {},
 	"ResourceContent":                           {},
@@ -1307,6 +1313,27 @@ func skipSchemaFiles() map[string]bool {
 	}
 }
 
+func rpcParamsType(properties map[string]schemaProperty, method string) (string, error) {
+	prop, present := properties["params"]
+	if !present {
+		return "", nil
+	}
+	if prop.Ref != "" {
+		return refName(prop.Ref), nil
+	}
+	if prop.Type == "null" {
+		return "", nil
+	}
+	if len(prop.AnyOf) == 2 {
+		for i, variant := range prop.AnyOf {
+			if variant.Ref != "" && prop.AnyOf[1-i].Type == "null" {
+				return "*" + refName(variant.Ref), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("unsupported params schema for method %q", method)
+}
+
 func loadMethods(path string) ([]rpcMethod, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -1327,13 +1354,9 @@ func loadMethods(path string) ([]rpcMethod, error) {
 			continue
 		}
 
-		paramsType := ""
-		if prop, ok := variant.Properties["params"]; ok {
-			if prop.Ref != "" {
-				paramsType = refName(prop.Ref)
-			} else if prop.Type == "null" {
-				paramsType = ""
-			}
+		paramsType, err := rpcParamsType(variant.Properties, method)
+		if err != nil {
+			return nil, err
 		}
 
 		methods = append(methods, rpcMethod{
@@ -1367,13 +1390,9 @@ func loadNotifications(path string) ([]rpcNotification, error) {
 			continue
 		}
 
-		paramsType := ""
-		if prop, ok := variant.Properties["params"]; ok {
-			if prop.Ref != "" {
-				paramsType = refName(prop.Ref)
-			} else if prop.Type == "null" {
-				paramsType = ""
-			}
+		paramsType, err := rpcParamsType(variant.Properties, method)
+		if err != nil {
+			return nil, err
 		}
 
 		notifications = append(notifications, rpcNotification{
@@ -1427,7 +1446,7 @@ func resolveResponseType(method rpcMethod, defs map[string]struct{}, overrides m
 	}
 
 	if method.ParamsType != "" {
-		base := strings.TrimSuffix(method.ParamsType, "Params")
+		base := strings.TrimSuffix(strings.TrimPrefix(method.ParamsType, "*"), "Params")
 		candidate := base + "Response"
 		if _, ok := defs[candidate]; ok {
 			return candidate, nil
@@ -1536,36 +1555,45 @@ func renderClientRequests(methods []rpcMethod, codexCommit string) []byte {
 	b.WriteString("// ClientRequests exposes every generated JSON-RPC call supported by the app-server.\n//\n// Deprecated: define a narrow interface containing only the methods your code consumes.\n")
 	b.WriteString("type ClientRequests interface {\n")
 	for _, method := range methods {
+		if strings.HasPrefix(method.ParamsType, "*") {
+			fmt.Fprintf(&b, "\t%s(ctx context.Context) (*protocol.%s, error)\n", methodName(method.Method), method.ResponseType)
+		}
 		if method.ParamsType == "" {
-			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context) (*protocol.%s, error)\n", methodName(method.Method), method.ResponseType))
+			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context) (*protocol.%s, error)\n", clientMethodName(method), method.ResponseType))
 		} else {
-			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context, params %s) (*protocol.%s, error)\n", methodName(method.Method), paramsType(method.ParamsType), method.ResponseType))
+			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context, params %s) (*protocol.%s, error)\n", clientMethodName(method), paramsType(method.ParamsType), method.ResponseType))
 		}
 	}
 	b.WriteString("}\n\n")
 
 	b.WriteString("// Client implements ClientRequests using JSON-RPC.\n")
 	for _, method := range methods {
+		if strings.HasPrefix(method.ParamsType, "*") {
+			fmt.Fprintf(&b, "// %s reads without optional filters. Use %s to supply parameters.\nfunc (c *Client) %s(ctx context.Context) (*protocol.%s, error) { return c.%s(ctx, nil) }\n\n", methodName(method.Method), clientMethodName(method), methodName(method.Method), method.ResponseType, clientMethodName(method))
+		}
 		if method.ParamsType == "" {
-			b.WriteString(fmt.Sprintf("func (c *Client) %s(ctx context.Context) (*protocol.%s, error) {\n", methodName(method.Method), method.ResponseType))
+			b.WriteString(fmt.Sprintf("func (c *Client) %s(ctx context.Context) (*protocol.%s, error) {\n", clientMethodName(method), method.ResponseType))
 		} else {
-			b.WriteString(fmt.Sprintf("func (c *Client) %s(ctx context.Context, params %s) (*protocol.%s, error) {\n", methodName(method.Method), paramsType(method.ParamsType), method.ResponseType))
+			b.WriteString(fmt.Sprintf("func (c *Client) %s(ctx context.Context, params %s) (*protocol.%s, error) {\n", clientMethodName(method), paramsType(method.ParamsType), method.ResponseType))
 		}
 		b.WriteString("\tvar result protocol.")
 		b.WriteString(method.ResponseType)
 		b.WriteString("\n")
 		if method.ParamsType == "" {
 			b.WriteString(fmt.Sprintf("\tif err := c.Call(ctx, %q, nil, &result); err != nil {\n", method.Method))
+		} else if strings.HasPrefix(method.ParamsType, "*") {
+			b.WriteString("\tvar requestParams any\n\tif params != nil { requestParams = params }\n")
+			fmt.Fprintf(&b, "\tif err := c.Call(ctx, %q, requestParams, &result); err != nil {\n", method.Method)
 		} else {
 			b.WriteString(fmt.Sprintf("\tif err := c.Call(ctx, %q, params, &result); err != nil {\n", method.Method))
 		}
 		b.WriteString("\t\treturn nil, err\n\t}\n\treturn &result, nil\n}\n\n")
-		legacy := legacyGoName(methodName(method.Method))
-		if legacy != methodName(method.Method) {
+		legacy := legacyGoName(clientMethodName(method))
+		if legacy != clientMethodName(method) {
 			if method.ParamsType == "" {
-				fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nfunc (c *Client) %s(ctx context.Context) (*protocol.%s, error) { return c.%s(ctx) }\n\n", legacy, methodName(method.Method), methodName(method.Method), legacy, method.ResponseType, methodName(method.Method))
+				fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nfunc (c *Client) %s(ctx context.Context) (*protocol.%s, error) { return c.%s(ctx) }\n\n", legacy, clientMethodName(method), clientMethodName(method), legacy, method.ResponseType, clientMethodName(method))
 			} else {
-				fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nfunc (c *Client) %s(ctx context.Context, params %s) (*protocol.%s, error) { return c.%s(ctx, params) }\n\n", legacy, methodName(method.Method), methodName(method.Method), legacy, paramsType(method.ParamsType), method.ResponseType, methodName(method.Method))
+				fmt.Fprintf(&b, "// %s is the former spelling of %s.\n//\n// Deprecated: use %s.\nfunc (c *Client) %s(ctx context.Context, params %s) (*protocol.%s, error) { return c.%s(ctx, params) }\n\n", legacy, clientMethodName(method), clientMethodName(method), legacy, paramsType(method.ParamsType), method.ResponseType, clientMethodName(method))
 			}
 		}
 	}
@@ -1633,8 +1661,8 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 				fmt.Fprintf(&b, "\t\tresult, err = handler.%s(ctx)\n", legacy)
 			}
 		} else {
-			b.WriteString("\t\tvar params protocol.")
-			b.WriteString(method.ParamsType)
+			b.WriteString("\t\tvar params ")
+			b.WriteString(paramsType(method.ParamsType))
 			b.WriteString("\n")
 			b.WriteString("\t\tif len(req.Params) > 0 {\n\t\t\tif err := json.Unmarshal(req.Params, &params); err != nil {\n\t\t\t\treturn nil, &ServerRequestParamsError{Method: req.Method, Err: err}\n\t\t\t}\n\t\t}\n")
 			if canonical != legacy {
@@ -1666,8 +1694,8 @@ func renderNotifications(notifications []rpcNotification, codexCommit string) []
 		if notification.ParamsType == "" {
 			b.WriteString(fmt.Sprintf("\t\treturn Notification{Method: %q, Params: nil, Raw: params}, nil\n", notification.Method))
 		} else {
-			b.WriteString("\t\tvar payload protocol.")
-			b.WriteString(notification.ParamsType)
+			b.WriteString("\t\tvar payload ")
+			b.WriteString(paramsType(notification.ParamsType))
 			b.WriteString("\n")
 			b.WriteString("\t\tif len(params) > 0 {\n\t\t\tif err := json.Unmarshal(params, &payload); err != nil {\n\t\t\t\treturn Notification{Method: ")
 			b.WriteString(fmt.Sprintf("%q", notification.Method))
@@ -1691,60 +1719,86 @@ func paramsType(name string) string {
 	if name == "" {
 		return "struct{}"
 	}
+	if strings.HasPrefix(name, "*") {
+		return "*protocol." + strings.TrimPrefix(name, "*")
+	}
 	return "protocol." + name
+}
+
+func clientMethodName(method rpcMethod) string {
+	name := methodName(method.Method)
+	if strings.HasPrefix(method.ParamsType, "*") {
+		return name + "WithParams"
+	}
+	return name
 }
 
 func manualProtocolTypes() map[string]struct{} {
 	return map[string]struct{}{
-		"ApplyPatchApprovalParams":                {},
-		"ApplyPatchApprovalResponse":              {},
-		"CommandExecutionRequestApprovalParams":   {},
-		"CommandExecutionRequestApprovalResponse": {},
-		"CommandExecutionApprovalDecision":        {},
-		"ErrorNotification":                       {},
-		"ExecCommandApprovalParams":               {},
-		"ExecCommandApprovalResponse":             {},
-		"FileChangeRequestApprovalParams":         {},
-		"FileChangeRequestApprovalResponse":       {},
-		"FileChangeApprovalDecision":              {},
-		"ItemCompletedNotification":               {},
-		"MCPServerElicitationRequestParams":       {},
-		"PermissionsRequestApprovalParams":        {},
-		"PermissionsRequestApprovalResponse":      {},
-		"ResponseItem":                            {},
-		"ReviewDecision":                          {},
-		"SandboxPolicy":                           {},
-		"Thread":                                  {},
-		"ThreadResponse":                          {},
-		"ThreadResumeResponse":                    {},
-		"ThreadGoal":                              {},
-		"ThreadGoalGetResponse":                   {},
-		"ThreadGoalSetResponse":                   {},
-		"ThreadGoalUpdatedNotification":           {},
-		"ThreadForkParams":                        {},
-		"ThreadForkResponse":                      {},
-		"ThreadListParams":                        {},
-		"ThreadListResponse":                      {},
-		"ThreadMetadataUpdateParams":              {},
-		"ThreadReadResponse":                      {},
-		"ThreadResumeParams":                      {},
-		"ThreadStartParams":                       {},
-		"ThreadStartResponse":                     {},
-		"ThreadStatus":                            {},
-		"ThreadUnarchiveResponse":                 {},
-		"SanitizedThreadMetadataUpdateParamsJSON": {},
-		"ToolRequestUserInputParams":              {},
-		"ToolRequestUserInputResponse":            {},
-		"TurnStartParams":                         {},
-		"TurnStartParamsInputElem":                {},
-		"TurnStartResponse":                       {},
-		"TurnItemsView":                           {},
-		"Turn":                                    {},
-		"TurnStatus":                              {},
-		"TurnsPage":                               {},
-		"UserInput":                               {},
-		"TurnCompletedNotification":               {},
-		"TurnStartedNotification":                 {},
+		"ApplyPatchApprovalParams":                         {},
+		"ApplyPatchApprovalResponse":                       {},
+		"CommandExecutionApprovalDecision":                 {},
+		"CommandExecutionRequestApprovalParams":            {},
+		"CommandExecutionRequestApprovalResponse":          {},
+		"ErrorNotification":                                {},
+		"ExecCommandApprovalParams":                        {},
+		"ExecCommandApprovalResponse":                      {},
+		"FileChangeApprovalDecision":                       {},
+		"FileChangeRequestApprovalParams":                  {},
+		"FileChangeRequestApprovalResponse":                {},
+		"ItemCompletedNotification":                        {},
+		"MCPServerElicitationRequestParams":                {},
+		"Nullable_GetAccountTokenUsageParams":              {},
+		"PermissionsRequestApprovalParams":                 {},
+		"PermissionsRequestApprovalResponse":               {},
+		"ResponseItem":                                     {},
+		"ReviewDecision":                                   {},
+		"SandboxPolicy":                                    {},
+		"SanitizedThreadMetadataUpdateParamsJSON":          {},
+		"SanitizedThreadSectionCreateResponseJSON":         {},
+		"SanitizedThreadSectionListResponseJSON":           {},
+		"SanitizedThreadSectionListResponseJSONNextCursor": {},
+		"SanitizedThreadSectionUpdateParamsJSON":           {},
+		"SanitizedThreadSectionUpdateResponseJSON":         {},
+		"Thread":                        {},
+		"ThreadForkParams":              {},
+		"ThreadForkResponse":            {},
+		"ThreadGoal":                    {},
+		"ThreadGoalGetResponse":         {},
+		"ThreadGoalSetResponse":         {},
+		"ThreadGoalUpdatedNotification": {},
+		"ThreadItemEntry":               {},
+		"ThreadItemsListResponse":       {},
+		"ThreadListParams":              {},
+		"ThreadListResponse":            {},
+		"ThreadMetadataUpdateParams":    {},
+		"ThreadReadResponse":            {},
+		"ThreadResponse":                {},
+		"ThreadResumeParams":            {},
+		"ThreadResumeResponse":          {},
+		"ThreadRevertResponse":          {},
+		"ThreadSection":                 {},
+		"ThreadSectionCreateResponse":   {},
+		"ThreadSectionListResponse":     {},
+		"ThreadSectionUpdateParams":     {},
+		"ThreadSectionUpdateResponse":   {},
+		"ThreadStartParams":             {},
+		"ThreadStartResponse":           {},
+		"ThreadStatus":                  {},
+		"ThreadTurnsListResponse":       {},
+		"ThreadUnarchiveResponse":       {},
+		"ToolRequestUserInputParams":    {},
+		"ToolRequestUserInputResponse":  {},
+		"Turn":                          {},
+		"TurnCompletedNotification":     {},
+		"TurnItemsView":                 {},
+		"TurnStartParams":               {},
+		"TurnStartParamsInputElem":      {},
+		"TurnStartResponse":             {},
+		"TurnStartedNotification":       {},
+		"TurnStatus":                    {},
+		"TurnsPage":                     {},
+		"UserInput":                     {},
 	}
 }
 

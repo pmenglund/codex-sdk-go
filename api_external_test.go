@@ -53,6 +53,7 @@ func TestPreferredAPISurfaceCompilesExternally(t *testing.T) {
 	oauth := protocol.MCPServerOAuthLoginParams{}
 	pinned := true
 	metadata := protocol.ThreadMetadataUpdateParams{
+		//lint:ignore SA1019 This fixture proves deprecated pinning fields still compile and stay off the wire.
 		IsPinned: protocol.ThreadMetadataUpdateParamsIsPinned(&pinned),
 		ThreadID: "thread-one",
 	}

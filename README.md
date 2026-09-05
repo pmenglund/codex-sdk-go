@@ -9,7 +9,7 @@ This SDK speaks JSON-RPC to the `codex app-server` process. By default it spawns
 
 ## Requirements
 
-- Go 1.25.12 or newer
+- Go 1.25.14 or newer
 - `codex` available on your `PATH`
 
 ## Install
@@ -293,6 +293,32 @@ missing binary, or unparseable version returns `*codex.CodexCompatibilityError`
 before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
+
+### Updating to protocol 0.153.4
+
+This SDK targets Codex CLI 0.153.x. Low-level RPC now includes paginated turn
+and item history, thread revert, plugin reconciliation, and new realtime,
+project, queue, and authentication-recovery notifications.
+
+`AccountUsageRead(ctx)` remains available. Use
+`AccountUsageReadWithParams(ctx, &protocol.GetAccountTokenUsageParams{ThreadID: &id})`
+for thread-specific usage. `ThreadForkOptions.ExcludeTurns` is supported again.
+Low-level resume and turn-start parameters expose the new history and per-turn
+options. `Thread.ProjectID` is nullable and always serializes as `projectId`, as
+required by the new protocol. Approval requests that omit `kind` decode as
+`command`, matching the upstream default for older servers.
+
+Section appearance updates distinguish omission, clearing, and replacement:
+leave `ThreadSectionUpdateParams.Appearance` nil to preserve it, assign a pointer
+to a nil `*protocol.ThreadSectionAppearance` to clear it, or point to an appearance
+value to replace it. Existing section response names remain available.
+
+`CapabilityRootLocation`, `ClientNotification`, `DynamicToolNamespaceTool`,
+`LocalShellAction`, and `ReasoningItemReasoningSummary` now use the same raw-preserving union wrappers as
+the other discriminated types. Replace direct map assignments with the
+corresponding `protocol.New<Type>(value)` constructor, and use `RawJSON()` to
+inspect the payload. Known variants validate shared required fields; unknown
+future variants continue to round-trip unchanged.
 
 ## Structured Output
 

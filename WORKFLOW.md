@@ -55,9 +55,10 @@ If Linear MCP is unavailable, proceed using the best available context and note 
 ## Quality Gates (Validation & Success Criteria)
 
 The required `Quality` workflow is secretless and runs on pushes and pull
-requests with Go 1.25.12 and patched Go 1.26.5. It checks formatting,
+requests with stable check names `Go 1.26` and `Go 1.27`, backed by pinned
+toolchains 1.26.8 and 1.27.1. It checks formatting,
 the checksum-verifying Codex installer fixtures, vet, unit tests, race tests,
-Staticcheck v0.7.0, and govulncheck v1.3.0. The Go 1.25.12 job also records an
+Staticcheck v0.8.1, and govulncheck v1.3.0. The Go 1.26 job also records an
 atomic coverage profile; a separate least-privilege job publishes it to
 Codecov with GitHub OIDC. `codecov.yml` gates project and patch coverage at 80
 percent while excluding generated files, executable examples, and credentialed

@@ -12,7 +12,7 @@ func TestManualThreadResumeResponseRoundTripsCompletePayload(t *testing.T) {
         "thread":{
             "id":"thr_1","extra":{"future":{"value":1}},"sessionId":"session_1",
             "forkedFromId":"thr_0","parentThreadId":"thr_parent","preview":"preview",
-            "ephemeral":true,"historyMode":"paginated","modelProvider":"openai",
+            "ephemeral":true,"historyMode":"paginated","modelProvider":"openai","projectId":null,
             "createdAt":10,"updatedAt":20,"recencyAt":19,
             "status":{"type":"idle"},"path":"/tmp/thread.jsonl","cwd":"/tmp/project",
             "cliVersion":"0.144.6","source":{"type":"cli"},"threadSource":"cli",
@@ -30,7 +30,8 @@ func TestManualThreadResumeResponseRoundTripsCompletePayload(t *testing.T) {
         "approvalPolicy":"never","approvalsReviewer":{"type":"user"},
         "sandbox":{"type":"readOnly"},"activePermissionProfile":{"name":"readonly"},
         "reasoningEffort":"high","multiAgentMode":"explicitRequestOnly",
-        "initialTurnsPage":{"data":[{"id":"turn_2","items":[],"itemsView":"summary","status":"completed"}],"nextCursor":"next","backwardsCursor":"back"}
+        "initialTurnsPage":{"data":[{"id":"turn_2","items":[],"itemsView":"summary","status":"completed"}],"nextCursor":"next","backwardsCursor":"back"},
+        "itemsBackwardsCursor":"items-back","turnsBackwardsCursor":"turns-back"
     }`)
 
 	var response ThreadResumeResponse

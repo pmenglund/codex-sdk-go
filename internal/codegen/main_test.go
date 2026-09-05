@@ -13,8 +13,106 @@ import (
 	"github.com/atombender/go-jsonschema/pkg/generator"
 )
 
+func TestDiscriminatedUnionSharedRequiredFields(t *testing.T) {
+	union, ok, err := parseDiscriminatedUnion("RealtimeItem", []byte(`{
+		"required":["id","sessionId"],
+		"oneOf":[
+			{"properties":{"type":{"enum":["started"]}},"required":["type"]},
+			{"properties":{"type":{"enum":["closed"]}},"required":["type","outcome"]}
+		]
+	}`))
+	if err != nil || !ok {
+		t.Fatalf("parse union: ok=%v err=%v", ok, err)
+	}
+	if got := strings.Join(union.Required["closed"], ","); got != "id,outcome,sessionId,type" {
+		t.Fatalf("required fields = %s", got)
+	}
+}
+
+func TestDiscriminatedUnionSingleVariant(t *testing.T) {
+	union, ok, err := parseDiscriminatedUnion("ImageGenerationFailure", []byte(`{
+		"oneOf":[{"properties":{"type":{"enum":["usageLimitExceeded"]}},"required":["type","limitId"]}]
+	}`))
+	if err != nil || !ok {
+		t.Fatalf("parse union: ok=%v err=%v", ok, err)
+	}
+	if len(union.Kinds) != 1 || union.Kinds[0] != "usageLimitExceeded" {
+		t.Fatalf("kinds = %v", union.Kinds)
+	}
+}
+
 const testCodexCommit = "0123456789abcdef0123456789abcdef01234567"
 const testCodexVersion = "1.2.3"
+
+func TestNullableRPCParamsPreserveLegacyCall(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ClientRequest.json")
+	if err := os.WriteFile(path, []byte(`{"oneOf":[{"properties":{"method":{"enum":["account/usage/read"]},"params":{"anyOf":[{"$ref":"#/definitions/GetAccountTokenUsageParams"},{"type":"null"}]}}}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	methods, err := loadMethods(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(methods) != 1 || methods[0].ParamsType != "*GetAccountTokenUsageParams" {
+		t.Fatalf("methods = %#v", methods)
+	}
+	methods[0].ResponseType = "GetAccountTokenUsageResponse"
+	source := string(renderClientRequests(methods, testCodexCommit))
+	for _, want := range []string{
+		"AccountUsageRead(ctx context.Context)",
+		"AccountUsageReadWithParams(ctx context.Context, params *protocol.GetAccountTokenUsageParams)",
+		"return c.AccountUsageReadWithParams(ctx, nil)",
+	} {
+		if !strings.Contains(source, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+}
+
+func TestUnsupportedRPCParamsUnionFailsClosed(t *testing.T) {
+	for _, variants := range []string{
+		`[{"$ref":"#/definitions/A"},{"$ref":"#/definitions/B"}]`,
+		`[{"$ref":"#/definitions/A"},{"$ref":"#/definitions/B"},{"type":"null"}]`,
+	} {
+		path := filepath.Join(t.TempDir(), "ClientRequest.json")
+		payload := `{"oneOf":[{"properties":{"method":{"enum":["example"]},"params":{"anyOf":` + variants + `}}}]}`
+		if err := os.WriteFile(path, []byte(payload), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := loadMethods(path); err == nil {
+			t.Fatal("unsupported union became a parameterless RPC")
+		}
+	}
+}
+
+func TestUnsupportedRPCParamsShapesFailClosed(t *testing.T) {
+	for _, shape := range []string{`{"oneOf":[{"$ref":"#/definitions/A"},{"type":"null"}]}`, `{"allOf":[{"$ref":"#/definitions/A"}]}`, `{"type":"object"}`, `{}`, `true`, `false`} {
+		path := filepath.Join(t.TempDir(), "rpc.json")
+		payload := `{"oneOf":[{"properties":{"method":{"enum":["example"]},"params":` + shape + `}}]}`
+		if err := os.WriteFile(path, []byte(payload), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := loadMethods(path); err == nil {
+			t.Errorf("request accepted unsupported params %s", shape)
+		}
+		if _, err := loadNotifications(path); err == nil {
+			t.Errorf("notification accepted unsupported params %s", shape)
+		}
+	}
+}
+
+func TestTypedUnionCannotRegressToOpaque(t *testing.T) {
+	for _, name := range []string{"CapabilityRootLocation", "DynamicToolNamespaceTool", "LocalShellAction", "ReasoningItemReasoningSummary"} {
+		source := []byte("package protocol\ntype " + name + " interface{}\n")
+		err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": source})
+		if err == nil || !strings.Contains(err.Error(), "unreviewed interface{}") {
+			t.Errorf("%s: expected typed generation guard, got %v", name, err)
+		}
+	}
+	if err := writeFallbackTypes(t.TempDir(), []string{"ClientNotification"}, map[string]struct{}{}, testCodexCommit); err == nil {
+		t.Fatal("ClientNotification regressed to an opaque fallback")
+	}
+}
 
 func TestMethodBaseName(t *testing.T) {
 	if got := methodBaseName("account/login/start"); got != "AccountLoginStart" {
@@ -527,7 +625,7 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 		"KnownJSON":            {},
 		"SanitizedMissingJSON": {},
 	}
-	fallbacks := []string{"Missing", "ClientNotification"}
+	fallbacks := []string{"Missing", "CodexAppServerProtocolV2"}
 
 	if err := writeFallbackTypes(dir, fallbacks, generated, testCodexCommit); err != nil {
 		t.Fatalf("writeFallbackTypes error: %v", err)
@@ -542,7 +640,7 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 	if !strings.Contains(string(data), "type Missing = SanitizedMissingJSON") {
 		t.Fatalf("expected Missing alias fallback")
 	}
-	if !strings.Contains(string(data), "type ClientNotification interface{}") {
+	if !strings.Contains(string(data), "type CodexAppServerProtocolV2 interface{}") {
 		t.Fatalf("expected allowlisted interface fallback")
 	}
 

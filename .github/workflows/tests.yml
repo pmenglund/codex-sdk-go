@@ -16,12 +16,18 @@ permissions:
 
 jobs:
   quality:
-    name: Go ${{ matrix.go-version }}
+    name: Go ${{ matrix.go-series }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.25.12", "1.26.5"]
+        include:
+          - go-series: "1.26"
+            go-version: "1.26.8"
+            coverage: true
+          - go-series: "1.27"
+            go-version: "1.27.1"
+            coverage: false
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,7 +70,7 @@ jobs:
         run: .github/scripts/validate-sdk-version-transition.sh "$BASE_SHA" HEAD
 
       - name: Validate workflows
-        if: matrix.go-version == '1.25.12'
+        if: matrix.coverage
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
 
       - name: Vet
@@ -73,14 +79,14 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          if [[ "${{ matrix.go-version }}" == "1.25.12" ]]; then
+          if [[ "${{ matrix.coverage }}" == "true" ]]; then
             go test -covermode=atomic -coverprofile=coverage.out ./...
           else
             go test ./...
           fi
 
       - name: Preserve coverage profile
-        if: matrix.go-version == '1.25.12'
+        if: matrix.coverage
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage
@@ -93,7 +99,7 @@ jobs:
 
       - name: Install pinned analyzers
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
+          go install honnef.co/go/tools/cmd/staticcheck@v0.8.1
           go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
 
       - name: Staticcheck

@@ -313,6 +313,7 @@ func TestThreadForkOptionsToParams(t *testing.T) {
 		BaseInstructions:      "base",
 		DeveloperInstructions: "dev",
 		Ephemeral:             &ephemeral,
+		ExcludeTurns:          &ephemeral,
 	}
 
 	params, err := opts.toParams("thr_123")
@@ -334,6 +335,7 @@ func TestThreadForkOptionsToParams(t *testing.T) {
 	assertEqual(t, "baseInstructions", params.BaseInstructions, stringPtr("base"))
 	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
 	assertEqual(t, "ephemeral", params.Ephemeral, &ephemeral)
+	assertEqual(t, "excludeTurns", params.ExcludeTurns, &ephemeral)
 }
 
 func TestThreadGoalResponsesWithReplay(t *testing.T) {
