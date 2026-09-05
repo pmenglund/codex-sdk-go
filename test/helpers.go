@@ -55,6 +55,8 @@ type RealClientOptions struct {
 	DisableAutoClose bool
 	Secrets          []string
 	RequestRecorder  *RequestRecorder
+	// ConfigOverrides configures the isolated app-server, including local test providers.
+	ConfigOverrides []string
 }
 
 // RequestRecorder captures outbound JSON-RPC requests without changing them.
@@ -119,9 +121,13 @@ func NewRealClient(t testing.TB, opts RealClientOptions) (*codex.Codex, context.
 	t.Cleanup(cancel)
 
 	stderr := LockedBuffer{secrets: secretMarkers(opts.Secrets...)}
-	clientOptions := codex.Options{Spawn: codex.SpawnOptions{CodexPath: codexPath, Stderr: &stderr}}
+	clientOptions := codex.Options{Spawn: codex.SpawnOptions{CodexPath: codexPath, Stderr: &stderr, ConfigOverrides: opts.ConfigOverrides}}
 	if opts.RequestRecorder != nil {
-		transport, spawnErr := rpc.SpawnStdio(context.WithoutCancel(ctx), codexPath, []string{"app-server"}, &stderr)
+		args := []string{"app-server"}
+		for _, override := range opts.ConfigOverrides {
+			args = append(args, "--config", override)
+		}
+		transport, spawnErr := rpc.SpawnStdio(context.WithoutCancel(ctx), codexPath, args, &stderr)
 		if spawnErr != nil {
 			t.Fatalf("spawn real codex app-server: %v\nstderr:\n%s", spawnErr, stderr.String())
 		}
@@ -348,17 +354,6 @@ func IsExpectedUnmaterializedThreadError(err error) bool {
 	}
 	message := strings.ToLower(err.Error())
 	return strings.Contains(message, "not materialized") || strings.Contains(message, "no rollout found")
-}
-
-// IsExpectedUnmaterializedArchiveError identifies expected empty archive state errors.
-func IsExpectedUnmaterializedArchiveError(err error) bool {
-	if err == nil {
-		return false
-	}
-	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "failed to read unarchived thread") ||
-		strings.Contains(message, "no archived rollout found") ||
-		strings.Contains(message, "thread-store internal error")
 }
 
 // AssertJSONContains marshals value and checks that it contains want.
