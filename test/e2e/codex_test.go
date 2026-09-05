@@ -76,10 +76,10 @@ func TestRealCodexHighLevelCoverageMatrix(t *testing.T) {
 		"Thread.Read":          "TestRealCodexThreadLifecycleHelpers",
 		"SetThreadName":        "TestRealCodexThreadLifecycleHelpers",
 		"Thread.SetName":       "TestRealCodexThreadLifecycleHelpers",
-		"ArchiveThread":        "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
-		"Thread.Archive":       "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
-		"UnarchiveThread":      "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
-		"Thread.Unarchive":     "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
+		"ArchiveThread":        "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
+		"Thread.Archive":       "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
+		"UnarchiveThread":      "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
+		"Thread.Unarchive":     "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
 		"CompactThread":        "TestRealCodexThreadLifecycleHelpers",
 		"Thread.Compact":       "TestRealCodexThreadLifecycleHelpers",
 		"ForkThread":           "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
@@ -176,28 +176,6 @@ func TestRealCodexThreadLifecycleHelpers(t *testing.T) {
 	}
 	if _, err := thread.SetName(ctx, "codex-sdk-go e2e thread"); err != nil {
 		t.Fatalf("set thread name through thread helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if _, err := client.ArchiveThread(ctx, thread.ID()); err != nil && !test.IsExpectedUnmaterializedThreadError(err) {
-		t.Fatalf("archive thread through client helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	unarchived, err := client.UnarchiveThread(ctx, thread.ID())
-	if err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
-		t.Fatalf("unarchive thread through client helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if err == nil && unarchived.Thread.ID != thread.ID() {
-		t.Fatalf("client unarchive returned thread %q, want %q", unarchived.Thread.ID, thread.ID())
-	}
-
-	threadForMethods := test.StartThread(t, client, ctx, stderr, cwd)
-	if _, err := threadForMethods.Archive(ctx); err != nil && !test.IsExpectedUnmaterializedThreadError(err) {
-		t.Fatalf("archive thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	methodUnarchived, err := threadForMethods.Unarchive(ctx)
-	if err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
-		t.Fatalf("unarchive thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if err == nil && methodUnarchived.Thread.ID != threadForMethods.ID() {
-		t.Fatalf("thread unarchive returned thread %q, want %q", methodUnarchived.Thread.ID, threadForMethods.ID())
 	}
 
 	threadForClientCompact := test.StartThread(t, client, ctx, stderr, cwd)

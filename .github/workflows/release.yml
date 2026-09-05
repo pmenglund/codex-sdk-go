@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate_sha:
-        description: Exact merged main commit from the failed release run
+        description: Exact failed candidate or merged corrective commit
         required: true
         type: string
 
@@ -36,7 +36,7 @@ jobs:
             exit 1
           fi
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -z "$CANDIDATE_SHA_INPUT" ]]; then
-            echo "Manual release retries require the exact candidate_sha from the failed run." >&2
+            echo "Manual releases require the exact failed candidate or merged corrective candidate_sha." >&2
             exit 1
           fi
           if [[ -n "$CANDIDATE_SHA_INPUT" && ! "$CANDIDATE_SHA_INPUT" =~ ^[0-9a-f]{40}$ ]]; then

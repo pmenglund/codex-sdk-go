@@ -75,8 +75,9 @@ constructs `CODEX_E2E_LOGIN_PARAMS_JSON` and runs
 
 `.github/sdk-version` is the authoritative SDK release version and is separate
 from the pinned Codex CLI version. A protected `main` merge that changes this
-file automatically starts `Release`; manual dispatch must name the exact merged
-`main` commit from the failed run. The workflow derives the tag from that commit, passes reusable
+file automatically starts `Release`. Manual dispatch must name the exact failed
+candidate for an unchanged retry or the exact merged corrective commit after
+fixing a failed release. The workflow derives the tag from that commit, passes reusable
 quality and trusted e2e workflows, and receives approval from the protected
 `release` environment. Its publish job has only `contents: write`, refuses
 conflicting or non-increasing tags, treats an existing tag at the exact gated

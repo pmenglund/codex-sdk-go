@@ -12,10 +12,20 @@ Workflow: `WORKFLOW.md`. This plan records the direct maintenance request of 202
 
 ## Progress
 
+- [x] (2026-09-05) PR #4 merged as 28b645f with stable Go 1.26/1.27 checks and Codecov project 80.6%/patch 97.0%. Release 33984848890 failed on empty-thread unarchive; v0.153.4 remains unpublished.
+- [x] (2026-09-05) User approved the lifecycle correction, local mock provider, required E2E reviewer, and protected release recovery. Focused planner proposal validated against exact upstream 0.153.4 fixtures. Reproduced the old test failure three times against checksum-verified 0.153.4 with credentials removed and provider confined to loopback.
+- [x] (2026-09-05) Separated empty-thread rejection from persisted archive/unarchive success. Both API forms verify restored ID, history, and archived/unarchived list membership against the local Responses fixture; ten consecutive race-enabled runs passed on exact CLI 0.153.4.
+- [x] (2026-09-05) E2E now requires pmenglund (32618), matching release; before/after verification preserved branch policy, admin bypass, wait behavior, and environment identity. Clarified unchanged-retry versus corrected-candidate dispatch without changing validation logic.
+- [x] (2026-09-05) Full Go 1.26.8/1.27.1 vet/unit/race/Staticcheck/govulncheck gates passed; tagged E2E static analysis, actionlint, and release identity/transition fixtures passed. Full tagged E2E passed with race detection on Go 1.25.14 using no credentials and loopback model routing; credentialed cases retained their normal skips.
+- [x] (2026-09-05) QA found no issues. Security found mock children inherited hosted login JSON; both credential variables are now cleared and retained only as redaction/leak-check markers. An actual child-process regression failed on both spawn paths before the fix and passed afterward. All three focused tests passed ten race-enabled repetitions; the full uncredentialed Go 1.25.14 tagged suite and tagged static analysis passed again. Security confirmed the finding closed.
+- [x] (2026-09-05) Published correction 8ad4181 in PR #5. Hosted Quality and Codecov project passed; patch coverage exposed five shared-helper lines absent from the unit profile. Added a fake-CLI unit regression proving literal config argument forwarding and initialization on both spawn paths; all five changed lines are exercised without changing coverage policy. Full unit/static checks passed; the helper package passed race tests on Go 1.25.14/1.26.8/1.27.1.
+- [ ] Publish the reviewed unit regression and merge PR #5 after all hosted checks pass.
+- [ ] Dispatch Release for the exact corrective merge SHA and hand off at required human approval; publish only through the protected workflow.
+
 - [x] (2026-09-05) Published reviewed protocol commit c581768 in PR #4; both Go jobs and the coverage-upload job passed. The later Codecov report failed project coverage at 74.7%, despite 95.5% patch coverage.
 - [x] (2026-09-05) Inspected the user's Go 1.26/1.27 and Codecov-comment follow-up, obtained the required focused planner proposal, and verified its named functions and fixtures locally.
 - [x] (2026-09-05) Added stable Go 1.26/1.27 checks with exact toolchains 1.26.8/1.27.1 and Staticcheck 0.8.1; expanded lifecycle, schema, approval, and overload tests without changing coverage policy. Both full Go gates passed; final added tests passed race/static analysis on both families. Go 1.25.14 unit/race compatibility checks also passed.
-- [ ] Verify both new Go families and hosted Codecov project/patch status, update authorized required checks, then merge through PR #4 and monitor Release.
+- [x] (2026-09-05) Verified both new hosted Go checks and Codecov statuses, updated the two required Go names, merged PR #4, and identified the failed lifecycle release gate.
 
 - [x] (2026-09-05 UTC) Verified clean main and origin/main at `6a14316cd1a6a2cc206b7d91b49b043dc3524d57`; fetched upstream and confirmed latest stable rust-v0.153.4 and latest SDK v0.147.0.
 - [x] (2026-09-05 UTC) Completed the required planner pass; verified its generator, metadata, compatibility, and release commands against current files. Created `codex/update-protocol-v0.153.4` before generation.
@@ -25,7 +35,7 @@ Workflow: `WORKFLOW.md`. This plan records the direct maintenance request of 202
 - [x] (2026-09-05 UTC) Complete updater passed with Go 1.26.8: deterministic generation, formatting, installer/metadata fixtures, vet, unit/race tests, Staticcheck, govulncheck, and diff check. Go 1.25.14 independently passed coverage/unit/race tests, vet, Staticcheck, govulncheck, and actionlint. Release metadata fixtures also passed.
 - [x] (2026-09-05 UTC) QA, architecture, and security reviews completed; all findings fixed and independently confirmed closed. The reviewed updater passed; all Go gates passed again after the final empty-approval-kind guard, with a focused minimum-Go race check.
 - [x] (2026-09-05) Committed and published original protocol update in PR #4.
-- [ ] Publish reviewed follow-up, confirm hosted Codecov thresholds, replace the two required Go names as authorized, and merge PR #4.
+- [x] (2026-09-05) Published and merged the reviewed Go/coverage follow-up in PR #4 after every required and Codecov check passed.
 - [ ] Monitor Release through required human approval and verify the immutable tag and merged commit.
 
 ## Surprises & Discoveries
@@ -41,6 +51,12 @@ Upstream declares Rust 1.95.0, but the installed Homebrew Rust 1.94.0 successful
 The new manual wire regression tests first failed on thread model/project/effort, resume/fork excludeTurns, per-turn service tier and trigger, approval kind, and the MCP policy amendment constructor. Generator regression tests also failed because single-variant unions were skipped and shared required fields were not included in variant validation. Both generator fixes now pass the complete generator test package.
 
 ## Decision Log
+
+The release correction keeps SDK version 0.153.4 and pinned CLI 0.153.4. The previous version is unpublished, and the version-transition validator correctly forbids a further bump. An unchanged retry uses the failed candidate SHA; a code correction uses the exact reviewed corrective merge SHA. Clarify those two paths in the workflow input, WORKFLOW.md, and update skill, without relaxing SHA/main-ancestry/tag or approval gates.
+
+Add test-only ConfigOverrides passthrough and a loopback HTTP Responses fixture matching upstream rust-v0.153.4's response.created/output_item.done/completed sequence. Complete a deterministic turn before archive and require successful archive/unarchive and restored state. Empty-thread failures are asserted separately; do not broaden tolerated archive errors or retry active-writer failures. No production SDK wrapper or generated API change is planned. Detailed baseline logs stay in /private/tmp/codex-sdk-e2e-before.log; final results will be summarized here and in the corrective PR.
+
+User approval includes configuring e2e's required reviewer as pmenglund (32618), matching release's prevent_self_review=false and keeping existing branch policy/admin bypass/wait-timer behavior. Never approve either environment on the user's behalf.
 
 The 2026-09-05 user follow-up explicitly authorizes updating required Go checks to families 1.26 and 1.27 and addressing Codecov comment 5549891090 on PR #4. Use stable check names with exact current toolchain pins 1.26.8 and 1.27.1. Preserve the SDK minimum in go.mod because this request concerns CI. Staticcheck v0.7.0 cannot decode Go 1.27 export data; v0.8.1 passed both CI toolchains and is pinned in CI, the updater, and contributor guidance. Preserve Coverage report, strict checking, app bindings, and all other branch protections when replacing the old Go contexts.
 
@@ -64,9 +80,9 @@ Use one flat release plan, matching repository convention. Keep large schema inv
 
 ## Outcomes & Retrospective
 
-PR #4 contains the reviewed protocol update. The requested follow-up has passed local Go 1.26.8/1.27.1 gates and minimum Go 1.25.14 unit/race checks. Follow-up QA found a POSIX fixture portability gap (fixed with a Windows skip) and future minimum-version CI coverage gap. Keep the two explicitly requested CI families and unchanged SDK minimum; the separate minimum-version run establishes compatibility for this change. Security review corrected stale analyzer guidance and confirmed unchanged CI permissions. The upload job does not enforce Codecov thresholds, so separately require both exact-head Codecov project and patch statuses before this merge. Adding those statuses to permanent branch protection remains outside the scoped two-name update. Hosted follow-up acceptance and release remain pending.
+The protocol/SDK 0.153.4 update is merged in PR #4 at 28b645f. Generation was deterministic and all local and hosted Quality checks passed. Codecov project coverage rose to 80.6%, and patch coverage reached 97.0%. Release 33984848890 exposed an invalid test sequence: unarchive followed a tolerated archive failure on a thread without persisted history. No v0.153.4 tag was published.
 
-Generation and compatibility work are complete for protocol/SDK 0.153.4. Deterministic generation, focused regressions, full unit/race tests, and Staticcheck passed. Both patched Go toolchains passed all local gates with no vulnerabilities found. QA, architecture, and security review findings are resolved and confirmed closed. The local update is ready for its protected PR; live branch protection still refers to the old version-specific check names. GitHub checks, merge, human environment approval, and immutable tag publication remain delivery gates.
+The corrective branch now uses separate empty-thread rejection tests and strict persisted-thread round trips with a real CLI and loopback mock provider. The original failure reproduced three times; the corrected tests passed ten race-enabled repetitions, and the full uncredentialed tagged suite passed on the release Go version. Both CI Go families passed all local gates. Required human E2E approval is restored. QA and security review are complete; the credential-isolation finding is fixed and verified with a failing-before/passing-after child-process regression. Hosted acceptance and release approval/publication remain pending at this checkpoint.
 
 ## Context and Orientation
 
@@ -110,7 +126,7 @@ The updater must pass two byte-identical generations, formatting, metadata/insta
 
 ## Idempotence and Recovery
 
-Recheck the worktree before every mutation and stage only named reviewed files. Preserve concurrent changes. Do not edit upstream toolchain requirements or downgrade the selected tag to avoid an environment error. If a build fails, record the exact failure and use a compatible toolchain where available. Before publication the feature branch is reversible; after publication repair with a higher SDK version. A failed Release retry requires the exact merged candidate SHA, never an arbitrary tag. Never push main directly, create or move local SDK tags, approve GitHub environments, or bypass failed checks.
+Recheck the worktree before every mutation and stage only named reviewed files. Preserve concurrent changes. Do not edit upstream toolchain requirements or downgrade the selected tag to avoid an environment error. If a build fails, record the exact failure and use a compatible toolchain where available. Before publication the feature branch is reversible; after publication repair with a higher SDK version. An unchanged Release retry uses its exact failed candidate SHA; a reviewed code correction uses its exact corrective merge SHA with the unpublished SDK version. Never supply an arbitrary tag. Never push main directly, create or move local SDK tags, approve GitHub environments, or bypass failed checks.
 
 ## Artifacts and Notes
 
