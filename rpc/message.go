@@ -105,21 +105,26 @@ type JSONRPCResponse struct {
 
 // JSONRPCError represents a JSON-RPC error response.
 type JSONRPCError struct {
-	ID    RequestID         `json:"id"`
-	Error JSONRPCErrorError `json:"error"`
+	ID    RequestID          `json:"id"`
+	Error JSONRPCErrorDetail `json:"error"`
 }
 
-// JSONRPCErrorError describes the error payload.
-type JSONRPCErrorError struct {
+// JSONRPCErrorDetail describes the error payload.
+type JSONRPCErrorDetail struct {
 	Code    int64           `json:"code"`
 	Message string          `json:"message"`
 	Data    json.RawMessage `json:"data,omitempty"`
 }
 
+// JSONRPCErrorError is the former name of JSONRPCErrorDetail.
+//
+// Deprecated: use JSONRPCErrorDetail.
+type JSONRPCErrorError = JSONRPCErrorDetail
+
 // ResponseError wraps a JSON-RPC error as a Go error.
 type ResponseError struct {
 	ID     RequestID
-	Detail JSONRPCErrorError
+	Detail JSONRPCErrorDetail
 }
 
 func (err *ResponseError) Error() string {

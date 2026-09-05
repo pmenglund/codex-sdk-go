@@ -15,6 +15,19 @@ import (
 
 var turnInterruptCleanupTimeout = 2 * time.Second
 
+// ErrTurnConsumptionMode identifies attempts to mix Run, Next, and Stream on
+// the same TurnHandle or to consume it concurrently.
+var ErrTurnConsumptionMode = errors.New("turn handle already has a consumer")
+
+type turnConsumptionMode uint8
+
+const (
+	turnConsumptionUnset turnConsumptionMode = iota
+	turnConsumptionRun
+	turnConsumptionNext
+	turnConsumptionStream
+)
+
 // TurnHandle controls a running turn.
 type TurnHandle struct {
 	client   *rpc.Client
@@ -22,9 +35,13 @@ type TurnHandle struct {
 	logger   *slog.Logger
 	stream   *TurnStream
 
-	mu     sync.Mutex
-	turnID string
-	closed bool
+	mu           sync.Mutex
+	turnID       string
+	closed       bool
+	mode         turnConsumptionMode
+	runStarted   bool
+	streamIssued bool
+	consumeMu    sync.Mutex
 }
 
 // StartTurn sends structured inputs and returns a handle for the running turn.
@@ -56,8 +73,8 @@ func (t *Thread) StartTurn(ctx context.Context, inputs []Input, opts *TurnOption
 		logger:   logger,
 		stream:   &TurnStream{iter: iter, threadID: t.id},
 	}
-	if id, ok := turnIDFromAny(response); ok {
-		handle.setTurnID(id)
+	if response != nil && response.Turn.ID != "" {
+		handle.setTurnID(response.Turn.ID)
 	}
 	return handle, nil
 }
@@ -67,14 +84,41 @@ func (h *TurnHandle) Stream() (*TurnStream, error) {
 	if err := h.ensureReady(); err != nil {
 		return nil, err
 	}
-	return h.stream, nil
+	if err := h.beginStream(); err != nil {
+		return nil, err
+	}
+	return &TurnStream{next: func(ctx context.Context) (rpc.Notification, error) {
+		return h.next(ctx, turnConsumptionStream)
+	}, close: h.Close}, nil
+}
+
+func (h *TurnHandle) beginStream() error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.mode != turnConsumptionUnset || h.streamIssued {
+		return ErrTurnConsumptionMode
+	}
+	h.mode = turnConsumptionStream
+	h.streamIssued = true
+	return nil
 }
 
 // Next returns the next notification for this turn and updates the handle state.
 func (h *TurnHandle) Next(ctx context.Context) (rpc.Notification, error) {
+	return h.next(ctx, turnConsumptionNext)
+}
+
+func (h *TurnHandle) next(ctx context.Context, mode turnConsumptionMode) (rpc.Notification, error) {
 	if err := h.ensureReady(); err != nil {
 		return rpc.Notification{}, err
 	}
+	if err := h.claimConsumption(mode); err != nil {
+		return rpc.Notification{}, err
+	}
+	if !h.consumeMu.TryLock() {
+		return rpc.Notification{}, ErrTurnConsumptionMode
+	}
+	defer h.consumeMu.Unlock()
 	note, err := h.stream.Next(ctx)
 	if err != nil {
 		return note, err
@@ -90,11 +134,14 @@ func (h *TurnHandle) Run(ctx context.Context) (*TurnResult, error) {
 	if err := h.ensureReady(); err != nil {
 		return nil, err
 	}
+	if err := h.beginRun(); err != nil {
+		return nil, err
+	}
 	defer h.Close()
 
 	result := &TurnResult{}
 	for {
-		note, err := h.Next(ctx)
+		note, err := h.next(ctx, turnConsumptionRun)
 		if err != nil {
 			if err == context.Canceled || err == context.DeadlineExceeded || errors.Is(err, rpc.ErrNotificationOverflow) {
 				h.interruptAfterRunError(ctx, err)
@@ -105,28 +152,52 @@ func (h *TurnHandle) Run(ctx context.Context) (*TurnResult, error) {
 		updateTurnResult(result, note)
 
 		if note.Method == "turn/completed" {
-			if turnErr := notificationError(note); turnErr != nil {
+			if turnErr := turnErrorFromNotification(note, result); turnErr != nil {
 				resolveLogger(h.logger).Error("codex turn failed", "thread_id", h.threadID, "turn_id", result.TurnID, "error", turnErr)
-				return nil, turnErr
+				return result, turnErr
 			}
 			resolveLogger(h.logger).Info("codex turn completed", "thread_id", h.threadID, "turn_id", result.TurnID)
 			return result, nil
 		}
 		if note.Method == "turn/failed" {
-			turnErr := notificationError(note)
+			turnErr := turnErrorFromNotification(note, result)
 			if turnErr == nil {
-				turnErr = errors.New("turn failed")
+				turnErr = &TurnError{Result: result, Method: note.Method, Raw: append(json.RawMessage(nil), note.Raw...)}
 			}
 			resolveLogger(h.logger).Error("codex turn failed", "thread_id", h.threadID, "turn_id", result.TurnID, "error", turnErr)
-			return nil, turnErr
+			return result, turnErr
 		}
 		if note.Method == "error" {
-			if turnErr := notificationError(note); turnErr != nil {
+			if turnErr := turnErrorFromNotification(note, result); turnErr != nil {
 				resolveLogger(h.logger).Error("codex turn failed", "thread_id", h.threadID, "turn_id", result.TurnID, "error", turnErr)
-				return nil, turnErr
+				return result, turnErr
 			}
 		}
 	}
+}
+
+func (h *TurnHandle) claimConsumption(requested turnConsumptionMode) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.mode == turnConsumptionUnset {
+		h.mode = requested
+		return nil
+	}
+	if h.mode != requested {
+		return ErrTurnConsumptionMode
+	}
+	return nil
+}
+
+func (h *TurnHandle) beginRun() error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.mode != turnConsumptionUnset || h.runStarted {
+		return ErrTurnConsumptionMode
+	}
+	h.mode = turnConsumptionRun
+	h.runStarted = true
+	return nil
 }
 
 func (h *TurnHandle) interruptAfterRunError(ctx context.Context, cause error) {
@@ -283,28 +354,4 @@ func buildTurnSteerParams(threadID, turnID string, inputs []Input) (protocol.Tur
 		params.Input = append(params.Input, wrapped)
 	}
 	return params, nil
-}
-
-func turnIDFromAny(value any) (string, bool) {
-	if value == nil {
-		return "", false
-	}
-	data, err := JSON(value)
-	if err != nil {
-		return "", false
-	}
-	var wrapper struct {
-		Turn *protocol.TurnNotificationTurn `json:"turn,omitempty"`
-		ID   string                         `json:"id,omitempty"`
-	}
-	if err := json.Unmarshal(data, &wrapper); err != nil {
-		return "", false
-	}
-	if wrapper.Turn != nil && wrapper.Turn.ID != "" {
-		return wrapper.Turn.ID, true
-	}
-	if wrapper.ID != "" {
-		return wrapper.ID, true
-	}
-	return "", false
 }

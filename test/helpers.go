@@ -55,6 +55,8 @@ type RealClientOptions struct {
 	DisableAutoClose bool
 	Secrets          []string
 	RequestRecorder  *RequestRecorder
+	// ConfigOverrides configures the isolated app-server, including local test providers.
+	ConfigOverrides []string
 }
 
 // RequestRecorder captures outbound JSON-RPC requests without changing them.
@@ -119,9 +121,13 @@ func NewRealClient(t testing.TB, opts RealClientOptions) (*codex.Codex, context.
 	t.Cleanup(cancel)
 
 	stderr := LockedBuffer{secrets: secretMarkers(opts.Secrets...)}
-	clientOptions := codex.Options{Spawn: codex.SpawnOptions{CodexPath: codexPath, Stderr: &stderr}}
+	clientOptions := codex.Options{Spawn: codex.SpawnOptions{CodexPath: codexPath, Stderr: &stderr, ConfigOverrides: opts.ConfigOverrides}}
 	if opts.RequestRecorder != nil {
-		transport, spawnErr := rpc.SpawnStdio(context.WithoutCancel(ctx), codexPath, []string{"app-server"}, &stderr)
+		args := []string{"app-server"}
+		for _, override := range opts.ConfigOverrides {
+			args = append(args, "--config", override)
+		}
+		transport, spawnErr := rpc.SpawnStdio(context.WithoutCancel(ctx), codexPath, args, &stderr)
 		if spawnErr != nil {
 			t.Fatalf("spawn real codex app-server: %v\nstderr:\n%s", spawnErr, stderr.String())
 		}
@@ -350,17 +356,6 @@ func IsExpectedUnmaterializedThreadError(err error) bool {
 	return strings.Contains(message, "not materialized") || strings.Contains(message, "no rollout found")
 }
 
-// IsExpectedUnmaterializedArchiveError identifies expected empty archive state errors.
-func IsExpectedUnmaterializedArchiveError(err error) bool {
-	if err == nil {
-		return false
-	}
-	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "failed to read unarchived thread") ||
-		strings.Contains(message, "no archived rollout found") ||
-		strings.Contains(message, "thread-store internal error")
-}
-
 // AssertJSONContains marshals value and checks that it contains want.
 func AssertJSONContains(t testing.TB, label string, value any, want string) {
 	t.Helper()
@@ -390,13 +385,13 @@ func AssertNoSecretLeak(t testing.TB, stderr *LockedBuffer, secrets ...string) {
 }
 
 type turnPayload struct {
-	ThreadID   string                          `json:"threadId,omitempty"`
-	TurnID     string                          `json:"turnId,omitempty"`
-	Turn       *protocol.TurnNotificationTurn  `json:"turn,omitempty"`
-	Item       json.RawMessage                 `json:"item,omitempty"`
-	WillRetry  *bool                           `json:"willRetry,omitempty"`
-	Error      *protocol.TurnNotificationError `json:"error,omitempty"`
-	TokenUsage *protocol.ThreadTokenUsage      `json:"tokenUsage,omitempty"`
+	ThreadID   string                     `json:"threadId,omitempty"`
+	TurnID     string                     `json:"turnId,omitempty"`
+	Turn       *protocol.Turn             `json:"turn,omitempty"`
+	Item       json.RawMessage            `json:"item,omitempty"`
+	WillRetry  *bool                      `json:"willRetry,omitempty"`
+	Error      *protocol.TurnError        `json:"error,omitempty"`
+	TokenUsage *protocol.ThreadTokenUsage `json:"tokenUsage,omitempty"`
 }
 
 func updateTurnResult(result *codex.TurnResult, note rpc.Notification) {
@@ -421,7 +416,7 @@ func updateTurnResult(result *codex.TurnResult, note rpc.Notification) {
 			result.TurnID = payload.Turn.ID
 		}
 		if payload.Turn != nil && payload.Turn.Status != "" {
-			result.Status = payload.Turn.Status
+			result.Status = string(payload.Turn.Status)
 		}
 		if payload.Turn != nil && payload.Turn.Error != nil && payload.Turn.Error.Message != "" {
 			result.ErrorMessage = payload.Turn.Error.Message
@@ -481,9 +476,11 @@ func parseTurnNotification(note rpc.Notification) (turnPayload, error) {
 		case protocol.TurnNotification:
 			return turnPayload{ThreadID: value.ThreadID, Turn: value.Turn}, nil
 		case protocol.ItemCompletedNotification:
-			return turnPayload{ThreadID: value.ThreadID, Item: value.Item}, nil
+			return turnPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, Item: value.Item.RawJSON()}, nil
 		case protocol.ErrorNotification:
-			return turnPayload{ThreadID: value.ThreadID, WillRetry: value.WillRetry, Error: value.Error}, nil
+			willRetry := value.WillRetry
+			detail := value.Error
+			return turnPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, WillRetry: &willRetry, Error: &detail}, nil
 		case protocol.ThreadTokenUsageUpdatedNotification:
 			return turnPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, TokenUsage: &value.TokenUsage}, nil
 		}

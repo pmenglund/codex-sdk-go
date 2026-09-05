@@ -23,6 +23,9 @@ expect_failure() {
 }
 
 expect_failure 0.146.0
+expect_failure v00.146.0
+expect_failure v0.0146.0
+expect_failure v0.146.00
 expect_failure v0.144.9
 expect_failure v0.145.0
 expect_failure v0.144.0

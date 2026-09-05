@@ -6,14 +6,113 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/atombender/go-jsonschema/pkg/generator"
 )
 
+func TestDiscriminatedUnionSharedRequiredFields(t *testing.T) {
+	union, ok, err := parseDiscriminatedUnion("RealtimeItem", []byte(`{
+		"required":["id","sessionId"],
+		"oneOf":[
+			{"properties":{"type":{"enum":["started"]}},"required":["type"]},
+			{"properties":{"type":{"enum":["closed"]}},"required":["type","outcome"]}
+		]
+	}`))
+	if err != nil || !ok {
+		t.Fatalf("parse union: ok=%v err=%v", ok, err)
+	}
+	if got := strings.Join(union.Required["closed"], ","); got != "id,outcome,sessionId,type" {
+		t.Fatalf("required fields = %s", got)
+	}
+}
+
+func TestDiscriminatedUnionSingleVariant(t *testing.T) {
+	union, ok, err := parseDiscriminatedUnion("ImageGenerationFailure", []byte(`{
+		"oneOf":[{"properties":{"type":{"enum":["usageLimitExceeded"]}},"required":["type","limitId"]}]
+	}`))
+	if err != nil || !ok {
+		t.Fatalf("parse union: ok=%v err=%v", ok, err)
+	}
+	if len(union.Kinds) != 1 || union.Kinds[0] != "usageLimitExceeded" {
+		t.Fatalf("kinds = %v", union.Kinds)
+	}
+}
+
 const testCodexCommit = "0123456789abcdef0123456789abcdef01234567"
 const testCodexVersion = "1.2.3"
+
+func TestNullableRPCParamsPreserveLegacyCall(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ClientRequest.json")
+	if err := os.WriteFile(path, []byte(`{"oneOf":[{"properties":{"method":{"enum":["account/usage/read"]},"params":{"anyOf":[{"$ref":"#/definitions/GetAccountTokenUsageParams"},{"type":"null"}]}}}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	methods, err := loadMethods(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(methods) != 1 || methods[0].ParamsType != "*GetAccountTokenUsageParams" {
+		t.Fatalf("methods = %#v", methods)
+	}
+	methods[0].ResponseType = "GetAccountTokenUsageResponse"
+	source := string(renderClientRequests(methods, testCodexCommit))
+	for _, want := range []string{
+		"AccountUsageRead(ctx context.Context)",
+		"AccountUsageReadWithParams(ctx context.Context, params *protocol.GetAccountTokenUsageParams)",
+		"return c.AccountUsageReadWithParams(ctx, nil)",
+	} {
+		if !strings.Contains(source, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+}
+
+func TestUnsupportedRPCParamsUnionFailsClosed(t *testing.T) {
+	for _, variants := range []string{
+		`[{"$ref":"#/definitions/A"},{"$ref":"#/definitions/B"}]`,
+		`[{"$ref":"#/definitions/A"},{"$ref":"#/definitions/B"},{"type":"null"}]`,
+	} {
+		path := filepath.Join(t.TempDir(), "ClientRequest.json")
+		payload := `{"oneOf":[{"properties":{"method":{"enum":["example"]},"params":{"anyOf":` + variants + `}}}]}`
+		if err := os.WriteFile(path, []byte(payload), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := loadMethods(path); err == nil {
+			t.Fatal("unsupported union became a parameterless RPC")
+		}
+	}
+}
+
+func TestUnsupportedRPCParamsShapesFailClosed(t *testing.T) {
+	for _, shape := range []string{`{"oneOf":[{"$ref":"#/definitions/A"},{"type":"null"}]}`, `{"allOf":[{"$ref":"#/definitions/A"}]}`, `{"type":"object"}`, `{}`, `true`, `false`} {
+		path := filepath.Join(t.TempDir(), "rpc.json")
+		payload := `{"oneOf":[{"properties":{"method":{"enum":["example"]},"params":` + shape + `}}]}`
+		if err := os.WriteFile(path, []byte(payload), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := loadMethods(path); err == nil {
+			t.Errorf("request accepted unsupported params %s", shape)
+		}
+		if _, err := loadNotifications(path); err == nil {
+			t.Errorf("notification accepted unsupported params %s", shape)
+		}
+	}
+}
+
+func TestTypedUnionCannotRegressToOpaque(t *testing.T) {
+	for _, name := range []string{"CapabilityRootLocation", "DynamicToolNamespaceTool", "LocalShellAction", "ReasoningItemReasoningSummary"} {
+		source := []byte("package protocol\ntype " + name + " interface{}\n")
+		err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": source})
+		if err == nil || !strings.Contains(err.Error(), "unreviewed interface{}") {
+			t.Errorf("%s: expected typed generation guard, got %v", name, err)
+		}
+	}
+	if err := writeFallbackTypes(t.TempDir(), []string{"ClientNotification"}, map[string]struct{}{}, testCodexCommit); err == nil {
+		t.Fatal("ClientNotification regressed to an opaque fallback")
+	}
+}
 
 func TestMethodBaseName(t *testing.T) {
 	if got := methodBaseName("account/login/start"); got != "AccountLoginStart" {
@@ -24,6 +123,19 @@ func TestMethodBaseName(t *testing.T) {
 	}
 	if got := methodName(""); got != "Unknown" {
 		t.Fatalf("expected Unknown, got %s", got)
+	}
+	for input, want := range map[string]string{
+		"McpServerOauthLoginParams": "MCPServerOAuthLoginParams",
+		"ThreadIdURL":               "ThreadIDURL",
+		"JSONRPCMessage":            "JSONRPCMessage",
+		"HttpSseUuid":               "HTTPSSEUUID",
+	} {
+		if got := canonicalGoName(input); got != want {
+			t.Errorf("canonicalGoName(%q) = %q, want %q", input, got, want)
+		}
+	}
+	if got := methodName("mcpServer/oauth/login"); got != "MCPServerOAuthLogin" {
+		t.Fatalf("unexpected canonical method name: %s", got)
 	}
 }
 
@@ -40,6 +152,138 @@ func TestNormalizeGeneratedHeader(t *testing.T) {
 	unchanged := []byte("package bar\n")
 	if got := normalizeGeneratedHeader(unchanged, testCodexCommit); string(got) != string(unchanged) {
 		t.Fatalf("expected header to remain unchanged, got %q", string(got))
+	}
+}
+
+func TestDocumentExportedDeclarations(t *testing.T) {
+	source := []byte(`package protocol
+
+// Existing schema description.
+type Existing struct{}
+
+type Alias = Existing
+
+const (
+	ExportedConstant = "value"
+	unexportedConstant = "value"
+)
+
+var ExportedVariable = Existing{}
+
+func ExportedFunction() {}
+func unexportedFunction() {}
+
+func (Existing) MarshalJSON() ([]byte, error) { return nil, nil }
+`)
+
+	documented, err := documentExportedDeclarations(source)
+	if err != nil {
+		t.Fatalf("document exported declarations: %v", err)
+	}
+	text := string(documented)
+	for _, want := range []string{
+		"// Existing schema description.\ntype Existing struct{}",
+		"// Alias is a generated alias for a Codex app-server protocol type.\ntype Alias = Existing",
+		"// ExportedConstant is a generated Codex app-server protocol constant.",
+		"// ExportedVariable is a generated Codex app-server protocol variable.\nvar ExportedVariable = Existing{}",
+		"// ExportedFunction implements generated Codex app-server protocol behavior.",
+		"// MarshalJSON implements generated Codex app-server protocol behavior.\nfunc (Existing) MarshalJSON()",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("documented source missing %q:\n%s", want, text)
+		}
+	}
+	if strings.Contains(text, "// unexportedFunction") || strings.Contains(text, "// unexportedConstant") {
+		t.Fatalf("unexported declarations must remain undocumented:\n%s", text)
+	}
+	if err := validateExportedDeclarationComments(documented); err != nil {
+		t.Fatalf("validate documented source: %v", err)
+	}
+	again, err := documentExportedDeclarations(documented)
+	if err != nil {
+		t.Fatalf("document source a second time: %v", err)
+	}
+	if string(again) != string(documented) {
+		t.Fatalf("documentation transform is not idempotent:\nfirst:\n%s\nsecond:\n%s", documented, again)
+	}
+}
+
+func TestDocumentExportedDeclarationsPreservesDeprecation(t *testing.T) {
+	source := []byte(`package protocol
+
+// Deprecated: use Current.
+type Legacy = Current
+
+type Current struct{}
+`)
+	documented, err := documentExportedDeclarations(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(documented), "// Legacy is a generated alias for a Codex app-server protocol type.\n// Deprecated: use Current.\ntype Legacy = Current") {
+		t.Fatalf("deprecation comment was not preserved:\n%s", documented)
+	}
+}
+
+func TestDocumentExportedDeclarationsRejectsInvalidGo(t *testing.T) {
+	if _, err := documentExportedDeclarations([]byte("package protocol\ntype")); err == nil {
+		t.Fatal("expected invalid Go source to fail")
+	}
+}
+
+func TestDocumentExportedDeclarationsRejectsMultipleExportedValues(t *testing.T) {
+	source := []byte(`package protocol
+
+var ExportedOne, ExportedTwo = 1, 2
+`)
+	_, err := documentExportedDeclarations(source)
+	if err == nil {
+		t.Fatal("expected multiple exported values to fail")
+	}
+	if want := "multiple exported names ExportedOne, ExportedTwo"; !strings.Contains(err.Error(), want) {
+		t.Fatalf("unexpected error %q; want it to contain %q", err, want)
+	}
+}
+
+func TestValidateExportedDeclarationCommentsRejectsMissingGoDoc(t *testing.T) {
+	source := []byte(`package protocol
+
+type MissingType struct{}
+
+const MissingConstant = 1
+
+var MissingVariable = 1
+
+func MissingFunction() {}
+
+func (MissingType) MissingMethod() {}
+`)
+	err := validateExportedDeclarationComments(source)
+	if err == nil {
+		t.Fatal("expected undocumented exported declarations to fail")
+	}
+	want := "exported declarations missing name-leading GoDoc: MissingConstant, MissingFunction, MissingMethod, MissingType, MissingVariable"
+	if err.Error() != want {
+		t.Fatalf("unexpected error:\n got: %q\nwant: %q", err, want)
+	}
+}
+
+func TestCommittedGeneratedProtocolDeclarationsHaveGoDoc(t *testing.T) {
+	paths, err := filepath.Glob(filepath.Join("..", "..", "protocol", "*_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) == 0 {
+		t.Fatal("expected committed generated protocol files")
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := validateExportedDeclarationComments(data); err != nil {
+			t.Errorf("%s: %v", path, err)
+		}
 	}
 }
 
@@ -162,6 +406,26 @@ func TestStripAndSanitize(t *testing.T) {
 		"nested": map[string]any{
 			"oneOf": []any{map[string]any{"type": "object"}},
 		},
+		"nullableReference": map[string]any{
+			"anyOf": []any{
+				map[string]any{"$ref": "#/definitions/TokenUsageBreakdown"},
+				map[string]any{"type": "null"},
+			},
+		},
+		"definitions": map[string]any{
+			"AppMetadata": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"developer": map[string]any{"type": []any{"string", "null"}},
+				},
+			},
+			"ThreadMetadataUpdateParams": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"threadId": map[string]any{"type": "string"},
+				},
+			},
+		},
 	}
 	stripSubschemas(input)
 	if _, ok := input["oneOf"]; ok {
@@ -173,6 +437,10 @@ func TestStripAndSanitize(t *testing.T) {
 	nested := input["nested"].(map[string]any)
 	if _, ok := nested["oneOf"]; ok {
 		t.Fatalf("expected nested oneOf removed")
+	}
+	nullableReference := input["nullableReference"].(map[string]any)
+	if got := nullableReference["$ref"]; got != "#/definitions/TokenUsageBreakdown" {
+		t.Fatalf("nullable reference = %v, want preserved reference", got)
 	}
 
 	dir := t.TempDir()
@@ -191,6 +459,120 @@ func TestStripAndSanitize(t *testing.T) {
 	}
 	if strings.Contains(string(data), "oneOf") || strings.Contains(string(data), "anyOf") {
 		t.Fatalf("expected oneOf/anyOf stripped from sanitized file")
+	}
+	var sanitizedSchema map[string]any
+	if err := json.Unmarshal(data, &sanitizedSchema); err != nil {
+		t.Fatalf("decode sanitized file: %v", err)
+	}
+	definitions := sanitizedSchema["definitions"].(map[string]any)
+	appMetadata := definitions["AppMetadata"].(map[string]any)
+	properties := appMetadata["properties"].(map[string]any)
+	firstPartyType, ok := properties["firstPartyType"].(map[string]any)
+	if !ok {
+		t.Fatalf("removed AppMetadata.firstPartyType compatibility field was not restored")
+	}
+	if description, _ := firstPartyType["description"].(string); !strings.HasPrefix(description, "Deprecated:") {
+		t.Fatalf("compatibility field description = %q, want deprecation", description)
+	}
+	metadataParams := definitions["ThreadMetadataUpdateParams"].(map[string]any)
+	metadataProperties := metadataParams["properties"].(map[string]any)
+	isPinned, ok := metadataProperties["isPinned"].(map[string]any)
+	if !ok {
+		t.Fatal("removed ThreadMetadataUpdateParams.isPinned compatibility field was not restored")
+	}
+	if description, _ := isPinned["description"].(string); !strings.HasPrefix(description, "Deprecated:") {
+		t.Fatalf("isPinned compatibility description = %q, want deprecation", description)
+	}
+}
+
+func TestDeprecateSanitizedFallbacks(t *testing.T) {
+	source := []byte("package protocol\n\ntype SanitizedMCPThingJSON struct{}\ntype SanitizedNestedJSON struct{}\n")
+	got := string(deprecateSanitizedFallbacks(source, map[string]string{
+		"SanitizedMCPThingJSON": "MCPThing",
+	}))
+	if !strings.Contains(got, "// Deprecated: use MCPThing.\ntype SanitizedMCPThingJSON") {
+		t.Fatalf("missing deprecation comment:\n%s", got)
+	}
+	if strings.Contains(got, "Deprecated: use SanitizedNestedJSON") {
+		t.Fatalf("unexpected nested-type deprecation:\n%s", got)
+	}
+}
+
+func TestWriteCompatibilityAliases(t *testing.T) {
+	dir := t.TempDir()
+	generated := map[string]struct{}{
+		"ExternalAgentConfigImportHistoryRecordSuccessParams":    {},
+		"ExternalAgentConfigImportHistoryRecordTypeResultParams": {},
+		"MCPServerOAuthLoginParams":                              {},
+		"SanitizedMCPServerOAuthLoginResponseJSON":               {},
+	}
+	for name := range protocolAliasNames(generated, nil) {
+		generated[name] = struct{}{}
+	}
+	if err := writeCompatibilityAliases(dir, generated, testCodexCommit); err != nil {
+		t.Fatalf("write compatibility aliases: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "compatibility_gen.go"))
+	if err != nil {
+		t.Fatalf("read compatibility aliases: %v", err)
+	}
+	text := string(data)
+	for _, want := range []string{
+		"type MCPServerOauthLoginParams = MCPServerOAuthLoginParams",
+		"type SanitizedMCPServerOauthLoginResponse = SanitizedMCPServerOAuthLoginResponse",
+		"type AmazonBedrockCredentialSource string",
+		"const AmazonBedrockCredentialSourceAwsManaged AmazonBedrockCredentialSource = \"awsManaged\"",
+		"const AmazonBedrockCredentialSourceCodexManaged AmazonBedrockCredentialSource = \"codexManaged\"",
+		"const ClientRequestKindMcpServerOauthLogin = ClientRequestKindMCPServerOAuthLogin",
+		"Deprecated: use MCPServerOAuthLoginParams.",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("compatibility output missing %q:\n%s", want, text)
+		}
+	}
+}
+
+func TestValidateManualStructSchemaCoverageReportsAllMissingFields(t *testing.T) {
+	repoRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(repoRoot, "protocol"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manualSource := []byte("package protocol\n\ntype Example struct {\n\tPresent string `json:\"present\"`\n\tRequiredOmitted string `json:\"requiredOmitted,omitempty\"`\n}\n")
+	if err := os.WriteFile(filepath.Join(repoRoot, "protocol", "manual_types.go"), manualSource, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	schemaDir := t.TempDir()
+	writeJSON(t, filepath.Join(schemaDir, "Bundle.json"), map[string]any{
+		"title": "Bundle",
+		"definitions": map[string]any{
+			"Example": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"present":         map[string]any{"type": "string"},
+					"requiredOmitted": map[string]any{"type": "string"},
+					"missingOne":      map[string]any{"type": "string"},
+					"missingTwo":      map[string]any{"type": "string"},
+				},
+				"required": []string{"requiredOmitted"},
+			},
+		},
+	})
+
+	originalRequired := requiredManualSchemaCoverage
+	requiredManualSchemaCoverage = map[string]struct{}{"Example": {}}
+	t.Cleanup(func() { requiredManualSchemaCoverage = originalRequired })
+
+	err := validateManualStructSchemaCoverage(schemaDir, repoRoot)
+	if err == nil {
+		t.Fatal("expected missing schema properties")
+	}
+	for _, want := range []string{
+		"Example missing: missingOne, missingTwo",
+		"Example required with omitempty: requiredOmitted",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error %q does not contain %q", err, want)
+		}
 	}
 }
 
@@ -243,7 +625,7 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 		"KnownJSON":            {},
 		"SanitizedMissingJSON": {},
 	}
-	fallbacks := []string{"Missing", "ClientNotification"}
+	fallbacks := []string{"Missing", "CodexAppServerProtocolV2"}
 
 	if err := writeFallbackTypes(dir, fallbacks, generated, testCodexCommit); err != nil {
 		t.Fatalf("writeFallbackTypes error: %v", err)
@@ -258,7 +640,7 @@ func TestWriteFallbackTypesAndAliases(t *testing.T) {
 	if !strings.Contains(string(data), "type Missing = SanitizedMissingJSON") {
 		t.Fatalf("expected Missing alias fallback")
 	}
-	if !strings.Contains(string(data), "type ClientNotification interface{}") {
+	if !strings.Contains(string(data), "type CodexAppServerProtocolV2 interface{}") {
 		t.Fatalf("expected allowlisted interface fallback")
 	}
 
@@ -282,11 +664,26 @@ func TestRejectsUnreviewedInterfaceFallbacks(t *testing.T) {
 	if err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": []byte("package protocol\ntype NewOpaqueType interface{}\n")}); err == nil {
 		t.Fatalf("expected unreviewed generated interface to fail")
 	}
+	originalDigest := approvedOpaqueInterfaceInventorySHA256
+	t.Cleanup(func() { approvedOpaqueInterfaceInventorySHA256 = originalDigest })
+	approvedOpaqueInterfaceInventorySHA256 = "not-the-current-inventory"
+	for name, source := range map[string]string{
+		"struct field":    "package protocol\ntype Example struct { Value interface{} }\n",
+		"collection type": "package protocol\ntype Example map[string]interface{}\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := validateOpaqueGeneratedInterfaces(map[string][]byte{"types.go": []byte(source)})
+			if err == nil || !strings.Contains(err.Error(), "opaque generated interface inventory changed") {
+				t.Fatalf("expected unreviewed opaque inventory to fail, got %v", err)
+			}
+		})
+	}
 }
 
 func TestRenderHelpers(t *testing.T) {
 	methods := []rpcMethod{
 		{Method: "foo/bar", ParamsType: "FooParams", ResponseType: "FooResponse"},
+		{Method: "mcpServer/elicitation/request", ParamsType: "MCPServerElicitationRequestParams", ResponseType: "MCPServerElicitationRequestResponse"},
 	}
 	client := string(renderClientRequests(methods, testCodexCommit))
 	if !strings.Contains(client, "Source codex commit: "+testCodexCommit) {
@@ -300,8 +697,20 @@ func TestRenderHelpers(t *testing.T) {
 	}
 
 	server := string(renderServerRequests(methods, testCodexCommit))
-	if !strings.Contains(server, "unsupported server request") {
-		t.Fatalf("expected server dispatch")
+	if !strings.Contains(server, "ServerRequestMethodError") {
+		t.Fatalf("expected typed server dispatch error")
+	}
+	if !strings.Contains(server, "UnimplementedServerRequestHandler") {
+		t.Fatalf("expected forward-compatible server handler")
+	}
+	for _, want := range []string{
+		"type MCPServerElicitationRequestHandler interface",
+		"handler.(MCPServerElicitationRequestHandler)",
+		"canonicalHandler.MCPServerElicitationRequest(ctx, params)",
+	} {
+		if !strings.Contains(server, want) {
+			t.Fatalf("server request output missing %q:\n%s", want, server)
+		}
 	}
 
 	notes := string(renderNotifications([]rpcNotification{{Method: "turn/started", ParamsType: "TurnStartedNotification"}}, testCodexCommit))
@@ -451,6 +860,20 @@ func TestExternalUnionInventoryWhenConfigured(t *testing.T) {
 		t.Skip("set CODEX_SCHEMA_TEST_DIR to verify an exported production schema inventory")
 	}
 	if err := validateUnionInventory(schemaDir); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestExternalManualStructSchemaCoverageWhenConfigured(t *testing.T) {
+	schemaDir := os.Getenv("CODEX_SCHEMA_TEST_DIR")
+	if schemaDir == "" {
+		t.Skip("set CODEX_SCHEMA_TEST_DIR to verify manual structs against exported production schemas")
+	}
+	root, err := repoRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validateManualStructSchemaCoverage(schemaDir, root); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -725,6 +1148,7 @@ func TestParamsType(t *testing.T) {
 }
 
 func TestGenerateProtocolTypes(t *testing.T) {
+	approveEmptyOpaqueInventory(t)
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
 	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
@@ -764,6 +1188,7 @@ func TestGenerateProtocolTypes(t *testing.T) {
 }
 
 func TestGenerateProtocolTypesSkipsManualTypes(t *testing.T) {
+	approveEmptyOpaqueInventory(t)
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
 	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
@@ -820,6 +1245,7 @@ type Foo struct {
 }
 
 func TestGenerateProtocolTypesSkipsProtocolSchemas(t *testing.T) {
+	approveEmptyOpaqueInventory(t)
 	root := t.TempDir()
 	schemaDir := filepath.Join(root, "schemas")
 	if err := os.MkdirAll(schemaDir, 0o755); err != nil {
@@ -834,6 +1260,13 @@ func TestGenerateProtocolTypesSkipsProtocolSchemas(t *testing.T) {
 	if err := generateProtocolTypes(schemaDir, root, testCodexCommit, testCodexVersion); err != nil {
 		t.Fatalf("generateProtocolTypes error: %v", err)
 	}
+}
+
+func approveEmptyOpaqueInventory(t *testing.T) {
+	t.Helper()
+	originalDigest := approvedOpaqueInterfaceInventorySHA256
+	approvedOpaqueInterfaceInventorySHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	t.Cleanup(func() { approvedOpaqueInterfaceInventorySHA256 = originalDigest })
 }
 
 func TestGenerateProtocolTypesInvalidSchema(t *testing.T) {
@@ -954,6 +1387,33 @@ func TestExportSchemasError(t *testing.T) {
 	dir := t.TempDir()
 	if err := exportSchemas(dir, filepath.Join(dir, "out")); err == nil {
 		t.Fatalf("expected exportSchemas error")
+	}
+}
+
+func TestSchemaExportCommandUsesCodexCLI(t *testing.T) {
+	codexRoot := t.TempDir()
+	codexRSRoot := filepath.Join(codexRoot, "codex-rs")
+	if err := os.MkdirAll(filepath.Join(codexRSRoot, "cli"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(codexRSRoot, "cli", "Cargo.toml"), []byte("[package]\nname = \"codex-cli\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	outDir := filepath.Join(t.TempDir(), "schemas")
+
+	cmd, err := schemaExportCommand(codexRoot, outDir)
+	if err != nil {
+		t.Fatalf("schemaExportCommand error: %v", err)
+	}
+	wantArgs := []string{
+		"cargo", "run", "-p", "codex-cli", "--bin", "codex", "--",
+		"app-server", "generate-json-schema", "--out", outDir,
+	}
+	if !reflect.DeepEqual(cmd.Args, wantArgs) {
+		t.Fatalf("schema exporter args = %#v, want %#v", cmd.Args, wantArgs)
+	}
+	if cmd.Dir != codexRSRoot {
+		t.Fatalf("schema exporter dir = %q, want %q", cmd.Dir, codexRSRoot)
 	}
 }
 

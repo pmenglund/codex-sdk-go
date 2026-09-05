@@ -5,10 +5,14 @@ concurrency:
   cancel-in-progress: false
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/sdk-version
   workflow_dispatch:
     inputs:
-      tag:
-        description: New immutable SDK tag, for example v0.145.0
+      candidate_sha:
+        description: Exact failed candidate or merged corrective commit
         required: true
         type: string
 
@@ -16,71 +20,134 @@ permissions:
   contents: read
 
 jobs:
-  validate-branch:
+  validate-release:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      candidate_sha: ${{ steps.release.outputs.candidate_sha }}
     steps:
-      - name: Require main branch
+      - name: Validate invocation
         shell: bash
+        env:
+          CANDIDATE_SHA_INPUT: ${{ inputs.candidate_sha }}
         run: |
           if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
-            echo "Release must be dispatched from main." >&2
+            echo "Release must run from main." >&2
+            exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && -z "$CANDIDATE_SHA_INPUT" ]]; then
+            echo "Manual releases require the exact failed candidate or merged corrective candidate_sha." >&2
+            exit 1
+          fi
+          if [[ -n "$CANDIDATE_SHA_INPUT" && ! "$CANDIDATE_SHA_INPUT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "candidate_sha must be an exact lowercase 40-character commit SHA." >&2
             exit 1
           fi
 
+      - name: Checkout main with tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.candidate_sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve and validate SDK release tag
+        id: release
+        shell: bash
+        run: |
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "Release candidate $(git rev-parse HEAD) is not on protected main." >&2
+            exit 1
+          fi
+          candidate_sha="$(git rev-parse HEAD)"
+          requested_tag="$(.github/scripts/sdk-release-tag.sh)"
+          .github/scripts/release-tag-state.sh "$requested_tag" "$candidate_sha" >/dev/null
+          .github/scripts/validate-codex-metadata.sh
+          echo "tag=${requested_tag}" >> "$GITHUB_OUTPUT"
+          echo "candidate_sha=${candidate_sha}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## SDK release candidate"
+            echo
+            echo "- Tag: \`${requested_tag}\`"
+            echo "- Candidate: \`${candidate_sha}\`"
+            echo "- SDK version: \`$(<.github/sdk-version)\`"
+            echo "- Codex version: \`$(<.github/codex/version)\`"
+            echo "- Event: \`${GITHUB_EVENT_NAME}\`"
+            echo "- Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   quality:
-    needs: validate-branch
+    needs: validate-release
     permissions:
       contents: read
+      id-token: write
     uses: ./.github/workflows/tests.yml
+    with:
+      candidate_sha: ${{ needs.validate-release.outputs.candidate_sha }}
 
   e2e:
-    needs: validate-branch
+    needs: [validate-release, quality]
     permissions:
       contents: read
     uses: ./.github/workflows/e2e.yml
+    with:
+      candidate_sha: ${{ needs.validate-release.outputs.candidate_sha }}
     secrets:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   publish-tag:
-    needs: [quality, e2e]
+    name: Publish ${{ needs.validate-release.outputs.tag }}
+    needs: [validate-release, quality, e2e]
     runs-on: ubuntu-latest
     environment: release
     permissions:
       contents: write
     steps:
       - name: Checkout main with tags
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.validate-release.outputs.candidate_sha }}
           fetch-depth: 0
           persist-credentials: false
 
       - name: Validate release request and pinned Codex metadata
         shell: bash
         env:
-          REQUESTED_TAG: ${{ inputs.tag }}
+          REQUESTED_TAG: ${{ needs.validate-release.outputs.tag }}
         run: |
-          git fetch origin main --no-tags
-          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
-            echo "main advanced after this release was dispatched; start a new release for the current main commit." >&2
+          git fetch origin main --tags
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "Release candidate $(git rev-parse HEAD) is no longer on protected main." >&2
             exit 1
           fi
-          .github/scripts/validate-release-tag.sh "$REQUESTED_TAG"
+          .github/scripts/release-tag-state.sh "$REQUESTED_TAG" HEAD >/dev/null
+          .github/scripts/validate-codex-metadata.sh
           .github/scripts/test-install-codex-cli.sh
-          generated_version="$(sed -n 's/^const GeneratedCodexVersion = "\([0-9.]*\)"/\1/p' protocol/metadata_gen.go)"
-          cli_version="$(tr -d '[:space:]' < .github/codex/version)"
-          if [[ -z "$generated_version" || "${generated_version%.*}" != "${cli_version%.*}" ]]; then
-            echo "Pinned Codex CLI ${cli_version} does not match generated protocol ${generated_version} at major/minor." >&2
-            exit 1
-          fi
 
       - name: Create and push immutable tag only
         shell: bash
         env:
-          REQUESTED_TAG: ${{ inputs.tag }}
+          REQUESTED_TAG: ${{ needs.validate-release.outputs.tag }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git tag -a "$REQUESTED_TAG" -m "Release ${REQUESTED_TAG}"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin "refs/tags/${REQUESTED_TAG}"
+          tag_state="$(.github/scripts/release-tag-state.sh "$REQUESTED_TAG" HEAD)"
+          if [[ "$tag_state" == "absent" ]]; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git tag -a "$REQUESTED_TAG" -m "Release ${REQUESTED_TAG}"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin "refs/tags/${REQUESTED_TAG}"
+          fi
+
+          remote_refs="$(git ls-remote origin "refs/tags/${REQUESTED_TAG}" "refs/tags/${REQUESTED_TAG}^{}")"
+          remote_tag_object="$(awk '$2 !~ /\^\{\}$/ { print $1 }' <<< "$remote_refs")"
+          remote_commit="$(awk '$2 ~ /\^\{\}$/ { print $1 }' <<< "$remote_refs")"
+          if [[ "$remote_tag_object" != "$(git rev-parse "refs/tags/${REQUESTED_TAG}")" ]]; then
+            echo "Remote ${REQUESTED_TAG} tag object does not match the verified local annotated tag." >&2
+            exit 1
+          fi
+          if [[ "$remote_commit" != "$(git rev-parse HEAD)" ]]; then
+            echo "Remote ${REQUESTED_TAG} did not resolve to the gated commit." >&2
+            exit 1
+          fi
+          echo "${REQUESTED_TAG} is published at $(git rev-parse HEAD)."

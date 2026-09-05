@@ -103,7 +103,7 @@ func exampleTranscript(info protocol.ClientInfo) []rpc.TranscriptEntry {
 		writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(8), Method: "turn/steer", Params: mustRaw(map[string]any{"threadId": "thr_fork", "expectedTurnId": "turn_1", "input": []codex.Input{codex.TextInput("Focus on public API ergonomics")}})}),
 		readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(8), Result: mustRaw(map[string]any{})}),
 		readLine(rpc.JSONRPCNotification{Method: "turn/started", Params: mustRaw(map[string]any{"threadId": "thr_fork", "turn": turnPayload("turn_1", "inProgress")})}),
-		readLine(rpc.JSONRPCNotification{Method: "item/completed", Params: mustRaw(map[string]any{"threadId": "thr_fork", "item": map[string]any{"text": "Lifecycle replay complete"}})}),
+		readLine(rpc.JSONRPCNotification{Method: "item/completed", Params: mustRaw(map[string]any{"threadId": "thr_fork", "turnId": "turn_fork", "completedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": "Lifecycle replay complete"}})}),
 		readLine(rpc.JSONRPCNotification{Method: "turn/completed", Params: mustRaw(map[string]any{"threadId": "thr_fork", "turn": turnPayload("turn_1", "completed")})}),
 	}
 }

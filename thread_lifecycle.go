@@ -2,7 +2,6 @@ package codex
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -11,19 +10,41 @@ import (
 
 // ThreadListOptions configures a thread/list request.
 type ThreadListOptions struct {
-	Archived       *bool
-	Cursor         string
-	Cwd            any
+	Archived *bool
+	Cursor   string
+	Cwd      any
+	// IsPinned is retained for source compatibility with Codex versions before
+	// 0.147. Codex 0.147 replaces pinned-thread organization with sections.
+	//
+	// Deprecated: use SectionID or Unsectioned.
+	IsPinned       *bool
 	Limit          *int
 	ModelProviders []string
 	SearchTerm     string
-	SortDirection  any
-	SortKey        any
-	SourceKinds    []protocol.ThreadSourceKind
+	// SectionID limits results to one persisted section. It cannot be combined
+	// with Unsectioned.
+	SectionID     string
+	SortDirection protocol.SortDirection
+	SortKey       protocol.ThreadSortKey
+	SourceKinds   []protocol.ThreadSourceKind
+	// Unsectioned limits results to threads that do not belong to a section. It
+	// cannot be combined with SectionID.
+	Unsectioned    bool
 	UseStateDBOnly *bool
 }
 
 func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
+	if o.SortDirection != "" && o.SortDirection != protocol.SortDirectionAsc && o.SortDirection != protocol.SortDirectionDesc {
+		return protocol.ThreadListParams{}, fmt.Errorf("invalid thread sort direction %q", o.SortDirection)
+	}
+	switch o.SortKey {
+	case "", protocol.ThreadSortKeyCreatedAt, protocol.ThreadSortKeyUpdatedAt, protocol.ThreadSortKeyRecencyAt, protocol.ThreadSortKeySectionPosition:
+	default:
+		return protocol.ThreadListParams{}, fmt.Errorf("invalid thread sort key %q", o.SortKey)
+	}
+	if o.SectionID != "" && o.Unsectioned {
+		return protocol.ThreadListParams{}, errors.New("thread section id and unsectioned filter cannot both be set")
+	}
 	params := protocol.ThreadListParams{
 		Archived:       o.Archived,
 		Cwd:            o.Cwd,
@@ -31,6 +52,14 @@ func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
 		SortDirection:  o.SortDirection,
 		SortKey:        o.SortKey,
 		UseStateDbOnly: o.UseStateDBOnly,
+	}
+	if o.Unsectioned {
+		var unsectioned *string
+		params.SectionID = &unsectioned
+	} else if o.SectionID != "" {
+		sectionID := o.SectionID
+		sectionValue := &sectionID
+		params.SectionID = &sectionValue
 	}
 	if o.ModelProviders != nil {
 		modelProviders := protocol.ThreadListParamsModelProviders(o.ModelProviders)
@@ -191,16 +220,15 @@ type ThreadForkOptions struct {
 	BaseInstructions      string
 	DeveloperInstructions string
 	Ephemeral             *bool
-	ExcludeTurns          *bool
+	// ExcludeTurns returns metadata without hydrating turn history when true.
+	ExcludeTurns *bool
 }
 
 func (o ThreadForkOptions) toParams(threadID string) (protocol.ThreadForkParams, error) {
 	params := protocol.ThreadForkParams{
-		ThreadID:  threadID,
-		Ephemeral: o.Ephemeral,
-	}
-	if o.ExcludeTurns != nil {
-		return params, errors.New("thread fork exclude turns is no longer supported by the current app-server protocol")
+		ThreadID:     threadID,
+		Ephemeral:    o.Ephemeral,
+		ExcludeTurns: o.ExcludeTurns,
 	}
 	if o.Model != "" {
 		params.Model = stringPtr(o.Model)
@@ -243,57 +271,42 @@ func (o ThreadForkOptions) toParams(threadID string) (protocol.ThreadForkParams,
 // ForkThread forks a thread by id and returns the newly forked thread.
 func (c *Codex) ForkThread(ctx context.Context, threadID string, opts ThreadForkOptions) (*Thread, protocol.ThreadForkResponse, error) {
 	if err := c.ensureReady(); err != nil {
-		return nil, nil, err
+		return nil, protocol.ThreadForkResponse{}, err
 	}
 	if threadID == "" {
-		return nil, nil, errors.New("thread id is required")
+		return nil, protocol.ThreadForkResponse{}, errors.New("thread id is required")
 	}
 	params, err := opts.toParams(threadID)
 	if err != nil {
-		return nil, nil, err
+		return nil, protocol.ThreadForkResponse{}, err
 	}
 	response, err := c.client.ThreadFork(ctx, params)
 	if err != nil {
-		return nil, nil, err
+		return nil, protocol.ThreadForkResponse{}, err
 	}
-	id, err := threadIDFromAny(response)
+	id, err := threadIDFromResponse(response.ThreadID, response.Thread)
 	if err != nil {
-		return nil, response, err
+		return nil, *response, err
 	}
-	return &Thread{client: c.client, id: id, logger: c.logger}, response, nil
+	return &Thread{client: c.client, id: id, logger: c.logger}, *response, nil
 }
 
 // Fork forks this thread and returns the newly forked thread.
 func (t *Thread) Fork(ctx context.Context, opts ThreadForkOptions) (*Thread, protocol.ThreadForkResponse, error) {
 	if err := t.ensureReady(); err != nil {
-		return nil, nil, err
+		return nil, protocol.ThreadForkResponse{}, err
 	}
 	params, err := opts.toParams(t.id)
 	if err != nil {
-		return nil, nil, err
+		return nil, protocol.ThreadForkResponse{}, err
 	}
 	response, err := t.client.ThreadFork(ctx, params)
 	if err != nil {
-		return nil, nil, err
+		return nil, protocol.ThreadForkResponse{}, err
 	}
-	id, err := threadIDFromAny(response)
+	id, err := threadIDFromResponse(response.ThreadID, response.Thread)
 	if err != nil {
-		return nil, response, err
+		return nil, *response, err
 	}
-	return &Thread{client: t.client, id: id, logger: t.logger}, response, nil
-}
-
-func threadIDFromAny(value any) (string, error) {
-	if value == nil {
-		return "", errors.New("thread id not found in response")
-	}
-	data, err := json.Marshal(value)
-	if err != nil {
-		return "", fmt.Errorf("thread response: %w", err)
-	}
-	var response protocol.ThreadResponse
-	if err := json.Unmarshal(data, &response); err != nil {
-		return "", fmt.Errorf("thread response: %w", err)
-	}
-	return threadIDFromResponse(response.ThreadID, response.Thread)
+	return &Thread{client: t.client, id: id, logger: t.logger}, *response, nil
 }

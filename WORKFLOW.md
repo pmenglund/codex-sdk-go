@@ -55,30 +55,45 @@ If Linear MCP is unavailable, proceed using the best available context and note 
 ## Quality Gates (Validation & Success Criteria)
 
 The required `Quality` workflow is secretless and runs on pushes and pull
-requests with Go 1.25.12 and patched Go 1.26.5. It checks formatting,
+requests with stable check names `Go 1.26` and `Go 1.27`, backed by pinned
+toolchains 1.26.8 and 1.27.1. It checks formatting,
 the checksum-verifying Codex installer fixtures, vet, unit tests, race tests,
-Staticcheck v0.7.0, and govulncheck v1.3.0. It must be safe for fork pull
-requests: it receives no API credential and does not download or execute Codex.
+Staticcheck v0.8.1, and govulncheck v1.3.0. The Go 1.26 job also records an
+atomic coverage profile; a separate least-privilege job publishes it to
+Codecov with GitHub OIDC. `codecov.yml` gates project and patch coverage at 80
+percent while excluding generated files, executable examples, and credentialed
+test support. The workflow must be safe for fork pull requests: it receives no
+API credential and does not download or execute Codex.
 
-The `Trusted E2E` workflow runs only on protected `main` pushes, manual
-dispatch, or as a reusable release gate. Its `e2e` GitHub Environment must
-require an approver and hold `OPENAI_API_KEY`. The workflow installs the exact
-Codex release recorded in `.github/codex/version`, verifies the archive against
+The `Trusted E2E` workflow runs by manual dispatch or as the reusable release
+gate. Its `e2e` GitHub Environment must allow protected branches without
+required reviewers, and the reusable caller must provide `OPENAI_API_KEY`. The
+workflow installs the exact Codex release recorded in `.github/codex/version`, verifies the archive against
 `.github/codex/checksums.txt`, then scopes the API key to the single step that
 constructs `CODEX_E2E_LOGIN_PARAMS_JSON` and runs
 `go test -tags=e2e ./test/e2e`.
 
-The manual `Release` workflow must run from `main`, pass both reusable quality
-and trusted e2e workflows, and receive approval from the protected `release`
-environment. Its publish job has only `contents: write`, refuses existing or
-non-increasing tags, requires at least v0.145.0 for the typed-union migration,
-and pushes only the new annotated tag. Local update scripts must never stage,
-commit, tag, or push.
+`.github/sdk-version` is the authoritative SDK release version and is separate
+from the pinned Codex CLI version. A protected `main` merge that changes this
+file automatically starts `Release`. Manual dispatch must name the exact failed
+candidate for an unchanged retry or the exact merged corrective commit after
+fixing a failed release. The workflow derives the tag from that commit, passes reusable
+quality and trusted e2e workflows, then publishes automatically after E2E
+succeeds. E2E and publication require no human approval on the happy path. Its
+publish job has only `contents: write`, refuses conflicting or non-increasing tags, treats an existing tag at the exact gated
+commit as an idempotent success, requires at least v0.145.0 for the typed-union
+migration, and pushes only the new annotated tag.
+
+The local updater script must never stage, commit, tag, or push. The
+`update-codex-protocol` skill may stage reviewed paths by name, commit and push
+a feature branch, open and merge a protected pull request, and monitor the
+automatic Release run. It must never push `main` directly or create a tag.
 
 Repository settings must require the `Quality` checks on `main`, prevent force
-pushes and tag deletion, and configure required reviewers for both `e2e` and
-`release` environments. Until those settings are confirmed in GitHub, release
-publication is blocked; a local direct push is not a fallback.
+pushes and tag deletion. Both `e2e` and `release` must allow deployments only
+from protected branches and have no required reviewers. Successful validation,
+Quality, E2E, and publication proceed automatically; failed checks block release.
+Until those settings are confirmed in GitHub, release publication is blocked; a local direct push is not a fallback.
 
 If a bad Go module version is published, never move its tag. Tell consumers to
 pin the prior good version, add a `retract` directive in the next corrective

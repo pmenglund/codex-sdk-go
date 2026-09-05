@@ -13,7 +13,8 @@ requested_tag="$1"
 repository="${2:-.}"
 minimum_tag="v0.145.0"
 
-if [[ ! "$requested_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+canonical_component='(0|[1-9][0-9]*)'
+if [[ ! "$requested_tag" =~ ^v${canonical_component}\.${canonical_component}\.${canonical_component}$ ]]; then
   echo "Requested tag must match vMAJOR.MINOR.PATCH." >&2
   exit 1
 fi

@@ -23,7 +23,17 @@ type Options struct {
 	ClientInfo protocol.ClientInfo
 
 	// ApprovalHandler handles server approval requests.
+	//
+	// Deprecated: use RequestHandler. ApprovalHandler requires the broad legacy
+	// rpc.ServerRequestHandler interface.
+	//lint:ignore SA1019 retained for source compatibility during the deprecation window
 	ApprovalHandler rpc.ServerRequestHandler
+
+	// RequestHandler provides optional, forward-compatible app-server callbacks.
+	// It conflicts with ApprovalHandler when both are configured. The client may
+	// invoke different callbacks concurrently, so callbacks that share state must
+	// synchronize access to it.
+	RequestHandler *ServerRequestCallbacks
 
 	// CompatibilityPolicy controls validation of a spawned Codex CLI. The zero
 	// value, RequireMajorMinor, rejects binaries whose major/minor version cannot

@@ -37,6 +37,8 @@ type TurnOptions struct {
 	// CollaborationMode is retained for source compatibility, but the current
 	// app-server protocol no longer supports this option. Setting it returns an
 	// error from buildTurnParams.
+	//
+	// Deprecated: collaboration mode is no longer supported by the app-server protocol.
 	CollaborationMode any
 }
 
@@ -54,18 +56,55 @@ type TurnResult struct {
 	CompletedAt   *time.Time
 }
 
+// ErrTurnFailed identifies a terminal turn failure.
+var ErrTurnFailed = errors.New("turn failed")
+
+// TurnError describes a terminal turn failure and retains the partial result
+// and complete structured wire details available at failure time.
+type TurnError struct {
+	Result    *TurnResult
+	Method    string
+	Detail    *protocol.TurnError
+	WillRetry bool
+	Raw       json.RawMessage
+}
+
+func (e *TurnError) Error() string {
+	if e != nil && e.Detail != nil && e.Detail.Message != "" {
+		return e.Detail.Message
+	}
+	if e != nil && e.Result != nil && e.Result.ErrorMessage != "" {
+		return e.Result.ErrorMessage
+	}
+	if e != nil && e.Method == "error" {
+		return "turn error"
+	}
+	return ErrTurnFailed.Error()
+}
+
+// Is allows errors.Is(err, ErrTurnFailed).
+func (e *TurnError) Is(target error) bool { return target == ErrTurnFailed }
+
 // TurnStream iterates notifications for a running turn.
 // Notifications that omit threadId are still emitted to avoid dropping
 // global events sent during the turn.
 type TurnStream struct {
 	iter     *rpc.NotificationIterator
 	threadID string
+	next     func(context.Context) (rpc.Notification, error)
+	close    func()
 }
 
 // Next returns the next notification for this turn.
 // Notifications without threadId are treated as belonging to the active stream.
 func (s *TurnStream) Next(ctx context.Context) (rpc.Notification, error) {
-	if s == nil || s.iter == nil {
+	if s == nil {
+		return rpc.Notification{}, errors.New("turn stream is not initialized")
+	}
+	if s.next != nil {
+		return s.next(ctx)
+	}
+	if s.iter == nil {
 		return rpc.Notification{}, errors.New("turn stream is not initialized")
 	}
 
@@ -85,7 +124,14 @@ func (s *TurnStream) Next(ctx context.Context) (rpc.Notification, error) {
 
 // Close stops the iterator.
 func (s *TurnStream) Close() {
-	if s == nil || s.iter == nil {
+	if s == nil {
+		return
+	}
+	if s.close != nil {
+		s.close()
+		return
+	}
+	if s.iter == nil {
 		return
 	}
 	s.iter.Close()
@@ -115,7 +161,15 @@ func updateTurnResult(result *TurnResult, note rpc.Notification) {
 			result.TurnID = payload.Turn.ID
 		}
 		if payload.Turn != nil && payload.Turn.Status != "" {
-			result.Status = payload.Turn.Status
+			result.Status = string(payload.Turn.Status)
+		}
+		if payload.Turn != nil && payload.Turn.StartedAt != nil {
+			startedAt := time.Unix(*payload.Turn.StartedAt, 0)
+			result.CreatedAt = &startedAt
+		}
+		if payload.Turn != nil && payload.Turn.CompletedAt != nil {
+			completedAt := time.Unix(*payload.Turn.CompletedAt, 0)
+			result.CompletedAt = &completedAt
 		}
 		if message := payloadErrorMessage(payload); message != "" {
 			result.ErrorMessage = message
@@ -134,42 +188,37 @@ func updateTurnResult(result *TurnResult, note rpc.Notification) {
 }
 
 func notificationError(note rpc.Notification) error {
-	if note.Method == "error" {
-		payload, err := parseTurnNotification(note)
-		if err != nil {
-			return errors.New("turn error")
+	return turnErrorFromNotification(note, nil)
+}
+
+func turnErrorFromNotification(note rpc.Notification, result *TurnResult) error {
+	payload, err := parseTurnNotification(note)
+	if err != nil {
+		if note.Method == "error" || note.Method == "turn/failed" {
+			return &TurnError{Result: result, Method: note.Method, Raw: append(json.RawMessage(nil), note.Raw...)}
 		}
-		if payload.WillRetry != nil && *payload.WillRetry {
-			return nil
-		}
-		if payload.Error != nil && payload.Error.Message != "" {
-			return errors.New(payload.Error.Message)
-		}
-		return errors.New("turn error")
+		return nil
 	}
-	if note.Method == "turn/completed" {
-		payload, err := parseTurnNotification(note)
-		if err != nil {
-			return nil
-		}
-		if payload.Turn != nil && payload.Turn.Status == "failed" {
-			if message := payloadErrorMessage(payload); message != "" {
-				return errors.New(message)
-			}
-			return errors.New("turn failed")
-		}
+	willRetry := payload.WillRetry != nil && *payload.WillRetry
+	if note.Method == "error" && willRetry {
+		return nil
 	}
-	if note.Method == "turn/failed" {
-		payload, err := parseTurnNotification(note)
-		if err != nil {
-			return errors.New("turn failed")
-		}
-		if message := payloadErrorMessage(payload); message != "" {
-			return errors.New(message)
-		}
-		return errors.New("turn failed")
+	failed := note.Method == "error" || note.Method == "turn/failed" ||
+		(note.Method == "turn/completed" && payload.Turn != nil && payload.Turn.Status == protocol.TurnStatusFailed)
+	if !failed {
+		return nil
 	}
-	return nil
+	detail := payload.Error
+	if detail == nil && payload.Turn != nil {
+		detail = payload.Turn.Error
+	}
+	return &TurnError{
+		Result:    result,
+		Method:    note.Method,
+		Detail:    detail,
+		WillRetry: willRetry,
+		Raw:       append(json.RawMessage(nil), note.Raw...),
+	}
 }
 
 func matchesThreadID(note rpc.Notification, threadID string) bool {
@@ -186,9 +235,10 @@ func extractTextFromItemRaw(raw json.RawMessage) (string, bool) {
 		return "", false
 	}
 	var direct struct {
+		Type string `json:"type"`
 		Text string `json:"text"`
 	}
-	if err := json.Unmarshal(raw, &direct); err == nil && direct.Text != "" {
+	if err := json.Unmarshal(raw, &direct); err == nil && direct.Type == "agentMessage" && direct.Text != "" {
 		return direct.Text, true
 	}
 
@@ -198,9 +248,10 @@ func extractTextFromItemRaw(raw json.RawMessage) (string, bool) {
 	}
 	for _, inner := range wrapper {
 		var nested struct {
+			Type string `json:"type"`
 			Text string `json:"text"`
 		}
-		if err := json.Unmarshal(inner, &nested); err == nil && nested.Text != "" {
+		if err := json.Unmarshal(inner, &nested); err == nil && nested.Type == "agentMessage" && nested.Text != "" {
 			return nested.Text, true
 		}
 	}
@@ -208,15 +259,15 @@ func extractTextFromItemRaw(raw json.RawMessage) (string, bool) {
 }
 
 type turnNotificationPayload struct {
-	ThreadID    string                          `json:"threadId,omitempty"`
-	TurnID      string                          `json:"turnId,omitempty"`
-	Turn        *protocol.TurnNotificationTurn  `json:"turn,omitempty"`
-	Item        json.RawMessage                 `json:"item,omitempty"`
-	WillRetry   *bool                           `json:"willRetry,omitempty"`
-	Error       *protocol.TurnNotificationError `json:"error,omitempty"`
-	TokenUsage  *protocol.ThreadTokenUsage      `json:"tokenUsage,omitempty"`
-	CreatedAt   *time.Time                      `json:"createdAt,omitempty"`
-	CompletedAt *time.Time                      `json:"completedAt,omitempty"`
+	ThreadID    string                     `json:"threadId,omitempty"`
+	TurnID      string                     `json:"turnId,omitempty"`
+	Turn        *protocol.Turn             `json:"turn,omitempty"`
+	Item        json.RawMessage            `json:"item,omitempty"`
+	WillRetry   *bool                      `json:"willRetry,omitempty"`
+	Error       *protocol.TurnError        `json:"error,omitempty"`
+	TokenUsage  *protocol.ThreadTokenUsage `json:"tokenUsage,omitempty"`
+	CreatedAt   *time.Time                 `json:"createdAt,omitempty"`
+	CompletedAt *time.Time                 `json:"completedAt,omitempty"`
 }
 
 func parseTurnNotification(note rpc.Notification) (turnNotificationPayload, error) {
@@ -229,16 +280,20 @@ func parseTurnNotification(note rpc.Notification) (turnNotificationPayload, erro
 				return turnNotificationPayload{ThreadID: value.ThreadID, Turn: value.Turn}, nil
 			}
 		case protocol.ItemCompletedNotification:
-			return turnNotificationPayload{ThreadID: value.ThreadID, Item: value.Item}, nil
+			return turnNotificationPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, Item: value.Item.RawJSON()}, nil
 		case *protocol.ItemCompletedNotification:
 			if value != nil {
-				return turnNotificationPayload{ThreadID: value.ThreadID, Item: value.Item}, nil
+				return turnNotificationPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, Item: value.Item.RawJSON()}, nil
 			}
 		case protocol.ErrorNotification:
-			return turnNotificationPayload{ThreadID: value.ThreadID, WillRetry: value.WillRetry, Error: value.Error}, nil
+			willRetry := value.WillRetry
+			detail := value.Error
+			return turnNotificationPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, WillRetry: &willRetry, Error: &detail}, nil
 		case *protocol.ErrorNotification:
 			if value != nil {
-				return turnNotificationPayload{ThreadID: value.ThreadID, WillRetry: value.WillRetry, Error: value.Error}, nil
+				willRetry := value.WillRetry
+				detail := value.Error
+				return turnNotificationPayload{ThreadID: value.ThreadID, TurnID: value.TurnID, WillRetry: &willRetry, Error: &detail}, nil
 			}
 		case protocol.ThreadGoalClearedNotification:
 			return turnNotificationPayload{ThreadID: value.ThreadID}, nil

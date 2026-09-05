@@ -27,6 +27,8 @@ type ThreadStartOptions struct {
 	// ExperimentalRawEvents is retained for source compatibility, but the current
 	// app-server protocol no longer supports this option. Setting it returns an
 	// error from toParams.
+	//
+	// Deprecated: raw events are no longer supported by the app-server protocol.
 	ExperimentalRawEvents bool
 }
 
@@ -77,6 +79,8 @@ func (o ThreadStartOptions) toParams() (protocol.ThreadStartParams, error) {
 // ThreadResumeHistoryElem keeps the old unstable history field compilable for
 // callers, but the current app-server protocol no longer accepts history-based
 // thread resume.
+//
+// Deprecated: history-based thread resume is no longer supported.
 type ThreadResumeHistoryElem = json.RawMessage
 
 // ThreadResumeOptions configures a thread/resume request.
@@ -86,10 +90,14 @@ type ThreadResumeOptions struct {
 	// History is retained for source compatibility, but the current app-server
 	// protocol no longer supports history-based resume. Passing History returns an
 	// error from toParams.
+	//
+	// Deprecated: history-based thread resume is no longer supported.
 	History []ThreadResumeHistoryElem
 	// Path is retained for source compatibility, but the current app-server
 	// protocol no longer supports path-based resume. Passing Path returns an error
 	// from toParams.
+	//
+	// Deprecated: path-based thread resume is no longer supported.
 	Path          string
 	Model         string
 	ModelProvider string

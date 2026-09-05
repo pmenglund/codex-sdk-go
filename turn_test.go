@@ -3,6 +3,7 @@ package codex
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -63,9 +64,19 @@ func TestThreadRunFailsOnTurnFailedNotification(t *testing.T) {
 		t.Fatalf("start thread error: %v", err)
 	}
 
-	_, err = thread.Run(ctx, "hello", nil)
+	result, err := thread.Run(ctx, "hello", nil)
 	if err == nil || err.Error() != "boom" {
 		t.Fatalf("expected boom error, got %v", err)
+	}
+	if result == nil || result.TurnID != "turn_1" || result.Status != "failed" {
+		t.Fatalf("expected partial failed result, got %#v", result)
+	}
+	if !errors.Is(err, ErrTurnFailed) {
+		t.Fatalf("expected ErrTurnFailed, got %v", err)
+	}
+	var turnErr *TurnError
+	if !errors.As(err, &turnErr) || turnErr.Result != result || turnErr.Detail == nil || turnErr.Detail.Message != "boom" {
+		t.Fatalf("expected structured TurnError, got %#v", err)
 	}
 }
 
@@ -91,9 +102,97 @@ func TestThreadRunFailsOnCompletedFailedStatus(t *testing.T) {
 		t.Fatalf("start thread error: %v", err)
 	}
 
-	_, err = thread.Run(ctx, "hello", nil)
+	result, err := thread.Run(ctx, "hello", nil)
 	if err == nil || err.Error() != "completed boom" {
 		t.Fatalf("expected completed boom error, got %v", err)
+	}
+	if result == nil || result.ErrorMessage != "completed boom" {
+		t.Fatalf("expected partial completed-failure result, got %#v", result)
+	}
+}
+
+func TestTurnHandleFailedResultRetainsAccumulatedDetails(t *testing.T) {
+	client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+	defer client.Close()
+	notes := []rpc.Notification{
+		{Method: "turn/started", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1", "items": []any{}, "status": "inProgress", "startedAt": 10}})},
+		{Method: "item/completed", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turnId": "turn_1", "completedAtMs": 11, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": "partial"}})},
+		{Method: "thread/tokenUsage/updated", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turnId": "turn_1", "tokenUsage": map[string]any{"last": tokenUsageBreakdown(1, 2, 3), "total": tokenUsageBreakdown(4, 5, 9)}})},
+		{Method: "error", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turnId": "turn_1", "willRetry": true, "error": map[string]any{"message": "retrying"}})},
+		{Method: "turn/failed", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1", "items": []any{}, "status": "failed", "completedAt": 20, "error": map[string]any{"message": "terminal", "additionalDetails": "details"}}})},
+	}
+	index := 0
+	handle := &TurnHandle{
+		client:   client,
+		threadID: "thr_1",
+		stream: &TurnStream{next: func(context.Context) (rpc.Notification, error) {
+			note := notes[index]
+			index++
+			return note, nil
+		}},
+	}
+	result, err := handle.Run(context.Background())
+	var turnErr *TurnError
+	if !errors.As(err, &turnErr) || !errors.Is(err, ErrTurnFailed) {
+		t.Fatalf("expected typed terminal failure, got %v", err)
+	}
+	if result == nil || turnErr.Result != result || result.FinalResponse != "partial" || len(result.Items) != 1 || len(result.Notifications) != len(notes) {
+		t.Fatalf("partial result was not retained: %#v", result)
+	}
+	if result.TokenUsage == nil || result.TokenUsage.Total.TotalTokens != 9 || result.CreatedAt == nil || result.CreatedAt.Unix() != 10 || result.CompletedAt == nil || result.CompletedAt.Unix() != 20 {
+		t.Fatalf("usage or timestamps were not retained: %#v", result)
+	}
+	if turnErr.Detail == nil || turnErr.Detail.Message != "terminal" || turnErr.WillRetry || len(turnErr.Raw) == 0 {
+		t.Fatalf("terminal details were not retained: %#v", turnErr)
+	}
+}
+
+func TestTurnHandleTerminalErrorRetainsAccumulatedResult(t *testing.T) {
+	client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+	defer client.Close()
+	notes := []rpc.Notification{
+		{Method: "item/completed", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turnId": "turn_1", "completedAtMs": 11, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": "partial"}})},
+		{Method: "error", Raw: mustRaw(map[string]any{"threadId": "thr_1", "turnId": "turn_1", "willRetry": false, "error": map[string]any{"message": "terminal error", "additionalDetails": "details"}})},
+	}
+	index := 0
+	handle := &TurnHandle{
+		client:   client,
+		threadID: "thr_1",
+		stream: &TurnStream{next: func(context.Context) (rpc.Notification, error) {
+			note := notes[index]
+			index++
+			return note, nil
+		}},
+	}
+
+	result, err := handle.Run(context.Background())
+	var turnErr *TurnError
+	if !errors.As(err, &turnErr) || !errors.Is(err, ErrTurnFailed) {
+		t.Fatalf("expected typed terminal error notification, got %v", err)
+	}
+	if result == nil || turnErr.Result != result || result.FinalResponse != "partial" || len(result.Items) != 1 || len(result.Notifications) != len(notes) {
+		t.Fatalf("terminal error discarded accumulated result: %#v", result)
+	}
+	if turnErr.Method != "error" || turnErr.WillRetry || turnErr.Detail == nil || turnErr.Detail.Message != "terminal error" {
+		t.Fatalf("terminal error details were not retained: %#v", turnErr)
+	}
+}
+
+func TestTurnResultUsesOnlyAgentMessageAsFinalResponse(t *testing.T) {
+	result := &TurnResult{}
+	for _, item := range []map[string]any{
+		{"type": "plan", "id": "plan_1", "text": "intermediate plan"},
+		{"type": "agentMessage", "id": "message_1", "text": "final answer"},
+		{"type": "reasoning", "id": "reasoning_1", "text": "internal text"},
+	} {
+		raw := mustRaw(map[string]any{"threadId": "thr_1", "turnId": "turn_1", "completedAtMs": 1, "item": item})
+		updateTurnResult(result, rpc.Notification{Method: "item/completed", Raw: raw})
+	}
+	if result.FinalResponse != "final answer" {
+		t.Fatalf("unexpected final response: %q", result.FinalResponse)
+	}
+	if len(result.Items) != 3 {
+		t.Fatalf("expected every raw item, got %d", len(result.Items))
 	}
 }
 
@@ -196,7 +295,7 @@ func runTranscript(info protocol.ClientInfo, prompt, finalResponse string) []rpc
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "item/completed",
-			Params: mustRaw(map[string]any{"threadId": "thr_123", "item": map[string]any{"text": finalResponse}}),
+			Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1", "completedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": finalResponse}}),
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "turn/completed",

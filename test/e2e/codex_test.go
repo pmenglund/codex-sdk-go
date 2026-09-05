@@ -76,10 +76,10 @@ func TestRealCodexHighLevelCoverageMatrix(t *testing.T) {
 		"Thread.Read":          "TestRealCodexThreadLifecycleHelpers",
 		"SetThreadName":        "TestRealCodexThreadLifecycleHelpers",
 		"Thread.SetName":       "TestRealCodexThreadLifecycleHelpers",
-		"ArchiveThread":        "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
-		"Thread.Archive":       "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
-		"UnarchiveThread":      "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
-		"Thread.Unarchive":     "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
+		"ArchiveThread":        "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
+		"Thread.Archive":       "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
+		"UnarchiveThread":      "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
+		"Thread.Unarchive":     "TestRealCodexThreadArchiveRoundTripWithMockProvider, TestRealCodexLiveTurnHelpers",
 		"CompactThread":        "TestRealCodexThreadLifecycleHelpers",
 		"Thread.Compact":       "TestRealCodexThreadLifecycleHelpers",
 		"ForkThread":           "TestRealCodexThreadLifecycleHelpers, TestRealCodexLiveTurnHelpers",
@@ -156,12 +156,16 @@ func TestRealCodexThreadLifecycleHelpers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	test.AssertJSONContains(t, "client read response", read, thread.ID())
+	if read.Thread.ID != thread.ID() {
+		t.Fatalf("client read returned thread %q, want %q\nstderr:\n%s", read.Thread.ID, thread.ID(), stderr.String())
+	}
 	threadRead, err := thread.Read(ctx, codex.ThreadReadOptions{})
 	if err != nil {
 		t.Fatalf("read thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	test.AssertJSONContains(t, "thread read response", threadRead, thread.ID())
+	if threadRead.Thread.ID != thread.ID() {
+		t.Fatalf("thread read returned thread %q, want %q\nstderr:\n%s", threadRead.Thread.ID, thread.ID(), stderr.String())
+	}
 
 	if _, err := client.ResumeThread(ctx, codex.ThreadResumeOptions{ThreadID: thread.ID(), Cwd: cwd}); err == nil || !test.IsExpectedUnmaterializedThreadError(err) {
 		t.Fatalf("expected unmaterialized thread resume error, got %v\nstderr:\n%s", err, stderr.String())
@@ -172,20 +176,6 @@ func TestRealCodexThreadLifecycleHelpers(t *testing.T) {
 	}
 	if _, err := thread.SetName(ctx, "codex-sdk-go e2e thread"); err != nil {
 		t.Fatalf("set thread name through thread helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if _, err := client.ArchiveThread(ctx, thread.ID()); err != nil && !test.IsExpectedUnmaterializedThreadError(err) {
-		t.Fatalf("archive thread through client helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if _, err := client.UnarchiveThread(ctx, thread.ID()); err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
-		t.Fatalf("unarchive thread through client helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-
-	threadForMethods := test.StartThread(t, client, ctx, stderr, cwd)
-	if _, err := threadForMethods.Archive(ctx); err != nil && !test.IsExpectedUnmaterializedThreadError(err) {
-		t.Fatalf("archive thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if _, err := threadForMethods.Unarchive(ctx); err != nil && !test.IsExpectedUnmaterializedArchiveError(err) {
-		t.Fatalf("unarchive thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
 
 	threadForClientCompact := test.StartThread(t, client, ctx, stderr, cwd)
@@ -278,28 +268,42 @@ func TestRealCodexLiveTurnHelpers(t *testing.T) {
 	if _, err := client.ArchiveThread(ctx, runThread.ID()); err != nil {
 		t.Fatalf("archive materialized live thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	if _, err := client.UnarchiveThread(ctx, runThread.ID()); err != nil {
+	clientUnarchived, err := client.UnarchiveThread(ctx, runThread.ID())
+	if err != nil {
 		t.Fatalf("unarchive materialized live thread through client helper: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if clientUnarchived.Thread.ID != runThread.ID() {
+		t.Fatalf("client unarchive returned thread %q, want %q", clientUnarchived.Thread.ID, runThread.ID())
 	}
 	if _, err := runThread.Archive(ctx); err != nil {
 		t.Fatalf("archive materialized live thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	if _, err := runThread.Unarchive(ctx); err != nil {
+	threadUnarchived, err := runThread.Unarchive(ctx)
+	if err != nil {
 		t.Fatalf("unarchive materialized live thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
-	forkedRunThread, _, err := client.ForkThread(ctx, runThread.ID(), codex.ThreadForkOptions{Cwd: t.TempDir()})
+	if threadUnarchived.Thread.ID != runThread.ID() {
+		t.Fatalf("thread unarchive returned thread %q, want %q", threadUnarchived.Thread.ID, runThread.ID())
+	}
+	forkedRunThread, clientForkResponse, err := client.ForkThread(ctx, runThread.ID(), codex.ThreadForkOptions{Cwd: t.TempDir()})
 	if err != nil {
 		t.Fatalf("fork materialized live thread through client helper: %v\nstderr:\n%s", err, stderr.String())
 	}
 	if forkedRunThread.ID() == "" || forkedRunThread.ID() == runThread.ID() {
 		t.Fatalf("expected materialized client fork id, got %q from %q", forkedRunThread.ID(), runThread.ID())
 	}
-	forkedByMethod, _, err := runThread.Fork(ctx, codex.ThreadForkOptions{Cwd: t.TempDir()})
+	if clientForkResponse.Thread == nil || clientForkResponse.Thread.ID != forkedRunThread.ID() {
+		t.Fatalf("client fork response did not describe %q: %#v", forkedRunThread.ID(), clientForkResponse)
+	}
+	forkedByMethod, methodForkResponse, err := runThread.Fork(ctx, codex.ThreadForkOptions{Cwd: t.TempDir()})
 	if err != nil {
 		t.Fatalf("fork materialized live thread through thread helper: %v\nstderr:\n%s", err, stderr.String())
 	}
 	if forkedByMethod.ID() == "" || forkedByMethod.ID() == runThread.ID() {
 		t.Fatalf("expected materialized method fork id, got %q from %q", forkedByMethod.ID(), runThread.ID())
+	}
+	if methodForkResponse.Thread == nil || methodForkResponse.Thread.ID != forkedByMethod.ID() {
+		t.Fatalf("method fork response did not describe %q: %#v", forkedByMethod.ID(), methodForkResponse)
 	}
 
 	inputsThread := test.StartThread(t, client, ctx, stderr, t.TempDir())
@@ -324,9 +328,6 @@ func TestRealCodexLiveTurnHelpers(t *testing.T) {
 	handle, err := handleThread.StartTurn(ctx, []codex.Input{codex.TextInput("Reply with one short sentence containing handle run e2e.")}, test.LiveTurnOptions(t))
 	if err != nil {
 		t.Fatalf("start live turn handle: %v\nstderr:\n%s", err, stderr.String())
-	}
-	if stream, err := handle.Stream(); err != nil || stream == nil {
-		t.Fatalf("get turn handle stream: stream=%#v err=%v", stream, err)
 	}
 	handleResult, err := handle.Run(ctx)
 	if err != nil {
