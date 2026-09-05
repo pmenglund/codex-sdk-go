@@ -13,6 +13,7 @@ const (
 	ReviewDecisionKindApproved                    ReviewDecisionKind = "approved"
 	ReviewDecisionKindApprovedExecpolicyAmendment ReviewDecisionKind = "approved_execpolicy_amendment"
 	ReviewDecisionKindApprovedForSession          ReviewDecisionKind = "approved_for_session"
+	ReviewDecisionKindApprovedMCPPolicyAmendment  ReviewDecisionKind = "approved_mcp_policy_amendment"
 	ReviewDecisionKindNetworkPolicyAmendment      ReviewDecisionKind = "network_policy_amendment"
 	ReviewDecisionKindDenied                      ReviewDecisionKind = "denied"
 	ReviewDecisionKindTimedOut                    ReviewDecisionKind = "timed_out"
@@ -109,7 +110,7 @@ func isKnownReviewDecisionKind(kind ReviewDecisionKind) bool {
 
 func isSimpleReviewDecisionKind(kind ReviewDecisionKind) bool {
 	switch kind {
-	case ReviewDecisionKindApproved, ReviewDecisionKindApprovedForSession,
+	case ReviewDecisionKindApproved, ReviewDecisionKindApprovedForSession, ReviewDecisionKindApprovedMCPPolicyAmendment,
 		ReviewDecisionKindTimedOut, ReviewDecisionKindAbort:
 		return true
 	default:
@@ -378,6 +379,9 @@ type Thread struct {
 	IsPinned         bool              `json:"isPinned,omitempty"`
 	HistoryMode      ThreadHistoryMode `json:"historyMode,omitempty"`
 	ModelProvider    string            `json:"modelProvider"`
+	Model            *string           `json:"model,omitempty"`
+	ProjectID        *string           `json:"projectId"`
+	ReasoningEffort  *ReasoningEffort  `json:"reasoningEffort,omitempty"`
 	CreatedAt        int64             `json:"createdAt"`
 	UpdatedAt        int64             `json:"updatedAt"`
 	RecencyAt        *int64            `json:"recencyAt,omitempty"`
@@ -422,6 +426,8 @@ type ThreadResponse = ThreadStartResponse
 
 // ThreadResumeResponse is the response payload for thread/resume.
 type ThreadResumeResponse struct {
+	ItemsBackwardsCursor    *string          `json:"itemsBackwardsCursor,omitempty"`
+	TurnsBackwardsCursor    *string          `json:"turnsBackwardsCursor,omitempty"`
 	ThreadID                string           `json:"threadId,omitempty"`
 	Thread                  *Thread          `json:"thread"`
 	Model                   string           `json:"model"`
@@ -508,6 +514,83 @@ type ThreadListParams struct {
 	UseStateDbOnly *bool                        `json:"useStateDbOnly,omitempty"`
 }
 
+// ThreadSection is an independently persisted thread section.
+type ThreadSection struct {
+	Appearance *ThreadSectionAppearance `json:"appearance,omitempty"`
+	ID         string                   `json:"id"`
+	Name       string                   `json:"name"`
+}
+
+// ThreadSectionUpdateParams updates a section's name and optional appearance.
+type ThreadSectionUpdateParams struct {
+	// Appearance distinguishes omitted (preserve), pointer-to-nil (clear), and
+	// pointer-to-appearance (replace) when marshaling an update.
+	Appearance **ThreadSectionAppearance `json:"appearance,omitempty"`
+	Name       string                    `json:"name"`
+	SectionID  string                    `json:"sectionId"`
+}
+
+// SanitizedThreadSectionUpdateParamsJSON preserves the generated spelling.
+type SanitizedThreadSectionUpdateParamsJSON = ThreadSectionUpdateParams
+
+// ThreadSectionCreateResponse contains the newly created section.
+type ThreadSectionCreateResponse struct {
+	Section ThreadSection `json:"section"`
+}
+
+// ThreadSectionUpdateResponse contains the updated section.
+type ThreadSectionUpdateResponse struct {
+	Section ThreadSection `json:"section"`
+}
+
+// ThreadSectionListResponse contains one page of sections.
+type ThreadSectionListResponse struct {
+	Data       []ThreadSection                                  `json:"data"`
+	NextCursor SanitizedThreadSectionListResponseJSONNextCursor `json:"nextCursor,omitempty"`
+}
+
+// SanitizedThreadSectionCreateResponseJSON preserves the generated spelling.
+type SanitizedThreadSectionCreateResponseJSON = ThreadSectionCreateResponse
+
+// SanitizedThreadSectionUpdateResponseJSON preserves the generated spelling.
+type SanitizedThreadSectionUpdateResponseJSON = ThreadSectionUpdateResponse
+
+// SanitizedThreadSectionListResponseJSON preserves the generated spelling.
+type SanitizedThreadSectionListResponseJSON = ThreadSectionListResponse
+
+// SanitizedThreadSectionListResponseJSONNextCursor is an optional section cursor.
+type SanitizedThreadSectionListResponseJSONNextCursor *string
+
+// ThreadTurnsListResponse contains a page of turns and directional cursors.
+type ThreadTurnsListResponse struct {
+	Data            []Turn  `json:"data"`
+	NextCursor      *string `json:"nextCursor,omitempty"`
+	BackwardsCursor *string `json:"backwardsCursor,omitempty"`
+}
+
+// ThreadItemEntry associates a history item with its turn.
+type ThreadItemEntry struct {
+	Item   ThreadItem `json:"item"`
+	TurnID string     `json:"turnId"`
+}
+
+// ThreadItemsListResponse contains a page of items and directional cursors.
+type ThreadItemsListResponse struct {
+	Data            []ThreadItemEntry `json:"data"`
+	NextCursor      *string           `json:"nextCursor,omitempty"`
+	BackwardsCursor *string           `json:"backwardsCursor,omitempty"`
+}
+
+// Nullable_GetAccountTokenUsageParams represents omitted account usage filters.
+type Nullable_GetAccountTokenUsageParams = *GetAccountTokenUsageParams
+
+// ThreadRevertResponse contains the updated thread and history cursors.
+type ThreadRevertResponse struct {
+	Thread               Thread  `json:"thread"`
+	ItemsBackwardsCursor *string `json:"itemsBackwardsCursor,omitempty"`
+	TurnsBackwardsCursor *string `json:"turnsBackwardsCursor,omitempty"`
+}
+
 // ThreadMetadataUpdateParams updates supported thread metadata.
 type ThreadMetadataUpdateParams struct {
 	GitInfo *ThreadMetadataGitInfoUpdateParams `json:"gitInfo,omitempty"`
@@ -555,6 +638,7 @@ type ThreadStartParams struct {
 // exceeds the generator's capabilities.
 type ThreadResumeParams struct {
 	ThreadID              string             `json:"threadId"`
+	ExcludeTurns          *bool              `json:"excludeTurns,omitempty"`
 	Model                 *string            `json:"model,omitempty"`
 	ModelProvider         *string            `json:"modelProvider,omitempty"`
 	ServiceTier           *string            `json:"serviceTier,omitempty"`
@@ -572,6 +656,7 @@ type ThreadResumeParams struct {
 // exceeds the generator's capabilities.
 type ThreadForkParams struct {
 	ThreadID              string             `json:"threadId"`
+	ExcludeTurns          *bool              `json:"excludeTurns,omitempty"`
 	Ephemeral             *bool              `json:"ephemeral,omitempty"`
 	Model                 *string            `json:"model,omitempty"`
 	ModelProvider         *string            `json:"modelProvider,omitempty"`
@@ -603,6 +688,9 @@ type TurnStartParams struct {
 	SandboxPolicy       json.RawMessage            `json:"sandboxPolicy,omitempty"`
 	Model               *string                    `json:"model,omitempty"`
 	ServiceTier         *string                    `json:"serviceTier,omitempty"`
+	ServiceTierForTurn  *string                    `json:"serviceTierForTurn,omitempty"`
+	ToolOutput          *TurnToolOutput            `json:"toolOutput,omitempty"`
+	TurnTrigger         *string                    `json:"turnTrigger,omitempty"`
 	Effort              json.RawMessage            `json:"effort,omitempty"`
 	Summary             json.RawMessage            `json:"summary,omitempty"`
 	OutputSchema        json.RawMessage            `json:"outputSchema,omitempty"`
@@ -722,11 +810,13 @@ type ToolRequestUserInputResponse = SanitizedToolRequestUserInputResponse
 // CommandExecutionRequestApprovalParams is maintained manually because the raw
 // schema uses nested unions that the generator does not currently emit.
 type CommandExecutionRequestApprovalParams struct {
-	ThreadID      string  `json:"threadId"`
-	TurnID        string  `json:"turnId"`
-	ItemID        string  `json:"itemId"`
-	StartedAtMs   int64   `json:"startedAtMs"`
-	EnvironmentID *string `json:"environmentId"`
+	// Kind identifies the action under review. Missing JSON values default to command.
+	Kind          CommandExecutionApprovalKind `json:"kind,omitempty"`
+	ThreadID      string                       `json:"threadId"`
+	TurnID        string                       `json:"turnId"`
+	ItemID        string                       `json:"itemId"`
+	StartedAtMs   int64                        `json:"startedAtMs"`
+	EnvironmentID *string                      `json:"environmentId"`
 
 	ApprovalID *string `json:"approvalId,omitempty"`
 	Reason     *string `json:"reason,omitempty"`
@@ -739,6 +829,32 @@ type CommandExecutionRequestApprovalParams struct {
 	ProposedExecpolicyAmendment     []string                           `json:"proposedExecpolicyAmendment,omitempty"`
 	ProposedNetworkPolicyAmendments []NetworkPolicyAmendment           `json:"proposedNetworkPolicyAmendments,omitempty"`
 	AvailableDecisions              []CommandExecutionApprovalDecision `json:"availableDecisions,omitempty"`
+}
+
+// UnmarshalJSON applies the upstream command default when kind is omitted.
+func (params *CommandExecutionRequestApprovalParams) UnmarshalJSON(data []byte) error {
+	type wireParams CommandExecutionRequestApprovalParams
+	value := wireParams{Kind: CommandExecutionApprovalKindCommand}
+	decoded := struct {
+		*wireParams
+		Kind json.RawMessage `json:"kind"`
+	}{wireParams: &value}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	if len(decoded.Kind) > 0 {
+		if string(decoded.Kind) == "null" {
+			return errors.New("command approval kind must be a string")
+		}
+		if err := json.Unmarshal(decoded.Kind, &value.Kind); err != nil {
+			return err
+		}
+		if value.Kind == "" {
+			return errors.New("command approval kind must not be empty")
+		}
+	}
+	*params = CommandExecutionRequestApprovalParams(value)
+	return nil
 }
 
 // CommandExecutionRequestApprovalResponse is maintained manually because the raw

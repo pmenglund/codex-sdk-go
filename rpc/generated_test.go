@@ -52,6 +52,79 @@ func TestGeneratedClientRequests(t *testing.T) {
 	}
 }
 
+func TestAccountUsageReadOptionalFilter(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+	for range 3 {
+		transport.enqueueResult(map[string]any{})
+	}
+	ctx := context.Background()
+	if _, err := client.AccountUsageRead(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.AccountUsageReadWithParams(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	threadID := "thr_1"
+	if _, err := client.AccountUsageReadWithParams(ctx, &protocol.GetAccountTokenUsageParams{ThreadID: &threadID}); err != nil {
+		t.Fatal(err)
+	}
+	requests := transport.writtenRequests()
+	if len(requests) != 3 {
+		t.Fatalf("requests = %d", len(requests))
+	}
+	for i, want := range []string{"", "", `{"threadId":"thr_1"}`} {
+		if requests[i].Method != "account/usage/read" || string(requests[i].Params) != want {
+			t.Errorf("request %d = %#v", i, requests[i])
+		}
+	}
+}
+
+func TestPaginatedThreadHistoryRPC(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+	transport.enqueueResult(json.RawMessage(`{"data":[{"id":"turn_1","items":[],"status":"completed"}],"nextCursor":"turn-next","backwardsCursor":"turn-back"}`))
+	transport.enqueueResult(json.RawMessage(`{"data":[{"turnId":"turn_1","item":{"type":"agentMessage","id":"item_1","text":"done"}}],"nextCursor":"item-next","backwardsCursor":"item-back"}`))
+	transport.enqueueResult(json.RawMessage(`{"thread":{"id":"thr_1","projectId":null,"turns":[]},"itemsBackwardsCursor":"item-back","turnsBackwardsCursor":"turn-back"}`))
+	ctx := context.Background()
+	cursor, turnID := "cursor_1", "turn_1"
+	limit := 7
+	direction := protocol.SortDirectionAsc
+	turns, err := client.ThreadTurnsList(ctx, protocol.ThreadTurnsListParams{ThreadID: "thr_1", Cursor: &cursor, Limit: &limit, SortDirection: &direction, ItemsView: protocol.TurnItemsViewSummary})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(turns.Data) != 1 || turns.Data[0].ID != "turn_1" || turns.NextCursor == nil || *turns.NextCursor != "turn-next" || turns.BackwardsCursor == nil || *turns.BackwardsCursor != "turn-back" {
+		t.Fatalf("turn page = %#v", turns)
+	}
+	items, err := client.ThreadItemsList(ctx, protocol.ThreadItemsListParams{ThreadID: "thr_1", Cursor: &cursor, Limit: &limit, SortDirection: &direction, TurnID: &turnID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items.Data) != 1 || items.Data[0].TurnID != "turn_1" || !items.Data[0].Item.IsKnown() || items.NextCursor == nil || *items.NextCursor != "item-next" || items.BackwardsCursor == nil || *items.BackwardsCursor != "item-back" {
+		t.Fatalf("item page = %#v", items)
+	}
+	reverted, err := client.ThreadRevert(ctx, protocol.ThreadRevertParams{ThreadID: "thr_1", BeforeTurnID: "turn_2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reverted.Thread.ID != "thr_1" || reverted.ItemsBackwardsCursor == nil || *reverted.ItemsBackwardsCursor != "item-back" || reverted.TurnsBackwardsCursor == nil || *reverted.TurnsBackwardsCursor != "turn-back" {
+		t.Fatalf("revert = %#v", reverted)
+	}
+	requests := transport.writtenRequests()
+	wantParams := []string{`{"cursor":"cursor_1","itemsView":"summary","limit":7,"sortDirection":"asc","threadId":"thr_1"}`, `{"cursor":"cursor_1","limit":7,"sortDirection":"asc","threadId":"thr_1","turnId":"turn_1"}`, `{"beforeTurnId":"turn_2","threadId":"thr_1"}`}
+	for i, method := range []string{"thread/turns/list", "thread/items/list", "thread/revert"} {
+		if string(requests[i].Params) != wantParams[i] {
+			t.Errorf("request %s: params %s, want %s", method, requests[i].Params, wantParams[i])
+		}
+		if requests[i].Method != method {
+			t.Fatalf("request %d = %s", i, requests[i].Method)
+		}
+	}
+}
+
 func TestGeneratedNotifications(t *testing.T) {
 	if len(notificationParsers) == 0 {
 		t.Fatalf("expected notification methods")
@@ -234,6 +307,17 @@ func TestDispatchServerRequests(t *testing.T) {
 	}
 }
 
+func TestDispatchOlderCommandApprovalDefaultsKind(t *testing.T) {
+	handler := &recordingHandler{}
+	req := JSONRPCRequest{ID: NewIntRequestID(1), Method: "item/commandExecution/requestApproval", Params: json.RawMessage(`{"threadId":"thr_1","turnId":"turn_1","itemId":"item_1"}`)}
+	if _, err := dispatchServerRequest(context.Background(), handler, req); err != nil {
+		t.Fatal(err)
+	}
+	if handler.approvalKind != protocol.CommandExecutionApprovalKindCommand {
+		t.Fatalf("approval kind = %q", handler.approvalKind)
+	}
+}
+
 func TestUnimplementedServerRequestHandlerSupportsPartialImplementations(t *testing.T) {
 	handler := partialServerRequestHandler{}
 	var _ ServerRequestHandler = handler
@@ -401,7 +485,8 @@ func (t *scriptedTransport) Close() error {
 }
 
 type recordingHandler struct {
-	lastMethod string
+	approvalKind protocol.CommandExecutionApprovalKind
+	lastMethod   string
 }
 
 type scriptedResponse struct {
@@ -433,6 +518,7 @@ func (h *recordingHandler) ExecCommandApproval(ctx context.Context, params proto
 
 func (h *recordingHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	h.lastMethod = "item/commandExecution/requestApproval"
+	h.approvalKind = params.Kind
 	resp := protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("accept")}
 	return &resp, nil
 }

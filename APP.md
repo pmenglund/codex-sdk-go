@@ -9,7 +9,7 @@ It provides a high-level `codex` client API, streaming turn execution, approval 
 
 ## System Boundaries
 
-- Primary runtime(s): Go 1.25.12+ and the `codex` CLI process (spawned and managed by the SDK).
+- Primary runtime(s): Go 1.25.14+ and the `codex` CLI process (spawned and managed by the SDK).
 - External services: Local `codex app-server` over JSON-RPC (stdio transport); local `openai/codex` checkout for schema export during codegen.
 - Data stores: No persistent datastore in this repo; generated artifacts are checked into source control.
 
@@ -90,7 +90,7 @@ unions are rendered as raw-preserving wrapper types; any remaining
 
 - Security and privacy requirements: Approval handling must remain explicit and safe; sample auto-approve behavior should stay minimal and conservative.
 - Performance expectations: Streaming APIs should remain responsive and avoid unnecessary buffering/copying for turn notifications.
-- Compatibility constraints: Support Go 1.25.12 or newer and maintain protocol compatibility with generated schema versions.
+- Compatibility constraints: Support Go 1.25.14 or newer and maintain protocol compatibility with generated schema versions.
 
 ## Change Checklist for Contributors
 
