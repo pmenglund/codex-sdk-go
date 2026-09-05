@@ -37,10 +37,17 @@ func main() {
 	for {
 		note, err := stream.Next(ctx)
 		if err != nil {
-			break
+			panic(err)
 		}
 		fmt.Printf("%s\n", note.Method)
+		if note.Method == "turn/failed" {
+			panic("turn failed")
+		}
 		if note.Method == "turn/completed" {
+			if completed, ok := note.Params.(protocol.TurnCompletedNotification); ok &&
+				completed.Turn != nil && completed.Turn.Status == protocol.TurnStatusFailed {
+				panic(fmt.Errorf("turn failed: %v", completed.Turn.Error))
+			}
 			break
 		}
 	}
@@ -106,7 +113,7 @@ func exampleTranscript(info protocol.ClientInfo, prompt, finalResponse string) [
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "item/completed",
-			Params: mustRaw(map[string]any{"threadId": "thr_123", "item": map[string]any{"text": finalResponse}}),
+			Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1", "completedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": finalResponse}}),
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "turn/completed",

@@ -23,7 +23,17 @@ type Options struct {
 	ClientInfo protocol.ClientInfo
 
 	// ApprovalHandler handles server approval requests.
+	//
+	// Deprecated: use RequestHandler. ApprovalHandler requires the broad legacy
+	// rpc.ServerRequestHandler interface.
+	//lint:ignore SA1019 retained for source compatibility during the deprecation window
 	ApprovalHandler rpc.ServerRequestHandler
+
+	// RequestHandler provides optional, forward-compatible app-server callbacks.
+	// It conflicts with ApprovalHandler when both are configured. The client may
+	// invoke different callbacks concurrently, so callbacks that share state must
+	// synchronize access to it.
+	RequestHandler *ServerRequestCallbacks
 
 	// CompatibilityPolicy controls validation of a spawned Codex CLI. The zero
 	// value, RequireMajorMinor, rejects binaries whose major/minor version cannot
@@ -55,9 +65,9 @@ type SpawnOptions struct {
 	ExtraArgs []string
 	// Stderr captures stderr from the codex process (defaults to os.Stderr).
 	Stderr io.Writer
-	// Env holds extra environment entries for the spawned process, in
-	// "KEY=value" form. They are appended to the parent process environment,
-	// so an entry overrides an inherited variable of the same name (useful
+	// Env holds extra "KEY=value" environment entries for the compatibility
+	// probe and spawned app-server process. They are appended to the parent
+	// environment, so an entry overrides an inherited variable of the same name (useful
 	// for CODEX_HOME or CODEX_API_KEY). Nil inherits the parent environment
 	// unchanged.
 	Env []string

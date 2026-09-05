@@ -33,13 +33,29 @@ type ReplayTransport struct {
 	closed     bool
 }
 
-// NewReplayTransport creates a ReplayTransport for a transcript.
+// NewReplayTransport creates a ReplayTransport for a transcript. It panics if
+// the transcript contains an unsupported direction.
 func NewReplayTransport(transcript []TranscriptEntry) *ReplayTransport {
+	replay, err := NewReplayTransportChecked(transcript)
+	if err != nil {
+		panic(err)
+	}
+	return replay
+}
+
+// NewReplayTransportChecked creates a ReplayTransport after validating every
+// transcript entry.
+func NewReplayTransportChecked(transcript []TranscriptEntry) (*ReplayTransport, error) {
+	for index, entry := range transcript {
+		if entry.Direction != TranscriptRead && entry.Direction != TranscriptWrite {
+			return nil, fmt.Errorf("transcript entry %d has invalid direction %q", index, entry.Direction)
+		}
+	}
 	copyTranscript := make([]TranscriptEntry, len(transcript))
 	copy(copyTranscript, transcript)
 	replay := &ReplayTransport{transcript: copyTranscript}
 	replay.cond = sync.NewCond(&replay.mu)
-	return replay
+	return replay, nil
 }
 
 // ReadLine returns the next recorded read line.
@@ -105,14 +121,32 @@ type RecordTransport struct {
 }
 
 // RercordTransport is a misspelled alias for RecordTransport.
+//
+// Deprecated: use RecordTransport.
 type RercordTransport = RecordTransport
 
-// NewRecordTransport wraps a transport and records traffic.
+// NewRecordTransport wraps a transport and records traffic. It panics if
+// transport is nil. Use NewRecordTransportChecked when the dependency is not
+// statically known.
 func NewRecordTransport(transport Transport) *RecordTransport {
-	return &RecordTransport{transport: transport}
+	recorder, err := NewRecordTransportChecked(transport)
+	if err != nil {
+		panic(err)
+	}
+	return recorder
+}
+
+// NewRecordTransportChecked wraps a validated transport and records traffic.
+func NewRecordTransportChecked(transport Transport) (*RecordTransport, error) {
+	if isNilInterface(transport) {
+		return nil, errors.New("rpc transport is nil")
+	}
+	return &RecordTransport{transport: transport}, nil
 }
 
 // NewRercordTransport wraps a transport and records traffic.
+//
+// Deprecated: use NewRecordTransport.
 func NewRercordTransport(transport Transport) *RecordTransport {
 	return NewRecordTransport(transport)
 }
@@ -174,7 +208,12 @@ func normalizeJSONLine(line string) (string, bool) {
 		return "", false
 	}
 	var payload any
-	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
+	decoder := json.NewDecoder(strings.NewReader(trimmed))
+	decoder.UseNumber()
+	if err := decoder.Decode(&payload); err != nil {
+		return "", false
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		return "", false
 	}
 	data, err := json.Marshal(payload)

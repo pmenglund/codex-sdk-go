@@ -1,0 +1,23 @@
+ignore:
+  # Deterministically generated source is checked by generator invariants.
+  - "**/*_gen.go"
+  # Executable examples and credentialed test support are not shipped library logic.
+  - "examples/**/*"
+  - "test/**/*"
+
+coverage:
+  precision: 1
+  round: down
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 0%
+    patch:
+      default:
+        target: 80%
+        threshold: 0%
+
+comment:
+  layout: "reach, diff, flags, files"
+  require_changes: false

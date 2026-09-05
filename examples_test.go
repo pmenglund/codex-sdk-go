@@ -128,7 +128,7 @@ func exampleTranscript(clientInfo protocol.ClientInfo, prompt, finalResponse str
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "item/completed",
-			Params: mustRaw(map[string]any{"threadId": "thr_123", "item": map[string]any{"text": finalResponse}}),
+			Params: mustRaw(map[string]any{"threadId": "thr_123", "turnId": "turn_1", "completedAtMs": 1, "item": map[string]any{"type": "agentMessage", "id": "item_1", "text": finalResponse}}),
 		}),
 		readLine(rpc.JSONRPCNotification{
 			Method: "turn/completed",

@@ -66,6 +66,22 @@ func TestConnTransportReadLineReturnsEOFWithoutPartialLine(t *testing.T) {
 	}
 }
 
+func TestReadLineLimited(t *testing.T) {
+	line, err := ReadLineLimited(bufio.NewReaderSize(strings.NewReader("1234\n"), 2), 4)
+	if err != nil || line != "1234" {
+		t.Fatalf("unexpected bounded line: %q, %v", line, err)
+	}
+	if _, err := ReadLineLimited(bufio.NewReaderSize(strings.NewReader("12345\n"), 2), 4); !errors.Is(err, ErrMessageTooLarge) {
+		t.Fatalf("expected ErrMessageTooLarge, got %v", err)
+	}
+	if _, err := ReadLineLimited(nil, 4); err == nil {
+		t.Fatal("nil reader was accepted")
+	}
+	if _, err := ReadLineLimited(bufio.NewReader(strings.NewReader("x\n")), 0); err == nil {
+		t.Fatal("non-positive limit was accepted")
+	}
+}
+
 func TestConnTransportWriteAndCloseErrors(t *testing.T) {
 	transport := NewConnTransport(&readWriteCloser{
 		reader:   strings.NewReader(""),

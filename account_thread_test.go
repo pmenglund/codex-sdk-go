@@ -24,7 +24,7 @@ func TestAccountAndModelHelpersWithReplay(t *testing.T) {
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "account/read", Params: mustRaw(map[string]any{"refreshToken": true})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"requiresOpenaiAuth": false, "account": map[string]any{"email": "dev@example.com"}})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"requiresOpenaiAuth": false, "account": map[string]any{"type": "chatgpt", "email": "dev@example.com", "planType": "plus"}})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "model/list", Params: mustRaw(map[string]any{"cursor": "cur_1", "includeHidden": true, "limit": 2})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"data": []any{}, "nextCursor": nil})}),
 		}),
@@ -119,16 +119,16 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "thread/start", Params: mustRaw(map[string]any{})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(2), Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123"}})}),
-			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "thread/list", Params: mustRaw(map[string]any{"archived": false, "limit": 10, "searchTerm": "sdk"})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"data": []any{}})}),
+			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(3), Method: "thread/list", Params: mustRaw(map[string]any{"archived": false, "limit": 10, "searchTerm": "sdk", "sectionId": "section_1"})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(3), Result: mustRaw(map[string]any{"data": []any{map[string]any{"id": "thr_123", "sessionId": "session_1", "preview": "SDK preview", "modelProvider": "openai", "createdAt": 1, "updatedAt": 2, "cwd": "/tmp/project", "cliVersion": "0.147.0", "section": map[string]any{"id": "section_1", "name": "Work"}, "sectionEnteredAt": 3, "turns": []any{}}}, "nextCursor": "next_1"})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(4), Method: "thread/read", Params: mustRaw(map[string]any{"threadId": "thr_123", "includeTurns": true})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(4), Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123"}})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(4), Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123", "name": "SDK work", "turns": []any{map[string]any{"id": "turn_1", "items": []any{}, "itemsView": "full", "status": "completed"}}}})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(5), Method: "thread/name/set", Params: mustRaw(map[string]any{"threadId": "thr_123", "name": "SDK work"})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(5), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(6), Method: "thread/archive", Params: mustRaw(map[string]any{"threadId": "thr_123"})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(6), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(7), Method: "thread/unarchive", Params: mustRaw(map[string]any{"threadId": "thr_123"})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(7), Result: mustRaw(map[string]any{})}),
+			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(7), Result: mustRaw(map[string]any{"thread": map[string]any{"id": "thr_123"}})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(8), Method: "thread/compact/start", Params: mustRaw(map[string]any{"threadId": "thr_123"})}),
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(8), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(9), Method: "thread/fork", Params: mustRaw(map[string]any{"threadId": "thr_123", "model": "gpt-test"})}),
@@ -145,11 +145,19 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 	if err != nil {
 		t.Fatalf("start thread error: %v", err)
 	}
-	if _, err := client.ListThreads(ctx, ThreadListOptions{Archived: &archived, Limit: &limit, SearchTerm: "sdk"}); err != nil {
+	page, err := client.ListThreads(ctx, ThreadListOptions{Archived: &archived, Limit: &limit, SearchTerm: "sdk", SectionID: "section_1"})
+	if err != nil {
 		t.Fatalf("list threads error: %v", err)
 	}
-	if _, err := thread.Read(ctx, ThreadReadOptions{IncludeTurns: true}); err != nil {
+	if len(page.Data) != 1 || page.Data[0].Preview != "SDK preview" || page.Data[0].Section == nil || page.Data[0].Section.ID != "section_1" || page.Data[0].SectionEnteredAt == nil || *page.Data[0].SectionEnteredAt != 3 || page.NextCursor == nil || *page.NextCursor != "next_1" {
+		t.Fatalf("unexpected typed thread page: %#v", page)
+	}
+	read, err := thread.Read(ctx, ThreadReadOptions{IncludeTurns: true})
+	if err != nil {
 		t.Fatalf("read thread error: %v", err)
+	}
+	if len(read.Thread.Turns) != 1 || read.Thread.Turns[0].Status != protocol.TurnStatusCompleted {
+		t.Fatalf("unexpected typed thread snapshot: %#v", read)
 	}
 	if _, err := thread.SetName(ctx, "SDK work"); err != nil {
 		t.Fatalf("set name error: %v", err)
@@ -157,18 +165,25 @@ func TestThreadLifecycleHelpersWithReplay(t *testing.T) {
 	if _, err := thread.Archive(ctx); err != nil {
 		t.Fatalf("archive error: %v", err)
 	}
-	if _, err := thread.Unarchive(ctx); err != nil {
+	unarchived, err := thread.Unarchive(ctx)
+	if err != nil {
 		t.Fatalf("unarchive error: %v", err)
+	}
+	if unarchived.Thread.ID != "thr_123" {
+		t.Fatalf("unexpected typed unarchive response: %#v", unarchived)
 	}
 	if _, err := thread.Compact(ctx, ThreadCompactOptions{}); err != nil {
 		t.Fatalf("compact error: %v", err)
 	}
-	forked, _, err := thread.Fork(ctx, ThreadForkOptions{Model: "gpt-test"})
+	forked, forkResponse, err := thread.Fork(ctx, ThreadForkOptions{Model: "gpt-test"})
 	if err != nil {
 		t.Fatalf("fork error: %v", err)
 	}
 	if forked.ID() != "thr_fork" {
 		t.Fatalf("expected forked thread id, got %s", forked.ID())
+	}
+	if forkResponse.Thread == nil || forkResponse.Thread.ID != "thr_fork" {
+		t.Fatalf("unexpected typed fork response: %#v", forkResponse)
 	}
 	if thread.ID() != "thr_123" {
 		t.Fatalf("original thread mutated: %s", thread.ID())
@@ -186,10 +201,27 @@ func TestThreadListOptionsToParamsPreservesExplicitEmptyFilters(t *testing.T) {
 	if params.SourceKinds != nil {
 		t.Fatalf("expected omitted source kinds for zero-value options")
 	}
+	if params.SectionID != nil {
+		t.Fatalf("expected omitted section filter for zero-value options")
+	}
+	zeroWire, err := json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal zero-value params: %v", err)
+	}
+	if strings.Contains(string(zeroWire), `"isPinned"`) {
+		t.Fatalf("expected omitted pinned filter for zero-value options: %s", zeroWire)
+	}
+	if strings.Contains(string(zeroWire), `"sectionId"`) {
+		t.Fatalf("expected omitted section filter for zero-value options: %s", zeroWire)
+	}
 
+	pinned := false
 	params, err = (ThreadListOptions{
 		ModelProviders: []string{},
 		SourceKinds:    []protocol.ThreadSourceKind{},
+		IsPinned:       &pinned,
+		SortDirection:  protocol.SortDirectionAsc,
+		SortKey:        protocol.ThreadSortKeyUpdatedAt,
 	}).toParams()
 	if err != nil {
 		t.Fatalf("to params with explicit filters: %v", err)
@@ -205,6 +237,65 @@ func TestThreadListOptionsToParamsPreservesExplicitEmptyFilters(t *testing.T) {
 	}
 	if len(*params.SourceKinds) != 0 {
 		t.Fatalf("expected empty source kinds filter, got %#v", *params.SourceKinds)
+	}
+	wire, err := json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	if strings.Contains(string(wire), `"isPinned"`) {
+		t.Fatalf("deprecated pinned filter reached the 0.147 wire: %s", wire)
+	}
+	if params.SortDirection != protocol.SortDirectionAsc || params.SortKey != protocol.ThreadSortKeyUpdatedAt {
+		t.Fatalf("typed sort options were not preserved: %#v", params)
+	}
+	pinned = true
+	params, err = (ThreadListOptions{IsPinned: &pinned}).toParams()
+	if err != nil {
+		t.Fatalf("to params with true pinned filter: %v", err)
+	}
+	wire, err = json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal true pinned filter: %v", err)
+	}
+	if strings.Contains(string(wire), `"isPinned"`) {
+		t.Fatalf("deprecated true pinned filter reached the 0.147 wire: %s", wire)
+	}
+	params, err = (ThreadListOptions{SectionID: "section_1", SortKey: protocol.ThreadSortKeySectionPosition}).toParams()
+	if err != nil {
+		t.Fatalf("to params with section filter: %v", err)
+	}
+	if params.SectionID == nil || *params.SectionID == nil || **params.SectionID != "section_1" {
+		t.Fatalf("concrete section filter was not preserved: %#v", params.SectionID)
+	}
+	wire, err = json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal section filter: %v", err)
+	}
+	if !strings.Contains(string(wire), `"sectionId":"section_1"`) {
+		t.Fatalf("section filter missing from wire params: %s", wire)
+	}
+	params, err = (ThreadListOptions{Unsectioned: true}).toParams()
+	if err != nil {
+		t.Fatalf("to params with unsectioned filter: %v", err)
+	}
+	if params.SectionID == nil || *params.SectionID != nil {
+		t.Fatalf("unsectioned filter was not preserved: %#v", params.SectionID)
+	}
+	wire, err = json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal unsectioned filter: %v", err)
+	}
+	if !strings.Contains(string(wire), `"sectionId":null`) {
+		t.Fatalf("unsectioned filter missing from wire params: %s", wire)
+	}
+	if _, err := (ThreadListOptions{SectionID: "section_1", Unsectioned: true}).toParams(); err == nil {
+		t.Fatal("contradictory section filters were accepted")
+	}
+	if _, err := (ThreadListOptions{SortDirection: "sideways"}).toParams(); err == nil {
+		t.Fatal("invalid sort direction was accepted")
+	}
+	if _, err := (ThreadListOptions{SortKey: "unknown"}).toParams(); err == nil {
+		t.Fatal("invalid sort key was accepted")
 	}
 }
 
@@ -222,6 +313,7 @@ func TestThreadForkOptionsToParams(t *testing.T) {
 		BaseInstructions:      "base",
 		DeveloperInstructions: "dev",
 		Ephemeral:             &ephemeral,
+		ExcludeTurns:          &ephemeral,
 	}
 
 	params, err := opts.toParams("thr_123")
@@ -243,6 +335,7 @@ func TestThreadForkOptionsToParams(t *testing.T) {
 	assertEqual(t, "baseInstructions", params.BaseInstructions, stringPtr("base"))
 	assertEqual(t, "developerInstructions", params.DeveloperInstructions, stringPtr("dev"))
 	assertEqual(t, "ephemeral", params.Ephemeral, &ephemeral)
+	assertEqual(t, "excludeTurns", params.ExcludeTurns, &ephemeral)
 }
 
 func TestThreadGoalResponsesWithReplay(t *testing.T) {
@@ -316,7 +409,7 @@ func TestThreadLifecyclePropagatesServerErrors(t *testing.T) {
 			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{})}),
 			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
 			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(2), Method: "thread/list", Params: mustRaw(map[string]any{})}),
-			readLine(rpc.JSONRPCError{ID: rpc.NewIntRequestID(2), Error: rpc.JSONRPCErrorError{Code: -32000, Message: "boom"}}),
+			readLine(rpc.JSONRPCError{ID: rpc.NewIntRequestID(2), Error: rpc.JSONRPCErrorDetail{Code: -32000, Message: "boom"}}),
 		}),
 		ClientInfo: info,
 	})

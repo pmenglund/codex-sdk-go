@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
 	"runtime/debug"
 	"strings"
@@ -25,6 +26,13 @@ type Codex struct {
 // New creates a new Codex client and performs the initialize handshake.
 func New(ctx context.Context, opts Options) (*Codex, error) {
 	logger := resolveLogger(opts.Logger)
+	if opts.RequestHandler != nil && !isNilServerRequestHandler(opts.ApprovalHandler) {
+		return nil, errors.New("request handler conflicts with deprecated approval handler")
+	}
+	requestHandler := opts.ApprovalHandler
+	if opts.RequestHandler != nil {
+		requestHandler = *opts.RequestHandler
+	}
 
 	transport := opts.Transport
 	if transport == nil {
@@ -39,7 +47,7 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		args = append(args, spawn.ExtraArgs...)
 
 		logger.Info("codex checking CLI compatibility", "path", spawn.CodexPath)
-		if err := checkCodexCompatibility(ctx, logger, spawn.CodexPath, opts.CompatibilityPolicy); err != nil {
+		if err := checkCodexCompatibility(ctx, logger, spawn.CodexPath, opts.CompatibilityPolicy, spawn.Env...); err != nil {
 			return nil, err
 		}
 
@@ -60,10 +68,13 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		logger.Info("codex using custom transport")
 	}
 
-	client := rpc.NewClient(transport, rpc.ClientOptions{
+	client, err := rpc.NewClientChecked(transport, rpc.ClientOptions{
 		Logger:         logger,
-		RequestHandler: attachApprovalLogger(opts.ApprovalHandler, logger),
+		RequestHandler: attachApprovalLogger(requestHandler, logger),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	info := opts.ClientInfo
 	if info.Name == "" {
@@ -160,7 +171,7 @@ func boolPtr(value bool) *bool {
 	return &value
 }
 
-func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath string, policy CompatibilityPolicy) error {
+func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath string, policy CompatibilityPolicy, env ...string) error {
 	if policy == Ignore {
 		return nil
 	}
@@ -172,7 +183,7 @@ func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath
 	if generatedVersion == "" {
 		return nil
 	}
-	runtimeVersion, err := probeCodexVersion(ctx, codexPath)
+	runtimeVersion, err := probeCodexVersion(ctx, codexPath, env...)
 	if err != nil {
 		return handleCompatibilityFailure(logger, policy, newCompatibilityError(codexPath, "", "version probe failed", err))
 	}
@@ -227,11 +238,15 @@ func majorMinor(version string) (string, string, bool) {
 	return strings.TrimLeft(parts[0], "0"), strings.TrimLeft(parts[1], "0"), true
 }
 
-func probeCodexVersion(parent context.Context, codexPath string) (string, error) {
+func probeCodexVersion(parent context.Context, codexPath string, env ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(parent, codexVersionProbeTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, codexPath, "--version").Output()
+	cmd := exec.CommandContext(ctx, codexPath, "--version")
+	if len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
+	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}

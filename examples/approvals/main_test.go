@@ -25,8 +25,8 @@ func TestExampleOptionsDefault(t *testing.T) {
 	if opts.Transport != nil {
 		t.Fatalf("expected nil transport for default options")
 	}
-	if opts.ApprovalHandler == nil {
-		t.Fatalf("expected approval handler for default options")
+	if opts.RequestHandler == nil {
+		t.Fatalf("expected request handler for default options")
 	}
 }
 

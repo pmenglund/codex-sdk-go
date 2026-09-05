@@ -64,6 +64,21 @@
 //   - codex.SandboxModeReadOnly / codex.SandboxModeWorkspaceWrite / ...
 //   - codex.ReasoningEffortLow / codex.ReasoningEffortMedium / ...
 //
-// Retryable overload errors can be detected with codex.IsRetryable or
-// codex.IsOverloaded. Both helpers work with wrapped errors.
+// Overload errors can be classified with codex.IsOverloaded. The helper works
+// with wrapped errors, but callers must decide retry safety from the operation's
+// idempotency; classification alone cannot prove that a retry is safe.
+//
+// A TurnHandle has one notification consumer. Choose Run, repeated Next calls,
+// or Stream; mixing styles returns ErrTurnConsumptionMode. Failed turns return
+// both their partial TurnResult and a *TurnError that matches ErrTurnFailed.
+// FinalResponse is derived only from completed agentMessage items.
+//
+// App-server requests should normally be configured with
+// Options.RequestHandler and ServerRequestCallbacks. Unset callbacks report
+// rpc.ErrServerRequestUnsupported. Options.ApprovalHandler and the broad
+// rpc.ServerRequestHandler remain deprecated compatibility surfaces.
+//
+// The protocol package uses canonical Go initialisms and concrete lifecycle
+// response types. Prefer MCP... and OAuth... declarations and the typed thread
+// sort and approval decision values; legacy spellings remain deprecated aliases.
 package codex
