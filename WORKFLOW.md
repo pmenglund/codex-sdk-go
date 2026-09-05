@@ -66,9 +66,9 @@ test support. The workflow must be safe for fork pull requests: it receives no
 API credential and does not download or execute Codex.
 
 The `Trusted E2E` workflow runs by manual dispatch or as the reusable release
-gate. Its `e2e` GitHub Environment must require an approver and the reusable
-caller must provide `OPENAI_API_KEY`. The workflow installs the exact Codex
-release recorded in `.github/codex/version`, verifies the archive against
+gate. Its `e2e` GitHub Environment must allow protected branches without
+required reviewers, and the reusable caller must provide `OPENAI_API_KEY`. The
+workflow installs the exact Codex release recorded in `.github/codex/version`, verifies the archive against
 `.github/codex/checksums.txt`, then scopes the API key to the single step that
 constructs `CODEX_E2E_LOGIN_PARAMS_JSON` and runs
 `go test -tags=e2e ./test/e2e`.
@@ -79,9 +79,8 @@ file automatically starts `Release`. Manual dispatch must name the exact failed
 candidate for an unchanged retry or the exact merged corrective commit after
 fixing a failed release. The workflow derives the tag from that commit, passes reusable
 quality and trusted e2e workflows, then publishes automatically after E2E
-succeeds. Human approval is required before E2E runs; the protected `release`
-environment requires no second approval. Its publish job has only `contents: write`, refuses
-conflicting or non-increasing tags, treats an existing tag at the exact gated
+succeeds. E2E and publication require no human approval on the happy path. Its
+publish job has only `contents: write`, refuses conflicting or non-increasing tags, treats an existing tag at the exact gated
 commit as an idempotent success, requires at least v0.145.0 for the typed-union
 migration, and pushes only the new annotated tag.
 
@@ -91,11 +90,10 @@ a feature branch, open and merge a protected pull request, and monitor the
 automatic Release run. It must never push `main` directly or create a tag.
 
 Repository settings must require the `Quality` checks on `main`, prevent force
-pushes and tag deletion, and configure required reviewers for `e2e`. Both
-`e2e` and `release` must allow deployments only from protected branches;
-`release` must have no required reviewers so publication follows successful E2E
-automatically. Until those settings are confirmed in GitHub, release
-publication is blocked; a local direct push is not a fallback.
+pushes and tag deletion. Both `e2e` and `release` must allow deployments only
+from protected branches and have no required reviewers. Successful validation,
+Quality, E2E, and publication proceed automatically; failed checks block release.
+Until those settings are confirmed in GitHub, release publication is blocked; a local direct push is not a fallback.
 
 If a bad Go module version is published, never move its tag. Tell consumers to
 pin the prior good version, add a `retract` directive in the next corrective

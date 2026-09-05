@@ -4,7 +4,7 @@ This living ExecPlan follows `PLANS.md`. Keep Progress, Surprises & Discoveries,
 
 ## Purpose / Big Picture
 
-Update the SDK from Codex 0.147.0 to stable `rust-v0.153.4`, commit `3d2ee51ca2d5db578f328aa75e20aa22c0197c9a`, and deliver SDK v0.153.4 through a protected pull request, human E2E approval, and automatic publication after E2E succeeds. Users receive current protocol types and RPC methods while existing handwritten APIs retain intentional source and wire compatibility.
+Update the SDK from Codex 0.147.0 to stable `rust-v0.153.4`, commit `3d2ee51ca2d5db578f328aa75e20aa22c0197c9a`, and deliver SDK v0.153.4 through a protected pull request and automated validation, Quality, E2E, and publication without human approval on the happy path. Users receive current protocol types and RPC methods while existing handwritten APIs retain intentional source and wire compatibility.
 
 ## Tracker Mapping
 
@@ -23,7 +23,10 @@ Workflow: `WORKFLOW.md`. This plan records the direct maintenance request of 202
 - [x] (2026-09-05) Dispatched Release 33989299001 for exact corrective merge e0c347a11e86fa1ca24816173bb9f5ae2c337340. Validation and Quality passed; E2E awaits human approval.
 - [x] (2026-09-05) Removed only the release environment required-reviewers rule. Before/after API comparisons prove release identity, branch policy, and admin-bypass setting unchanged and the complete E2E environment unchanged. Unit tests and diff hygiene passed.
 - [x] (2026-09-05) Independent security review found no actionable issues with the reviewer removal, successful-job dependencies, candidate/tag validation, or updated guidance.
-- [ ] Merge matching automatic-publication guidance through a protected PR after hosted checks pass.
+- [x] (2026-09-05) PR #6 merged as 20b13c5 after all required checks passed, documenting automatic publication after E2E.
+- [x] (2026-09-05) Removed only E2E's required-reviewers rule. API snapshots prove E2E identity, branch restrictions, and admin-bypass unchanged, with the complete release environment unchanged. Main requires zero approving PR reviews while retaining strict Quality checks. Local unit tests and diff hygiene passed.
+- [x] (2026-09-05) Security review confirmed the change matches user authorization and identified the inherent trust in repository maintainers described in the Decision Log. No automated gate or credential scope was weakened beyond the explicitly requested reviewer removal.
+- [ ] Deliver the fully automatic happy-path guidance through a protected PR.
 
 - [x] (2026-09-05) Published reviewed protocol commit c581768 in PR #4; both Go jobs and the coverage-upload job passed. The later Codecov report failed project coverage at 74.7%, despite 95.5% patch coverage.
 - [x] (2026-09-05) Inspected the user's Go 1.26/1.27 and Codecov-comment follow-up, obtained the required focused planner proposal, and verified its named functions and fixtures locally.
@@ -39,13 +42,13 @@ Workflow: `WORKFLOW.md`. This plan records the direct maintenance request of 202
 - [x] (2026-09-05 UTC) QA, architecture, and security reviews completed; all findings fixed and independently confirmed closed. The reviewed updater passed; all Go gates passed again after the final empty-approval-kind guard, with a focused minimum-Go race check.
 - [x] (2026-09-05) Committed and published original protocol update in PR #4.
 - [x] (2026-09-05) Published and merged the reviewed Go/coverage follow-up in PR #4 after every required and Codecov check passed.
-- [ ] Monitor Release through required human approval and verify the immutable tag and merged commit.
+- [x] (2026-09-05) Release 33989299001 attempt 2 passed validation, both Go checks, coverage, E2E, and publication with no human approvals. Verified remote annotated v0.153.4 object e24b94b00a66a5176c09aec832aa4d49bcd0196c peels to exact corrective candidate e0c347a11e86fa1ca24816173bb9f5ae2c337340.
 
 ## Surprises & Discoveries
 
 Live main branch protection requires version-specific checks `Go 1.25.12`, `Go 1.26.5`, and `Coverage report`, with strict up-to-date enforcement and administrator enforcement. The patched matrix emits `Go 1.25.14` and `Go 1.26.8`. The later user follow-up authorizes replacing those two required check names with stable Go 1.26 and Go 1.27; preserve all other protection settings and never bypass the gate.
 
-At the lifecycle correction checkpoint, the skill permitted the protected PR handoff and stopped at E2E or release environment approval. The subsequent user request moves the sole human approval to E2E, with publication automatic after it succeeds. Its former dedicated-credential prerequisite is absent from current main. No credential configuration is part of this update.
+At the lifecycle correction checkpoint, the skill permitted the protected PR handoff and stopped at E2E or release environment approval. The next user request made publication automatic after E2E; the final clarification removes human approval from E2E as well. Its former dedicated-credential prerequisite is absent from current main. No credential configuration is part of this update.
 
 The local `.envrc` contains an old CODEX_REPO_REF; never source or print it. Explicitly unset that variable for the updater so it chooses the latest stable tag. The verified upstream checkout is `/Users/pme/src/openai/codex`.
 
@@ -54,6 +57,10 @@ Upstream declares Rust 1.95.0, but the installed Homebrew Rust 1.94.0 successful
 The new manual wire regression tests first failed on thread model/project/effort, resume/fork excludeTurns, per-turn service tier and trigger, approval kind, and the MCP policy amendment constructor. Generator regression tests also failed because single-variant unions were skipped and shared required fields were not included in variant validation. Both generator fixes now pass the complete generator test package.
 
 ## Decision Log
+
+Security review noted that removing human gates trusts maintainers who can change credentialed tests and publication code. This is the explicitly requested automation policy. Retain current secret scope and automated protections; introducing a separate workflow repository or mandatory human review would be a separate architectural/policy change. No credential migration is part of this task.
+
+The latest 2026-09-05 clarification requires no human involvement on the happy path. Remove the remaining E2E required-reviewers rule and keep both environments restricted to protected branches. This supersedes all earlier E2E/release approval requirements below. Preserve automated validation, Quality, E2E success dependencies, exact candidate/tag checks, and credential scope. No workflow code change is needed; the waiting corrective release should continue automatically.
 
 The user's subsequent 2026-09-05 request explicitly authorizes automatic publication when E2E passes. Remove only the required-reviewers rule from GitHub's release environment. Preserve the E2E reviewer, both environments' protected-branch policies, and the existing publish job dependencies on validation, Quality, and E2E. Keep environment: release for deployment restrictions and audit history. No workflow code, SDK version, release candidate, or credential changes are needed. This supersedes the earlier requirement for a second release approval.
 
@@ -87,7 +94,7 @@ Use one flat release plan, matching repository convention. Keep large schema inv
 
 The protocol/SDK 0.153.4 update is merged in PR #4 at 28b645f. Generation was deterministic and all local and hosted Quality checks passed. Codecov project coverage rose to 80.6%, and patch coverage reached 97.0%. Release 33984848890 exposed an invalid test sequence: unarchive followed a tolerated archive failure on a thread without persisted history. No v0.153.4 tag was published.
 
-The corrective branch now uses separate empty-thread rejection tests and strict persisted-thread round trips with a real CLI and loopback mock provider. The original failure reproduced three times; the corrected tests passed ten race-enabled repetitions, and the full uncredentialed tagged suite passed on the release Go version. Both CI Go families passed all local gates. Required human E2E approval is restored. QA and security review are complete; the credential-isolation finding is fixed and verified with a failing-before/passing-after child-process regression. PR #5 passed hosted Quality and Codecov and merged at e0c347a. Corrective Release 33989299001 passed validation and Quality and awaits E2E approval. The user then requested automatic publication after successful E2E; publication remains pending.
+The corrective branch now uses separate empty-thread rejection tests and strict persisted-thread round trips with a real CLI and loopback mock provider. The original failure reproduced three times; the corrected tests passed ten race-enabled repetitions, and the full uncredentialed tagged suite passed on the release Go version. Both CI Go families passed all local gates. Required human E2E approval is restored. QA and security review are complete; the credential-isolation finding is fixed and verified with a failing-before/passing-after child-process regression. PR #5 passed hosted Quality and Codecov and merged at e0c347a. Corrective Release 33989299001 passed validation and Quality and awaits E2E approval. The user then requested automatic publication after successful E2E, followed by a clarification removing E2E approval too. Both environments now follow the automatic happy-path policy. The old pending E2E deployment ended without a runner or test execution; GitHub annotated it as rejected or unsatisfied protection rules. Retried all jobs of run 33989299001 on the same exact candidate under the new settings. Attempt 2 passed every gate and automatically published v0.153.4. Remote tag verification confirmed the annotated tag peels to e0c347a11e86fa1ca24816173bb9f5ae2c337340. The release is complete.
 
 ## Context and Orientation
 
@@ -103,7 +110,7 @@ Next inspect the complete generated diff, including RPC additions/removals, expo
 
 Then update CLI version and four official release archive digests, and set SDK version 0.153.4. Run the updater to prove two identical generations and the full gate. Run independent QA and architecture reviews after implementation and validation; add security review if approval boundaries change. Resolve actionable findings before explicit-path staging and protected PR handoff.
 
-Finally watch required PR checks, fix failures, and merge only through the PR when protection permits. Monitor the automatic Release run and report its URL. Pause at required PR review or E2E approval; after human approval and successful E2E, verify the automatically published immutable tag v0.153.4 resolves to the merged main commit.
+Finally watch required PR checks, fix failures, and merge only through the PR when protection permits. Monitor the automatic Release run and report its URL. Continue through successful Quality and E2E automatically, then verify the automatically published immutable tag v0.153.4 resolves to the merged main commit.
 
 ## Concrete Steps
 
