@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
 	"runtime/debug"
 	"strings"
@@ -46,7 +47,7 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		args = append(args, spawn.ExtraArgs...)
 
 		logger.Info("codex checking CLI compatibility", "path", spawn.CodexPath)
-		if err := checkCodexCompatibility(ctx, logger, spawn.CodexPath, opts.CompatibilityPolicy); err != nil {
+		if err := checkCodexCompatibility(ctx, logger, spawn.CodexPath, opts.CompatibilityPolicy, spawn.Env...); err != nil {
 			return nil, err
 		}
 
@@ -59,7 +60,7 @@ func New(ctx context.Context, opts Options) (*Codex, error) {
 		}
 		logger.Info("codex starting app-server", "path", spawn.CodexPath, "argument_count", len(args))
 		// The constructor context is only for initialization; process lifetime is managed by Close.
-		transport, err = rpc.SpawnStdio(context.WithoutCancel(ctx), spawn.CodexPath, args, spawn.Stderr)
+		transport, err = rpc.SpawnStdio(context.WithoutCancel(ctx), spawn.CodexPath, args, spawn.Stderr, spawn.Env...)
 		if err != nil {
 			return nil, err
 		}
@@ -170,7 +171,7 @@ func boolPtr(value bool) *bool {
 	return &value
 }
 
-func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath string, policy CompatibilityPolicy) error {
+func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath string, policy CompatibilityPolicy, env ...string) error {
 	if policy == Ignore {
 		return nil
 	}
@@ -182,7 +183,7 @@ func checkCodexCompatibility(ctx context.Context, logger *slog.Logger, codexPath
 	if generatedVersion == "" {
 		return nil
 	}
-	runtimeVersion, err := probeCodexVersion(ctx, codexPath)
+	runtimeVersion, err := probeCodexVersion(ctx, codexPath, env...)
 	if err != nil {
 		return handleCompatibilityFailure(logger, policy, newCompatibilityError(codexPath, "", "version probe failed", err))
 	}
@@ -237,11 +238,15 @@ func majorMinor(version string) (string, string, bool) {
 	return strings.TrimLeft(parts[0], "0"), strings.TrimLeft(parts[1], "0"), true
 }
 
-func probeCodexVersion(parent context.Context, codexPath string) (string, error) {
+func probeCodexVersion(parent context.Context, codexPath string, env ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(parent, codexVersionProbeTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, codexPath, "--version").Output()
+	cmd := exec.CommandContext(ctx, codexPath, "--version")
+	if len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
+	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}

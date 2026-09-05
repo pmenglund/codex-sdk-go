@@ -726,6 +726,47 @@ func TestSpawnLogsDoNotExposeArgumentValues(t *testing.T) {
 	}
 }
 
+func TestNewSpawnEnvAppliesToProbeAndServer(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("spawn script test is unix-only")
+	}
+	t.Setenv("SPAWN_ENV_OVERRIDDEN", "parent-value")
+	path := writeFakeCodexBinary(t)
+	script, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	guard := `#!/bin/sh
+[ "$SPAWN_ENV_OVERRIDDEN" = "child-value" ] || exit 42
+[ "$SPAWN_ENV_EXTRA" = "extra-value" ] || exit 43
+`
+	if err := os.WriteFile(path, []byte(strings.Replace(string(script), "#!/bin/sh\n", guard, 1)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var logs bytes.Buffer
+	client, err := New(ctx, Options{
+		Logger: slog.New(slog.NewTextHandler(&logs, nil)),
+		Spawn: SpawnOptions{
+			CodexPath: path,
+			Env:       []string{"SPAWN_ENV_OVERRIDDEN=child-value", "SPAWN_ENV_EXTRA=extra-value"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("new client with environment overrides: %v", err)
+	}
+	defer client.Close()
+	if got := os.Getenv("SPAWN_ENV_OVERRIDDEN"); got != "parent-value" {
+		t.Fatalf("parent environment changed: %q", got)
+	}
+	for _, value := range []string{"child-value", "extra-value"} {
+		if strings.Contains(logs.String(), value) {
+			t.Fatalf("spawn log exposed environment value %q", value)
+		}
+	}
+}
+
 func TestRequireMajorMinorRejectsMismatch(t *testing.T) {
 	_, err := New(context.Background(), Options{
 		Spawn: SpawnOptions{CodexPath: writeFakeCodexBinaryWithVersion(t, "999.999.999")},

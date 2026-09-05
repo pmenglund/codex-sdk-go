@@ -65,4 +65,10 @@ type SpawnOptions struct {
 	ExtraArgs []string
 	// Stderr captures stderr from the codex process (defaults to os.Stderr).
 	Stderr io.Writer
+	// Env holds extra "KEY=value" environment entries for the compatibility
+	// probe and spawned app-server process. They are appended to the parent
+	// environment, so an entry overrides an inherited variable of the same name (useful
+	// for CODEX_HOME or CODEX_API_KEY). Nil inherits the parent environment
+	// unchanged.
+	Env []string
 }
