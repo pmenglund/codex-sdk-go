@@ -9,7 +9,7 @@ This SDK speaks JSON-RPC to the `codex app-server` process. By default it spawns
 
 ## Requirements
 
-- Go 1.25.14 or newer
+- Go 1.26.8 or newer
 - `codex` available on your `PATH`
 
 ## Install
