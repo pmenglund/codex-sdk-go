@@ -381,8 +381,10 @@ func TestThreadLifecycleRejectsInvalidInputs(t *testing.T) {
 	if _, err := c.ListThreads(ctx, ThreadListOptions{}); err == nil {
 		t.Fatalf("expected uninitialized client error")
 	}
-	if _, err := c.ReadThread(ctx, "", ThreadReadOptions{}); err == nil {
-		t.Fatalf("expected read thread id error")
+	c.client = rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+	defer c.Close()
+	if _, err := c.ReadThread(ctx, "", ThreadReadOptions{}); err == nil || err.Error() != "thread id is required" {
+		t.Fatalf("expected read thread id error, got %v", err)
 	}
 
 	thread := &Thread{client: rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{}), id: "thr_123"}
