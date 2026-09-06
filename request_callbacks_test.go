@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/rpc"
@@ -145,31 +145,34 @@ func TestServerRequestCallbacksRouteEveryMethod(t *testing.T) {
 }
 
 func TestNewInstallsPreferredRequestHandler(t *testing.T) {
-	info := protocol.ClientInfo{Name: "callbacks-test", Version: "test"}
-	called := make(chan struct{}, 1)
-	client, err := New(context.Background(), Options{
-		Transport: rpc.NewReplayTransport([]rpc.TranscriptEntry{
-			writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(1), Method: "initialize", Params: mustRaw(protocol.InitializeParams{ClientInfo: info})}),
-			readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{})}),
-			writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
-			readLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(9), Method: "item/fileChange/requestApproval", Params: mustRaw(map[string]any{"threadId": "thr", "turnId": "turn", "itemId": "item"})}),
-			writeLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(9), Result: mustRaw(protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionDecline})}),
-		}),
-		ClientInfo: info,
-		RequestHandler: &ServerRequestCallbacks{
-			ApproveFileChange: func(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
-				called <- struct{}{}
-				return &protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionDecline}, nil
+	synctest.Test(t, func(t *testing.T) {
+		info := protocol.ClientInfo{Name: "callbacks-test", Version: "test"}
+		called := make(chan struct{}, 1)
+		client, err := New(context.Background(), Options{
+			Transport: rpc.NewReplayTransport([]rpc.TranscriptEntry{
+				writeLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(1), Method: "initialize", Params: mustRaw(protocol.InitializeParams{ClientInfo: info})}),
+				readLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(1), Result: mustRaw(map[string]any{})}),
+				writeLine(rpc.JSONRPCNotification{Method: "initialized"}),
+				readLine(rpc.JSONRPCRequest{ID: rpc.NewIntRequestID(9), Method: "item/fileChange/requestApproval", Params: mustRaw(map[string]any{"threadId": "thr", "turnId": "turn", "itemId": "item"})}),
+				writeLine(rpc.JSONRPCResponse{ID: rpc.NewIntRequestID(9), Result: mustRaw(protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionDecline})}),
+			}),
+			ClientInfo: info,
+			RequestHandler: &ServerRequestCallbacks{
+				ApproveFileChange: func(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
+					called <- struct{}{}
+					return &protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionDecline}, nil
+				},
 			},
-		},
+		})
+		if err != nil {
+			t.Fatalf("new client: %v", err)
+		}
+		defer client.Close()
+		synctest.Wait()
+		select {
+		case <-called:
+		default:
+			t.Fatal("preferred request handler was not called")
+		}
 	})
-	if err != nil {
-		t.Fatalf("new client: %v", err)
-	}
-	defer client.Close()
-	select {
-	case <-called:
-	case <-time.After(time.Second):
-		t.Fatal("preferred request handler was not called")
-	}
 }

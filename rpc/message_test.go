@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
-	"time"
+	"testing/synctest"
 )
 
 func TestRequestIDJSON(t *testing.T) {
@@ -215,30 +215,34 @@ func TestNotificationIteratorNext(t *testing.T) {
 }
 
 func TestReplayTransportWaitsForRead(t *testing.T) {
-	replay := NewReplayTransport([]TranscriptEntry{
-		{Direction: TranscriptWrite, Line: "write"},
-		{Direction: TranscriptRead, Line: "read"},
-	})
+	synctest.Test(t, func(t *testing.T) {
+		replay := NewReplayTransport([]TranscriptEntry{
+			{Direction: TranscriptWrite, Line: "write"},
+			{Direction: TranscriptRead, Line: "read"},
+		})
 
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		if err := replay.WriteLine("write"); err != nil {
-			t.Errorf("write error: %v", err)
+		defer replay.Close()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			if err := replay.WriteLine("write"); err != nil {
+				t.Errorf("write error: %v", err)
+			}
+		}()
+
+		synctest.Wait()
+		select {
+		case <-done:
+		default:
+			t.Fatalf("write did not complete")
 		}
-	}()
 
-	select {
-	case <-done:
-	case <-time.After(1 * time.Second):
-		t.Fatalf("write did not complete")
-	}
-
-	line, err := replay.ReadLine()
-	if err != nil {
-		t.Fatalf("read error: %v", err)
-	}
-	if line != "read" {
-		t.Fatalf("unexpected line: %s", line)
-	}
+		line, err := replay.ReadLine()
+		if err != nil {
+			t.Fatalf("read error: %v", err)
+		}
+		if line != "read" {
+			t.Fatalf("unexpected line: %s", line)
+		}
+	})
 }
