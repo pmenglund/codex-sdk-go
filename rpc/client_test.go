@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
@@ -94,225 +95,241 @@ func TestNotificationDelivery(t *testing.T) {
 }
 
 func TestNotificationOverflowIsBoundedAndIsolated(t *testing.T) {
-	transport := newChannelTransport()
-	client := NewClient(transport, ClientOptions{})
-	defer client.Close()
+	synctest.Test(t, func(t *testing.T) {
+		transport := newChannelTransport()
+		client := NewClient(transport, ClientOptions{})
+		defer client.Close()
 
-	slow := client.SubscribeNotifications(1)
-	defer slow.Close()
-	healthy := client.SubscribeNotifications(4)
-	defer healthy.Close()
+		slow := client.SubscribeNotifications(1)
+		defer slow.Close()
+		healthy := client.SubscribeNotifications(4)
+		defer healthy.Close()
 
-	callDone := make(chan error, 1)
-	go func() {
-		var result map[string]any
-		callDone <- client.Call(context.Background(), "ping", map[string]any{}, &result)
-	}()
-	transport.waitForWrites(t, 1)
+		callDone := make(chan error, 1)
+		go func() {
+			var result map[string]any
+			callDone <- client.Call(context.Background(), "ping", map[string]any{}, &result)
+		}()
+		transport.waitForWrites(t, 1)
 
-	transport.pushReadLine(mustJSON(JSONRPCNotification{
-		Method: "turn/started",
-		Params: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1"}}),
-	}))
-	transport.pushReadLine(mustJSON(JSONRPCNotification{
-		Method: "turn/completed",
-		Params: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1"}}),
-	}))
-	transport.pushReadLine(mustJSON(JSONRPCResponse{
-		ID:     NewIntRequestID(1),
-		Result: mustRaw(map[string]any{"ok": true}),
-	}))
+		transport.pushReadLine(mustJSON(JSONRPCNotification{
+			Method: "turn/started",
+			Params: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1"}}),
+		}))
+		transport.pushReadLine(mustJSON(JSONRPCNotification{
+			Method: "turn/completed",
+			Params: mustRaw(map[string]any{"threadId": "thr_1", "turn": map[string]any{"id": "turn_1"}}),
+		}))
+		transport.pushReadLine(mustJSON(JSONRPCResponse{
+			ID:     NewIntRequestID(1),
+			Result: mustRaw(map[string]any{"ok": true}),
+		}))
 
-	transport.waitForReads(t, 3)
+		transport.waitForReads(t, 3)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	_, err := slow.Next(ctx)
-	var overflow *NotificationOverflowError
-	if !errors.As(err, &overflow) {
-		t.Fatalf("expected NotificationOverflowError, got %v", err)
-	}
-	if overflow.Capacity != 1 {
-		t.Fatalf("unexpected overflow capacity: %d", overflow.Capacity)
-	}
-	if !errors.Is(err, ErrNotificationOverflow) {
-		t.Fatalf("expected ErrNotificationOverflow compatibility, got %v", err)
-	}
-
-	for _, want := range []string{"turn/started", "turn/completed"} {
-		note, nextErr := healthy.Next(ctx)
-		if nextErr != nil {
-			t.Fatalf("healthy notification error: %v", nextErr)
+		synctest.Wait()
+		ctx := context.Background()
+		_, err := slow.Next(ctx)
+		var overflow *NotificationOverflowError
+		if !errors.As(err, &overflow) {
+			t.Fatalf("expected NotificationOverflowError, got %v", err)
 		}
-		if note.Method != want {
-			t.Fatalf("unexpected healthy notification: got %s want %s", note.Method, want)
+		if overflow.Capacity != 1 {
+			t.Fatalf("unexpected overflow capacity: %d", overflow.Capacity)
 		}
-	}
-
-	select {
-	case callErr := <-callDone:
-		if callErr != nil {
-			t.Fatalf("call failed after another subscriber overflowed: %v", callErr)
+		if !errors.Is(err, ErrNotificationOverflow) {
+			t.Fatalf("expected ErrNotificationOverflow compatibility, got %v", err)
 		}
-	case <-time.After(time.Second):
-		t.Fatalf("reader was blocked by overflowing subscriber")
-	}
 
-	client.subsMu.Lock()
-	subCount := len(client.subs)
-	client.subsMu.Unlock()
-	if subCount != 1 {
-		t.Fatalf("expected only healthy subscriber to remain, got %d", subCount)
-	}
+		for _, want := range []string{"turn/started", "turn/completed"} {
+			note, nextErr := healthy.Next(ctx)
+			if nextErr != nil {
+				t.Fatalf("healthy notification error: %v", nextErr)
+			}
+			if note.Method != want {
+				t.Fatalf("unexpected healthy notification: got %s want %s", note.Method, want)
+			}
+		}
+
+		synctest.Wait()
+		select {
+		case callErr := <-callDone:
+			if callErr != nil {
+				t.Fatalf("call failed after another subscriber overflowed: %v", callErr)
+			}
+		default:
+			t.Fatalf("reader was blocked by overflowing subscriber")
+		}
+
+		client.subsMu.Lock()
+		subCount := len(client.subs)
+		client.subsMu.Unlock()
+		if subCount != 1 {
+			t.Fatalf("expected only healthy subscriber to remain, got %d", subCount)
+		}
+	})
 }
 
 func TestNotificationPublishCloseRace(t *testing.T) {
-	for iteration := 0; iteration < 100; iteration++ {
-		transport := newChannelTransport()
-		client := NewClient(transport, ClientOptions{})
-		iter := client.SubscribeNotifications(2)
-		note := JSONRPCNotification{Method: "turn/started", Params: mustRaw(map[string]any{"threadId": "thr_1"})}
+	synctest.Test(t, func(t *testing.T) {
+		for iteration := 0; iteration < 100; iteration++ {
+			transport := newChannelTransport()
+			client := NewClient(transport, ClientOptions{})
+			iter := client.SubscribeNotifications(2)
+			note := JSONRPCNotification{Method: "turn/started", Params: mustRaw(map[string]any{"threadId": "thr_1"})}
 
-		var wg sync.WaitGroup
-		wg.Add(3)
-		go func() {
-			defer wg.Done()
-			for publish := 0; publish < 100; publish++ {
-				client.handleNotification(note)
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for closeCall := 0; closeCall < 10; closeCall++ {
-				iter.Close()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			_ = client.Close()
-		}()
+			var wg sync.WaitGroup
+			wg.Add(3)
+			go func() {
+				defer wg.Done()
+				for publish := 0; publish < 100; publish++ {
+					client.handleNotification(note)
+				}
+			}()
+			go func() {
+				defer wg.Done()
+				for closeCall := 0; closeCall < 10; closeCall++ {
+					iter.Close()
+				}
+			}()
+			go func() {
+				defer wg.Done()
+				_ = client.Close()
+			}()
 
-		done := make(chan struct{})
-		go func() {
-			wg.Wait()
-			close(done)
-		}()
-		select {
-		case <-done:
-		case <-time.After(time.Second):
-			t.Fatalf("publish/close race did not finish at iteration %d", iteration)
+			done := make(chan struct{})
+			go func() {
+				wg.Wait()
+				close(done)
+			}()
+			synctest.Wait()
+			select {
+			case <-done:
+			default:
+				t.Fatalf("publish/close race did not finish at iteration %d", iteration)
+			}
+			synctest.Wait()
+			_, err := iter.Next(context.Background())
+			if err == nil {
+				t.Fatalf("expected terminal iterator error at iteration %d", iteration)
+			}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		_, err := iter.Next(ctx)
-		cancel()
-		if err == nil {
-			t.Fatalf("expected terminal iterator error at iteration %d", iteration)
-		}
-	}
+	})
 }
 
 func TestSubscribeAfterClientCloseIsNotRetained(t *testing.T) {
-	client := NewClient(newChannelTransport(), ClientOptions{})
-	if err := client.Close(); err != nil {
-		t.Fatalf("close client: %v", err)
-	}
-	iter := client.SubscribeNotifications(1)
-	client.subsMu.Lock()
-	subCount := len(client.subs)
-	client.subsMu.Unlock()
-	if subCount != 0 {
-		t.Fatalf("closed client retained %d subscriptions", subCount)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	if _, err := iter.Next(ctx); err == nil {
-		t.Fatalf("expected closed-client iterator error")
-	}
+	synctest.Test(t, func(t *testing.T) {
+		client := NewClient(newChannelTransport(), ClientOptions{})
+		if err := client.Close(); err != nil {
+			t.Fatalf("close client: %v", err)
+		}
+		iter := client.SubscribeNotifications(1)
+		client.subsMu.Lock()
+		subCount := len(client.subs)
+		client.subsMu.Unlock()
+		if subCount != 0 {
+			t.Fatalf("closed client retained %d subscriptions", subCount)
+		}
+		synctest.Wait()
+		ctx := context.Background()
+		if _, err := iter.Next(ctx); err == nil {
+			t.Fatalf("expected closed-client iterator error")
+		}
+	})
 }
 
 func TestServerRequestDispatch(t *testing.T) {
-	resp := protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
-	handler := &testHandler{
-		called: make(chan struct{}, 1),
-		applyPatch: func(params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
-			return &resp, nil
-		},
-	}
+	synctest.Test(t, func(t *testing.T) {
+		resp := protocol.ApplyPatchApprovalResponse{Decision: protocol.MustReviewDecision("approved")}
+		handler := &testHandler{
+			called: make(chan struct{}, 1),
+			applyPatch: func(params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+				return &resp, nil
+			},
+		}
 
-	transcript := []TranscriptEntry{
-		readLine(JSONRPCRequest{
-			ID:     NewIntRequestID(9),
-			Method: "applyPatchApproval",
-			Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
-		}),
-		writeLine(JSONRPCResponse{
-			ID:     NewIntRequestID(9),
-			Result: mustRaw(map[string]any{"decision": "approved"}),
-		}),
-	}
+		transcript := []TranscriptEntry{
+			readLine(JSONRPCRequest{
+				ID:     NewIntRequestID(9),
+				Method: "applyPatchApproval",
+				Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
+			}),
+			writeLine(JSONRPCResponse{
+				ID:     NewIntRequestID(9),
+				Result: mustRaw(map[string]any{"decision": "approved"}),
+			}),
+		}
 
-	client := NewClient(NewReplayTransport(transcript), ClientOptions{RequestHandler: handler})
-	defer client.Close()
+		client := NewClient(NewReplayTransport(transcript), ClientOptions{RequestHandler: handler})
+		defer client.Close()
 
-	select {
-	case <-handler.called:
-	case <-time.After(1 * time.Second):
-		t.Fatalf("handler was not called")
-	}
+		synctest.Wait()
+		select {
+		case <-handler.called:
+		default:
+			t.Fatalf("handler was not called")
+		}
+	})
 }
 
 func TestServerRequestHandlerDoesNotBlockReaderAndReceivesCloseContext(t *testing.T) {
-	transport := newChannelTransport()
-	handler := &blockingServerRequestHandler{
-		entered: make(chan struct{}),
-		done:    make(chan error, 1),
-	}
-	client := NewClient(transport, ClientOptions{RequestHandler: handler})
-
-	callDone := make(chan error, 1)
-	go func() {
-		var result map[string]any
-		callDone <- client.Call(context.Background(), "ping", map[string]any{}, &result)
-	}()
-	transport.waitForWrites(t, 1)
-
-	transport.pushReadLine(mustJSON(JSONRPCRequest{
-		ID:     NewIntRequestID(9),
-		Method: "applyPatchApproval",
-		Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
-	}))
-
-	select {
-	case <-handler.entered:
-	case <-time.After(time.Second):
-		t.Fatalf("handler was not called")
-	}
-
-	transport.pushReadLine(mustJSON(JSONRPCResponse{
-		ID:     NewIntRequestID(1),
-		Result: mustRaw(map[string]any{"ok": true}),
-	}))
-
-	select {
-	case err := <-callDone:
-		if err != nil {
-			t.Fatalf("call failed while handler was blocked: %v", err)
+	synctest.Test(t, func(t *testing.T) {
+		transport := newChannelTransport()
+		handler := &blockingServerRequestHandler{
+			entered: make(chan struct{}),
+			done:    make(chan error, 1),
 		}
-	case <-time.After(time.Second):
-		t.Fatalf("reader was blocked by server request handler")
-	}
+		client := NewClient(transport, ClientOptions{RequestHandler: handler})
+		defer client.Close()
 
-	if err := client.Close(); err != nil {
-		t.Fatalf("close failed: %v", err)
-	}
-	select {
-	case err := <-handler.done:
-		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("expected canceled handler context, got %v", err)
+		callDone := make(chan error, 1)
+		go func() {
+			var result map[string]any
+			callDone <- client.Call(context.Background(), "ping", map[string]any{}, &result)
+		}()
+		transport.waitForWrites(t, 1)
+
+		transport.pushReadLine(mustJSON(JSONRPCRequest{
+			ID:     NewIntRequestID(9),
+			Method: "applyPatchApproval",
+			Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
+		}))
+
+		synctest.Wait()
+		select {
+		case <-handler.entered:
+		default:
+			t.Fatalf("handler was not called")
 		}
-	case <-time.After(time.Second):
-		t.Fatalf("handler did not observe close context")
-	}
+
+		transport.pushReadLine(mustJSON(JSONRPCResponse{
+			ID:     NewIntRequestID(1),
+			Result: mustRaw(map[string]any{"ok": true}),
+		}))
+
+		synctest.Wait()
+		select {
+		case err := <-callDone:
+			if err != nil {
+				t.Fatalf("call failed while handler was blocked: %v", err)
+			}
+		default:
+			t.Fatalf("reader was blocked by server request handler")
+		}
+
+		if err := client.Close(); err != nil {
+			t.Fatalf("close failed: %v", err)
+		}
+		synctest.Wait()
+		select {
+		case err := <-handler.done:
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("expected canceled handler context, got %v", err)
+			}
+		default:
+			t.Fatalf("handler did not observe close context")
+		}
+	})
 }
 
 func TestRecordTransport(t *testing.T) {
@@ -439,27 +456,31 @@ func TestCallContextCancel(t *testing.T) {
 }
 
 func TestCallContextCancelAfterSend(t *testing.T) {
-	transport := newChannelTransport()
-	client := NewClient(transport, ClientOptions{})
-	defer client.Close()
+	synctest.Test(t, func(t *testing.T) {
+		transport := newChannelTransport()
+		client := NewClient(transport, ClientOptions{})
+		defer client.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() {
-		var result map[string]any
-		done <- client.Call(ctx, "ping", map[string]any{}, &result)
-	}()
-	transport.waitForWrites(t, 1)
-	cancel()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := make(chan error, 1)
+		go func() {
+			var result map[string]any
+			done <- client.Call(ctx, "ping", map[string]any{}, &result)
+		}()
+		transport.waitForWrites(t, 1)
+		cancel()
 
-	select {
-	case err := <-done:
-		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("expected context canceled, got %v", err)
+		synctest.Wait()
+		select {
+		case err := <-done:
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("expected context canceled, got %v", err)
+			}
+		default:
+			t.Fatalf("call did not return after context cancellation")
 		}
-	case <-time.After(time.Second):
-		t.Fatalf("call did not return after context cancellation")
-	}
+	})
 }
 
 func TestBlockedWriteHonorsCallerContext(t *testing.T) {
@@ -482,74 +503,80 @@ func TestBlockedWriteHonorsCallerContext(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			transport := newBlockingWriteTransport()
-			client := NewClient(transport, ClientOptions{})
+			synctest.Test(t, func(t *testing.T) {
+				transport := newBlockingWriteTransport()
+				client := NewClient(transport, ClientOptions{})
+				defer client.Close()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
-			defer cancel()
-			done := make(chan error, 1)
-			go func() { done <- test.run(client, ctx) }()
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+				defer cancel()
+				done := make(chan error, 1)
+				go func() { done <- test.run(client, ctx) }()
 
-			select {
-			case <-transport.started:
-			case <-time.After(time.Second):
-				t.Fatalf("write did not start")
-			}
-			select {
-			case err := <-done:
-				if !errors.Is(err, context.DeadlineExceeded) {
+				synctest.Wait()
+				select {
+				case <-transport.started:
+				default:
+					t.Fatal("write did not start")
+				}
+				if err := awaitTestDeadline(t, done, 20*time.Millisecond); !errors.Is(err, context.DeadlineExceeded) {
 					t.Fatalf("expected deadline exceeded, got %v", err)
 				}
-			case <-time.After(time.Second):
-				t.Fatalf("caller remained blocked on transport write")
-			}
-			if err := client.Close(); err != nil {
-				t.Fatalf("close client: %v", err)
-			}
+				if err := client.Close(); err != nil {
+					t.Fatalf("close client: %v", err)
+				}
+			})
 		})
 	}
 }
 
 func TestOutboundWritesAreSerialized(t *testing.T) {
-	transport := newSerialWriteTransport()
-	client := NewClient(transport, ClientOptions{})
-	defer client.Close()
+	synctest.Test(t, func(t *testing.T) {
+		transport := newSerialWriteTransport()
+		client := NewClient(transport, ClientOptions{})
+		defer client.Close()
 
-	const writes = 20
-	var wg sync.WaitGroup
-	wg.Add(writes)
-	for index := range writes {
-		go func() {
-			defer wg.Done()
-			if err := client.Notify(context.Background(), "notice", map[string]any{"index": index}); err != nil {
-				t.Errorf("notify: %v", err)
-			}
-		}()
-	}
-	wg.Wait()
-	if got := transport.maxConcurrent.Load(); got != 1 {
-		t.Fatalf("writes were not serialized: max concurrent=%d", got)
-	}
+		const writes = 20
+		var wg sync.WaitGroup
+		wg.Add(writes)
+		for index := range writes {
+			go func() {
+				defer wg.Done()
+				if err := client.Notify(context.Background(), "notice", map[string]any{"index": index}); err != nil {
+					t.Errorf("notify: %v", err)
+				}
+			}()
+		}
+		wg.Wait()
+		if got := transport.maxConcurrent.Load(); got != 1 {
+			t.Fatalf("writes were not serialized: max concurrent=%d", got)
+		}
+	})
 }
 
 func TestContextTransportReceivesWriteContext(t *testing.T) {
-	transport := newContextWriteTransport()
-	client := NewClient(transport, ClientOptions{})
-	defer client.Close()
+	synctest.Test(t, func(t *testing.T) {
+		transport := newContextWriteTransport()
+		client := NewClient(transport, ClientOptions{})
+		defer client.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
-	defer cancel()
-	if err := client.Notify(ctx, "notice", nil); !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("expected deadline exceeded, got %v", err)
-	}
-	select {
-	case <-transport.contextWrite:
-	case <-time.After(time.Second):
-		t.Fatalf("context-aware write method was not used")
-	}
-	if err := client.Notify(context.Background(), "after/canceled/write", nil); !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("context-aware write error was not terminal: %v", err)
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+		defer cancel()
+		done := make(chan error, 1)
+		go func() { done <- client.Notify(ctx, "notice", nil) }()
+		if err := awaitTestDeadline(t, done, 20*time.Millisecond); !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("expected deadline exceeded, got %v", err)
+		}
+		synctest.Wait()
+		select {
+		case <-transport.contextWrite:
+		default:
+			t.Fatalf("context-aware write method was not used")
+		}
+		if err := client.Notify(context.Background(), "after/canceled/write", nil); !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("context-aware write error was not terminal: %v", err)
+		}
+	})
 }
 
 func TestClientRejectsOversizedCustomTransportMessage(t *testing.T) {
@@ -558,163 +585,191 @@ func TestClientRejectsOversizedCustomTransportMessage(t *testing.T) {
 		"whitespace": "     ",
 	} {
 		t.Run(name, func(t *testing.T) {
-			client := NewClient(&stubTransport{reads: []string{line}}, ClientOptions{MaxMessageBytes: 4})
-			defer client.Close()
-			select {
-			case <-client.done:
-				if !errors.Is(client.errOrClosed(), ErrMessageTooLarge) {
-					t.Fatalf("expected ErrMessageTooLarge, got %v", client.errOrClosed())
+			synctest.Test(t, func(t *testing.T) {
+				client := NewClient(&stubTransport{reads: []string{line}}, ClientOptions{MaxMessageBytes: 4})
+				defer client.Close()
+				synctest.Wait()
+				select {
+				case <-client.done:
+					if !errors.Is(client.errOrClosed(), ErrMessageTooLarge) {
+						t.Fatalf("expected ErrMessageTooLarge, got %v", client.errOrClosed())
+					}
+				default:
+					t.Fatal("client did not reject oversized message")
 				}
-			case <-time.After(time.Second):
-				t.Fatal("client did not reject oversized message")
-			}
+			})
 		})
 	}
 }
 
 func TestServerRequestQueueIsBounded(t *testing.T) {
-	transport := newChannelTransport()
-	handler := &queueBlockingHandler{entered: make(chan struct{}, 1), release: make(chan struct{})}
-	client := NewClient(transport, ClientOptions{
-		RequestHandler:             handler,
-		ServerRequestWorkers:       1,
-		ServerRequestQueueCapacity: 1,
-	})
-	defer client.Close()
-
-	request := func(id int64) string {
-		return mustJSON(JSONRPCRequest{
-			ID:     NewIntRequestID(id),
-			Method: "applyPatchApproval",
-			Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
+	synctest.Test(t, func(t *testing.T) {
+		transport := newChannelTransport()
+		handler := &queueBlockingHandler{entered: make(chan struct{}, 1), release: make(chan struct{})}
+		client := NewClient(transport, ClientOptions{
+			RequestHandler:             handler,
+			ServerRequestWorkers:       1,
+			ServerRequestQueueCapacity: 1,
 		})
-	}
-	transport.pushReadLine(request(1))
-	select {
-	case <-handler.entered:
-	case <-time.After(time.Second):
-		t.Fatalf("first handler did not start")
-	}
-	transport.pushReadLine(request(2))
-	transport.waitForReads(t, 2)
-	transport.pushReadLine(request(3))
-	transport.waitForReads(t, 1)
+		defer client.Close()
+		defer func() {
+			select {
+			case <-handler.release:
+			default:
+				close(handler.release)
+			}
+		}()
 
-	writes := transport.waitForWrites(t, 1)
-	expected := mustJSON(JSONRPCError{
-		ID: NewIntRequestID(3),
-		Error: JSONRPCErrorDetail{
-			Code:    ServerRequestBusyCode,
-			Message: "server request queue is full",
-		},
+		request := func(id int64) string {
+			return mustJSON(JSONRPCRequest{
+				ID:     NewIntRequestID(id),
+				Method: "applyPatchApproval",
+				Params: mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}}),
+			})
+		}
+		transport.pushReadLine(request(1))
+		synctest.Wait()
+		select {
+		case <-handler.entered:
+		default:
+			t.Fatalf("first handler did not start")
+		}
+		transport.pushReadLine(request(2))
+		transport.waitForReads(t, 2)
+		transport.pushReadLine(request(3))
+		transport.waitForReads(t, 1)
+
+		writes := transport.waitForWrites(t, 1)
+		expected := mustJSON(JSONRPCError{
+			ID: NewIntRequestID(3),
+			Error: JSONRPCErrorDetail{
+				Code:    ServerRequestBusyCode,
+				Message: "server request queue is full",
+			},
+		})
+		if !equalJSONLine(expected, writes[0]) {
+			t.Fatalf("unexpected busy response:\n got: %s\nwant: %s", writes[0], expected)
+		}
+		close(handler.release)
+		transport.waitForWrites(t, 3)
 	})
-	if !equalJSONLine(expected, writes[0]) {
-		t.Fatalf("unexpected busy response:\n got: %s\nwant: %s", writes[0], expected)
-	}
-	close(handler.release)
-	transport.waitForWrites(t, 3)
 }
 
 func TestServerRequestPanicIsContained(t *testing.T) {
-	transport := newChannelTransport()
-	client := NewClient(transport, ClientOptions{RequestHandler: &panicServerRequestHandler{}})
-	defer client.Close()
+	synctest.Test(t, func(t *testing.T) {
+		transport := newChannelTransport()
+		client := NewClient(transport, ClientOptions{RequestHandler: &panicServerRequestHandler{}})
+		defer client.Close()
 
-	transport.pushReadLine(mustJSON(JSONRPCRequest{
-		ID:     NewIntRequestID(9),
-		Method: "applyPatchApproval",
-		Params: mustRaw(map[string]any{}),
-	}))
-	writes := transport.waitForWrites(t, 1)
-	var response JSONRPCError
-	if err := json.Unmarshal([]byte(writes[0]), &response); err != nil {
-		t.Fatalf("decode panic response: %v", err)
-	}
-	if response.Error.Code != ServerRequestInternalErrorCode {
-		t.Fatalf("unexpected panic response: %#v", response)
-	}
-	if err := client.Notify(context.Background(), "still/alive", nil); err != nil {
-		t.Fatalf("panic stopped unrelated traffic: %v", err)
-	}
+		transport.pushReadLine(mustJSON(JSONRPCRequest{
+			ID:     NewIntRequestID(9),
+			Method: "applyPatchApproval",
+			Params: mustRaw(map[string]any{}),
+		}))
+		writes := transport.waitForWrites(t, 1)
+		var response JSONRPCError
+		if err := json.Unmarshal([]byte(writes[0]), &response); err != nil {
+			t.Fatalf("decode panic response: %v", err)
+		}
+		if response.Error.Code != ServerRequestInternalErrorCode {
+			t.Fatalf("unexpected panic response: %#v", response)
+		}
+		if err := client.Notify(context.Background(), "still/alive", nil); err != nil {
+			t.Fatalf("panic stopped unrelated traffic: %v", err)
+		}
+	})
 }
 
 func TestServerRequestWireErrorContract(t *testing.T) {
 	validParams := mustRaw(map[string]any{"callId": "call", "conversationId": "thr", "fileChanges": map[string]any{}})
 	tests := []struct {
 		name    string
-		handler ServerRequestHandler
+		handler func() ServerRequestHandler
 		method  string
 		params  json.RawMessage
 		code    int64
 		message string
 	}{
 		{name: "no handler", method: "applyPatchApproval", params: validParams, code: ServerRequestMethodNotFoundCode, message: "no handler configured"},
-		{name: "unknown method", handler: &recordingHandler{}, method: "unknown", code: ServerRequestMethodNotFoundCode, message: "method not found"},
-		{name: "invalid params", handler: &recordingHandler{}, method: "applyPatchApproval", params: mustRaw([]any{}), code: ServerRequestInvalidParamsCode, message: "invalid params"},
-		{name: "handler failure", handler: &testHandler{applyPatch: func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
-			return nil, errors.New("secret failure")
-		}}, method: "applyPatchApproval", params: validParams, code: ServerRequestHandlerErrorCode, message: "server request handler failed"},
-		{name: "unsupported callback", handler: UnimplementedServerRequestHandler{}, method: "applyPatchApproval", params: validParams, code: ServerRequestMethodNotFoundCode, message: "method not found"},
-		{name: "panic", handler: &panicServerRequestHandler{}, method: "applyPatchApproval", params: validParams, code: ServerRequestInternalErrorCode, message: "server request handler panicked"},
+		{name: "unknown method", handler: func() ServerRequestHandler { return &recordingHandler{} }, method: "unknown", code: ServerRequestMethodNotFoundCode, message: "method not found"},
+		{name: "invalid params", handler: func() ServerRequestHandler { return &recordingHandler{} }, method: "applyPatchApproval", params: mustRaw([]any{}), code: ServerRequestInvalidParamsCode, message: "invalid params"},
+		{name: "handler failure", handler: func() ServerRequestHandler {
+			return &testHandler{applyPatch: func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+				return nil, errors.New("secret failure")
+			}}
+		}, method: "applyPatchApproval", params: validParams, code: ServerRequestHandlerErrorCode, message: "server request handler failed"},
+		{name: "unsupported callback", handler: func() ServerRequestHandler { return UnimplementedServerRequestHandler{} }, method: "applyPatchApproval", params: validParams, code: ServerRequestMethodNotFoundCode, message: "method not found"},
+		{name: "panic", handler: func() ServerRequestHandler { return &panicServerRequestHandler{} }, method: "applyPatchApproval", params: validParams, code: ServerRequestInternalErrorCode, message: "server request handler panicked"},
 	}
 	for index, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			transport := newChannelTransport()
-			client := NewClient(transport, ClientOptions{RequestHandler: test.handler})
-			defer client.Close()
-			transport.pushReadLine(mustJSON(JSONRPCRequest{ID: NewIntRequestID(int64(index + 1)), Method: test.method, Params: test.params}))
-			writes := transport.waitForWrites(t, 1)
-			expected := mustJSON(JSONRPCError{
-				ID: NewIntRequestID(int64(index + 1)),
-				Error: JSONRPCErrorDetail{
-					Code:    test.code,
-					Message: test.message,
-				},
+			synctest.Test(t, func(t *testing.T) {
+				transport := newChannelTransport()
+				var handler ServerRequestHandler
+				if test.handler != nil {
+					handler = test.handler()
+				}
+				client := NewClient(transport, ClientOptions{RequestHandler: handler})
+				defer client.Close()
+				transport.pushReadLine(mustJSON(JSONRPCRequest{ID: NewIntRequestID(int64(index + 1)), Method: test.method, Params: test.params}))
+				writes := transport.waitForWrites(t, 1)
+				expected := mustJSON(JSONRPCError{
+					ID: NewIntRequestID(int64(index + 1)),
+					Error: JSONRPCErrorDetail{
+						Code:    test.code,
+						Message: test.message,
+					},
+				})
+				if !equalJSONLine(expected, writes[0]) {
+					t.Fatalf("unexpected response:\n got: %s\nwant: %s", writes[0], expected)
+				}
+				if err := client.Notify(context.Background(), "still/alive", nil); err != nil {
+					t.Fatalf("request error stopped unrelated traffic: %v", err)
+				}
 			})
-			if !equalJSONLine(expected, writes[0]) {
-				t.Fatalf("unexpected response:\n got: %s\nwant: %s", writes[0], expected)
-			}
-			if err := client.Notify(context.Background(), "still/alive", nil); err != nil {
-				t.Fatalf("request error stopped unrelated traffic: %v", err)
-			}
 		})
 	}
 }
 
 func TestServerRequestLogsRedactCallbackValues(t *testing.T) {
-	const secret = "TOP-SECRET-CALLBACK-VALUE"
-	for _, handler := range []ServerRequestHandler{
-		&testHandler{applyPatch: func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
-			return nil, errors.New(secret)
-		}},
-		&sensitivePanicHandler{value: secret},
-	} {
-		var logs bytes.Buffer
-		transport := newChannelTransport()
-		client := NewClient(transport, ClientOptions{Logger: slog.New(slog.NewTextHandler(&logs, nil)), RequestHandler: handler})
-		transport.pushReadLine(mustJSON(JSONRPCRequest{ID: NewIntRequestID(1), Method: "applyPatchApproval", Params: mustRaw(map[string]any{})}))
-		transport.waitForWrites(t, 1)
-		_ = client.Close()
-		if strings.Contains(logs.String(), secret) {
-			t.Fatalf("callback value leaked to logs: %s", logs.String())
+	synctest.Test(t, func(t *testing.T) {
+		const secret = "TOP-SECRET-CALLBACK-VALUE"
+		for _, handler := range []ServerRequestHandler{
+			&testHandler{applyPatch: func(protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
+				return nil, errors.New(secret)
+			}},
+			&sensitivePanicHandler{value: secret},
+		} {
+			var logs bytes.Buffer
+			transport := newChannelTransport()
+			client := NewClient(transport, ClientOptions{Logger: slog.New(slog.NewTextHandler(&logs, nil)), RequestHandler: handler})
+			defer client.Close()
+			transport.pushReadLine(mustJSON(JSONRPCRequest{ID: NewIntRequestID(1), Method: "applyPatchApproval", Params: mustRaw(map[string]any{})}))
+			transport.waitForWrites(t, 1)
+			_ = client.Close()
+			if strings.Contains(logs.String(), secret) {
+				t.Fatalf("callback value leaked to logs: %s", logs.String())
+			}
 		}
-	}
+	})
 }
 
 func TestServerRequestReplyFailureIsTerminal(t *testing.T) {
-	writeErr := errors.New("reply write failed")
-	transport := newFailingWriteTransport(writeErr)
-	client := NewClient(transport, ClientOptions{})
-	defer client.Close()
-	iter := client.SubscribeNotifications(1)
-	defer iter.Close()
+	synctest.Test(t, func(t *testing.T) {
+		writeErr := errors.New("reply write failed")
+		transport := newFailingWriteTransport(writeErr)
+		client := NewClient(transport, ClientOptions{})
+		defer client.Close()
+		iter := client.SubscribeNotifications(1)
+		defer iter.Close()
 
-	transport.reads <- mustJSON(JSONRPCRequest{ID: NewIntRequestID(1), Method: "unknown"})
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	if _, err := iter.Next(ctx); !errors.Is(err, writeErr) {
-		t.Fatalf("expected terminal reply failure, got %v", err)
-	}
+		transport.reads <- mustJSON(JSONRPCRequest{ID: NewIntRequestID(1), Method: "unknown"})
+		synctest.Wait()
+		ctx := context.Background()
+		if _, err := iter.Next(ctx); !errors.Is(err, writeErr) {
+			t.Fatalf("expected terminal reply failure, got %v", err)
+		}
+	})
 }
 
 func TestCallInvalidResultJSON(t *testing.T) {
@@ -1051,37 +1106,29 @@ func (t *channelTransport) pushReadLine(line string) {
 	t.reads <- line
 }
 
+// waitForReads requires the caller and transport to be inside the same synctest bubble.
 func (t *channelTransport) waitForReads(testingT *testing.T, count int) {
 	testingT.Helper()
+	synctest.Wait()
 	for i := 0; i < count; i++ {
 		select {
 		case <-t.observed:
-		case <-time.After(time.Second):
-			testingT.Fatalf("timed out waiting for read %d", i+1)
+		default:
+			testingT.Fatalf("expected read %d to have completed", i+1)
 		}
 	}
 }
 
+// waitForWrites requires the caller and transport to be inside the same synctest bubble.
 func (t *channelTransport) waitForWrites(testingT *testing.T, count int) []string {
 	testingT.Helper()
-	deadline := time.After(time.Second)
-	ticker := time.NewTicker(time.Millisecond)
-	defer ticker.Stop()
-	for {
-		t.mu.Lock()
-		if len(t.writes) >= count {
-			writes := append([]string(nil), t.writes...)
-			t.mu.Unlock()
-			return writes
-		}
-		t.mu.Unlock()
-
-		select {
-		case <-deadline:
-			testingT.Fatalf("timed out waiting for %d writes", count)
-		case <-ticker.C:
-		}
+	synctest.Wait()
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if len(t.writes) < count {
+		testingT.Fatalf("expected at least %d writes, got %d", count, len(t.writes))
 	}
+	return append([]string(nil), t.writes...)
 }
 
 type errorTransport struct{}
@@ -1164,4 +1211,31 @@ func mustRaw(payload any) json.RawMessage {
 		panic(err)
 	}
 	return data
+}
+
+// awaitTestDeadline verifies that an operation stays blocked until its deadline.
+// The caller must run inside synctest.Test and start the deadline at the current time.
+func awaitTestDeadline(t *testing.T, done <-chan error, timeout time.Duration) error {
+	t.Helper()
+	assertPending := func() {
+		t.Helper()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			t.Fatalf("operation returned before deadline: %v", err)
+		default:
+		}
+	}
+	assertPending()
+	time.Sleep(timeout - time.Nanosecond)
+	assertPending()
+	time.Sleep(time.Nanosecond)
+	synctest.Wait()
+	select {
+	case err := <-done:
+		return err
+	default:
+		t.Fatal("operation did not return at deadline")
+		return nil
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
@@ -197,33 +198,37 @@ func TestTurnResultUsesOnlyAgentMessageAsFinalResponse(t *testing.T) {
 }
 
 func TestThreadRunReturnsStreamNextError(t *testing.T) {
-	ctx := context.Background()
-	info := protocol.ClientInfo{
-		Name:    "codex-go-test",
-		Title:   stringPtr("Codex Go SDK Test"),
-		Version: "test",
-	}
+	synctest.Test(t, func(t *testing.T) {
+		ctx := context.Background()
+		info := protocol.ClientInfo{
+			Name:    "codex-go-test",
+			Title:   stringPtr("Codex Go SDK Test"),
+			Version: "test",
+		}
 
-	client, err := New(ctx, Options{
-		Transport:  rpc.NewReplayTransport(runWithoutCompletionTranscript(info, "hello")),
-		ClientInfo: info,
+		client, err := New(ctx, Options{
+			Transport:  rpc.NewReplayTransport(runWithoutCompletionTranscript(info, "hello")),
+			ClientInfo: info,
+		})
+		if err != nil {
+			t.Fatalf("new client error: %v", err)
+		}
+		defer client.Close()
+
+		thread, err := client.StartThread(ctx, ThreadStartOptions{})
+		if err != nil {
+			t.Fatalf("start thread error: %v", err)
+		}
+
+		runCtx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+		defer cancel()
+		done := make(chan error, 1)
+		go func() { _, runErr := thread.Run(runCtx, "hello", nil); done <- runErr }()
+		err = awaitTestDeadline(t, done, 10*time.Millisecond)
+		if err != context.DeadlineExceeded {
+			t.Fatalf("expected context deadline exceeded error, got %v", err)
+		}
 	})
-	if err != nil {
-		t.Fatalf("new client error: %v", err)
-	}
-	defer client.Close()
-
-	thread, err := client.StartThread(ctx, ThreadStartOptions{})
-	if err != nil {
-		t.Fatalf("start thread error: %v", err)
-	}
-
-	runCtx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
-	defer cancel()
-	_, err = thread.Run(runCtx, "hello", nil)
-	if err == nil || err != context.DeadlineExceeded {
-		t.Fatalf("expected context deadline exceeded error, got %v", err)
-	}
 }
 
 func TestResumeThreadWithReplay(t *testing.T) {

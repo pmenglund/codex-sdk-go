@@ -7,6 +7,7 @@ import (
 	"io"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/pmenglund/codex-sdk-go/protocol"
@@ -112,20 +113,24 @@ func TestTurnHandleRejectsUnknownTurnIDAndInvalidInputs(t *testing.T) {
 	}
 }
 
-func TestTurnHandleContextCancellation(t *testing.T) {
-	client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
-	defer client.Close()
-	handle := &TurnHandle{
-		client:   client,
-		threadID: "thr_123",
-		stream:   &TurnStream{iter: client.SubscribeNotifications(0), threadID: "thr_123"},
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
-	defer cancel()
-	_, err := handle.Next(ctx)
-	if !errors.Is(err, context.DeadlineExceeded) && !errors.Is(err, context.Canceled) {
-		t.Fatalf("expected context error, got %v", err)
-	}
+func TestTurnHandleContextDeadline(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		client := rpc.NewClient(rpc.NewReplayTransport(nil), rpc.ClientOptions{})
+		defer client.Close()
+		handle := &TurnHandle{
+			client:   client,
+			threadID: "thr_123",
+			stream:   &TurnStream{iter: client.SubscribeNotifications(0), threadID: "thr_123"},
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		done := make(chan error, 1)
+		go func() { _, err := handle.Next(ctx); done <- err }()
+		err := awaitTestDeadline(t, done, time.Second)
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("expected context error, got %v", err)
+		}
+	})
 }
 
 func TestTurnHandleRejectsMixedConsumptionModes(t *testing.T) {
@@ -341,72 +346,73 @@ func TestTurnHandleRunCancellationWithoutTurnIDPreservesContextError(t *testing.
 }
 
 func TestTurnHandleCancellationCleanupIsBoundedWhenTransportWriteBlocks(t *testing.T) {
-	originalTimeout := turnInterruptCleanupTimeout
-	turnInterruptCleanupTimeout = 25 * time.Millisecond
-	t.Cleanup(func() { turnInterruptCleanupTimeout = originalTimeout })
+	synctest.Test(t, func(t *testing.T) {
+		transport := newBlockingWriteTransport()
+		client := rpc.NewClient(transport, rpc.ClientOptions{})
+		defer client.Close()
+		handle := &TurnHandle{
+			client:   client,
+			threadID: "thr_123",
+			turnID:   "turn_1",
+			stream:   &TurnStream{iter: client.SubscribeNotifications(1), threadID: "thr_123"},
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		done := make(chan error, 1)
+		go func() { _, err := handle.Run(ctx); done <- err }()
+		synctest.Wait()
+		select {
+		case <-transport.writeStarted:
+		default:
+			t.Fatal("interrupt write was not attempted")
+		}
+		if err := awaitTestDeadline(t, done, turnInterruptCleanupTimeout); err != context.Canceled {
+			t.Fatalf("expected exact context.Canceled, got %v", err)
+		}
 
-	transport := newBlockingWriteTransport()
-	client := rpc.NewClient(transport, rpc.ClientOptions{})
-	handle := &TurnHandle{
-		client:   client,
-		threadID: "thr_123",
-		turnID:   "turn_1",
-		stream:   &TurnStream{iter: client.SubscribeNotifications(1), threadID: "thr_123"},
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	started := time.Now()
-	_, err := handle.Run(ctx)
-	if err != context.Canceled {
-		t.Fatalf("expected exact context.Canceled, got %v", err)
-	}
-	if elapsed := time.Since(started); elapsed > 250*time.Millisecond {
-		t.Fatalf("cancellation cleanup was not bounded: %v", elapsed)
-	}
-	select {
-	case <-transport.writeStarted:
-	case <-time.After(time.Second):
-		t.Fatalf("interrupt write was not attempted")
-	}
-	_ = client.Close()
+		_ = client.Close()
+	})
 }
 
 func TestTurnHandleNotificationOverflowInterruptsRemoteTurn(t *testing.T) {
-	transport := newOverflowTurnTransport()
-	client := rpc.NewClient(transport, rpc.ClientOptions{})
-	defer client.Close()
-	handle := &TurnHandle{
-		client:   client,
-		threadID: "thr_123",
-		turnID:   "turn_1",
-		stream:   &TurnStream{iter: client.SubscribeNotifications(1), threadID: "thr_123"},
-	}
-	note := mustJSON(rpc.JSONRPCNotification{Method: "turn/started", Params: mustRaw(map[string]any{
-		"threadId": "thr_123",
-		"turn":     turnPayload("turn_1", "inProgress"),
-	})})
-	for index := 0; index < 3; index++ {
-		transport.reads <- note
-	}
+	synctest.Test(t, func(t *testing.T) {
+		transport := newOverflowTurnTransport()
+		client := rpc.NewClient(transport, rpc.ClientOptions{})
+		defer client.Close()
+		handle := &TurnHandle{
+			client:   client,
+			threadID: "thr_123",
+			turnID:   "turn_1",
+			stream:   &TurnStream{iter: client.SubscribeNotifications(1), threadID: "thr_123"},
+		}
+		note := mustJSON(rpc.JSONRPCNotification{Method: "turn/started", Params: mustRaw(map[string]any{
+			"threadId": "thr_123",
+			"turn":     turnPayload("turn_1", "inProgress"),
+		})})
+		for index := 0; index < 3; index++ {
+			transport.reads <- note
+		}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	_, err := handle.Run(ctx)
-	if !errors.Is(err, rpc.ErrNotificationOverflow) {
-		t.Fatalf("expected notification overflow, got %v", err)
-	}
-	select {
-	case line := <-transport.writes:
-		var request rpc.JSONRPCRequest
-		if err := json.Unmarshal([]byte(line), &request); err != nil {
-			t.Fatalf("decode interrupt request: %v", err)
+		synctest.Wait()
+		ctx := context.Background()
+		_, err := handle.Run(ctx)
+		if !errors.Is(err, rpc.ErrNotificationOverflow) {
+			t.Fatalf("expected notification overflow, got %v", err)
 		}
-		if request.Method != "turn/interrupt" {
-			t.Fatalf("expected turn/interrupt, got %s", request.Method)
+		synctest.Wait()
+		select {
+		case line := <-transport.writes:
+			var request rpc.JSONRPCRequest
+			if err := json.Unmarshal([]byte(line), &request); err != nil {
+				t.Fatalf("decode interrupt request: %v", err)
+			}
+			if request.Method != "turn/interrupt" {
+				t.Fatalf("expected turn/interrupt, got %s", request.Method)
+			}
+		default:
+			t.Fatalf("overflow did not trigger turn interruption")
 		}
-	case <-time.After(time.Second):
-		t.Fatalf("overflow did not trigger turn interruption")
-	}
+	})
 }
 
 type blockingWriteTransport struct {
@@ -441,7 +447,10 @@ func (t *overflowTurnTransport) WriteLine(line string) error {
 	var request rpc.JSONRPCRequest
 	if json.Unmarshal([]byte(line), &request) == nil && request.Method == "turn/interrupt" {
 		go func() {
-			t.reads <- mustJSON(rpc.JSONRPCResponse{ID: request.ID, Result: mustRaw(map[string]any{})})
+			select {
+			case t.reads <- mustJSON(rpc.JSONRPCResponse{ID: request.ID, Result: mustRaw(map[string]any{})}):
+			case <-t.closed:
+			}
 		}()
 	}
 	return nil
@@ -526,5 +535,32 @@ func tokenUsageBreakdown(input, output, total int) map[string]any {
 		"outputTokens":          output,
 		"reasoningOutputTokens": 0,
 		"totalTokens":           total,
+	}
+}
+
+// awaitTestDeadline verifies that an operation stays blocked until its deadline.
+// The caller must run inside synctest.Test and start the deadline at the current time.
+func awaitTestDeadline(t *testing.T, done <-chan error, timeout time.Duration) error {
+	t.Helper()
+	assertPending := func() {
+		t.Helper()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			t.Fatalf("operation returned before deadline: %v", err)
+		default:
+		}
+	}
+	assertPending()
+	time.Sleep(timeout - time.Nanosecond)
+	assertPending()
+	time.Sleep(time.Nanosecond)
+	synctest.Wait()
+	select {
+	case err := <-done:
+		return err
+	default:
+		t.Fatal("operation did not return at deadline")
+		return nil
 	}
 }
