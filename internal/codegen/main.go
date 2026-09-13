@@ -28,7 +28,7 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "aa19cfcd55fcee125e20373138c395e420a673088dc3bb039d372e8d4b726fe2"
+	approvedUnionInventorySHA256 = "214941a1bf78eb429f79fc0599b321d7ab251ab90b3a6b25ab552e095deb2139"
 )
 
 var approvedOpaqueInterfaceInventorySHA256 = "a6f55f1b748d2bce87b46d67d107373fe4ffa17d13a8e20603a4e58d3d3c9319"
@@ -1737,6 +1737,8 @@ func manualProtocolTypes() map[string]struct{} {
 	return map[string]struct{}{
 		"ApplyPatchApprovalParams":                         {},
 		"ApplyPatchApprovalResponse":                       {},
+		"AttestationGenerateParams":                        {},
+		"ChatgptAuthTokensRefreshParams":                   {},
 		"CommandExecutionApprovalDecision":                 {},
 		"CommandExecutionRequestApprovalParams":            {},
 		"CommandExecutionRequestApprovalResponse":          {},
@@ -1749,6 +1751,7 @@ func manualProtocolTypes() map[string]struct{} {
 		"ItemCompletedNotification":                        {},
 		"MCPServerElicitationRequestParams":                {},
 		"Nullable_GetAccountTokenUsageParams":              {},
+		"Nullable_GetAccountRateLimitsParams":              {},
 		"PermissionsRequestApprovalParams":                 {},
 		"PermissionsRequestApprovalResponse":               {},
 		"ResponseItem":                                     {},
