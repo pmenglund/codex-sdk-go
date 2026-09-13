@@ -20,16 +20,17 @@ Workflow: `WORKFLOW.md`. This plan tracks the user's explicit update-codex-proto
 - [x] Updated CLI metadata, documentation, and SDK version. The complete updater passed: byte-identical generations, formatting, metadata/installer fixtures, vet, unit/race tests, Staticcheck v0.8.1, govulncheck v1.3.0, and diff hygiene on Go 1.26.8.
 - [x] Completed compatibility/security/QA review of the complete diff and independent source-versus-export/AST inventory comparisons; fixed callback alias identity regressions. Verified protected-main checks, immutable tag rules, and automatic protected-branch-only E2E/publication settings.
 - [x] Committed the reviewed update as `acf6c73aced1f6487b568e2b4df8fbaca366b950` and pushed `codex/update-protocol-v0.154.0`.
-- [ ] Create the PR and pass required hosted checks. Blocked: the connected GitHub integration rejected POST /repos/pmenglund/codex-sdk-go/pulls with HTTP 403, Resource not accessible by integration. Restore pull-request write permission before retrying.
+- [x] (2026-09-13) User restored GitHub access; created PR #9: https://github.com/pmenglund/codex-sdk-go/pull/9.
+- [ ] Pass required hosted checks.
 - [ ] Merge through the protected PR, monitor Release, and verify the immutable tag points to the gated merged commit.
 
 ## Surprises & Discoveries
 
 The initial origin/main reference was stale. Fetching showed the local commits were already merged remotely, allowing a simple fast-forward without losing work. This Linux environment provides Go 1.26.8 but initially has neither Cargo nor the GitHub CLI. Git transport works and the GitHub connector reports administrator/push access. Upstream requests Rust 1.95.0.
 
-Rust 1.95.0 installed successfully. The first upstream compile stopped because OpenSSL development files were absent. Installed Debian bookworm libssl-dev 3.0.20-1~deb12u2 by downloading and extracting the package under `/tmp/codex-protocol-deps`, without system changes. The retry uses OPENSSL_INCLUDE_DIR, OPENSSL_LIB_DIR, and OPENSSL_STATIC=1. GitHub's connector can read repository rulesets but returned 403 on main's branch-protection endpoint; protection verification remains outstanding before publication.
+Rust 1.95.0 installed successfully. The first upstream compile stopped because OpenSSL development files were absent. Installed Debian bookworm libssl-dev 3.0.20-1~deb12u2 by downloading and extracting the package under `/tmp/codex-protocol-deps`, without system changes. The retry uses OPENSSL_INCLUDE_DIR, OPENSSL_LIB_DIR, and OPENSSL_STATIC=1. GitHub's connector returned 403 on the administrative branch-protection endpoint; branch metadata, tag rules, and public environment settings independently verified the required protections as recorded below.
 
-Committed upstream JSON schemas reproduce the approved 0.153.4 union digest exactly when canonicalized with Go-compatible number/HTML encoding: 407 schemas, aa19cfcd55fcee125e20373138c395e420a673088dc3bb039d372e8d4b726fe2. The 0.154.0 source schemas have 414 entries, 18 added and 11 removed. Actual exported inventory still must be printed and checked before approval. Regression tests reproduced missing originator preservation, unrecognized configuration_update items, and missing originator request filtering before their fixes.
+Committed upstream JSON schemas reproduce the approved 0.153.4 union digest exactly when canonicalized with Go-compatible number/HTML encoding: 407 schemas, aa19cfcd55fcee125e20373138c395e420a673088dc3bb039d372e8d4b726fe2. The 0.154.0 source schemas have 414 entries, 18 added and 11 removed. The later printed export exactly matched this source inventory before approval. Regression tests reproduced missing originator preservation, unrecognized configuration_update items, and missing originator request filtering before their fixes.
 
 ## Decision Log
 
@@ -45,7 +46,7 @@ The Go diff revealed that AttestationGenerateParams and ChatgptAuthTokensRefresh
 
 ## Outcomes & Retrospective
 
-Generated protocol/RPC output, compatibility adapters, regression tests, CLI checksums, and SDK version 0.154.0 are prepared, reviewed, committed, and pushed to `codex/update-protocol-v0.154.0`. The complete local updater passed, including deterministic generation and every quality gate; govulncheck reported no vulnerabilities. No exported protocol types were removed, the previous server-request aliases are preserved, and the opaque inventory remains unchanged. GitHub rejected PR creation with HTTP 403 (Resource not accessible by integration). No PR, merge, or release was created. Restore the integration's pull-request write access, retry creating a PR from the existing branch to main, and then follow hosted checks and the automatic Release workflow. Linear separately requires reauthentication.
+Generated protocol/RPC output, compatibility adapters, regression tests, CLI checksums, and SDK version 0.154.0 are prepared, reviewed, committed, and pushed to `codex/update-protocol-v0.154.0`. The complete local updater passed, including deterministic generation and every quality gate; govulncheck reported no vulnerabilities. No exported protocol types were removed, the previous server-request aliases are preserved, and the opaque inventory remains unchanged. The initial GitHub HTTP 403 was resolved after the user restored access. PR #9 is open and the hosted checks, protected merge, and automatic Release verification remain in progress. Linear separately requires reauthentication.
 
 ## Context and Orientation
 
@@ -103,3 +104,5 @@ Revision note: Created before generation after live source/remote inspection and
 Revision note: Recorded schema review, compatibility corrections, passing complete local gate, and live GitHub protection evidence before the protected PR handoff. Detailed full-gate output is `/tmp/codex-protocol-full-gate.log`.
 
 Revision note: Recorded the successful branch push and exact GitHub PR permission blocker. The update skill requires stopping at missing GitHub permissions; do not use a direct-main push or an alternate publication path. The prepared comparison is https://github.com/pmenglund/codex-sdk-go/compare/main...codex/update-protocol-v0.154.0?expand=1.
+
+Revision note (2026-09-13): User restored GitHub access and PR #9 was created successfully. The original permission blocker is resolved; hosted gates remain authoritative for merge and publication.
