@@ -19,7 +19,8 @@ Workflow: `WORKFLOW.md`. This plan tracks the user's explicit update-codex-proto
 - [x] Reviewed all changed schemas and printed union/opaque inventories. Implemented originator fields/filtering and nullable rate-limit params, with regression tests for wire behavior and server callback alias compatibility.
 - [x] Updated CLI metadata, documentation, and SDK version. The complete updater passed: byte-identical generations, formatting, metadata/installer fixtures, vet, unit/race tests, Staticcheck v0.8.1, govulncheck v1.3.0, and diff hygiene on Go 1.26.8.
 - [x] Completed compatibility/security/QA review of the complete diff and independent source-versus-export/AST inventory comparisons; fixed callback alias identity regressions. Verified protected-main checks, immutable tag rules, and automatic protected-branch-only E2E/publication settings.
-- [ ] Publish the reviewed branch and PR, and pass required hosted checks.
+- [x] Committed the reviewed update as `acf6c73aced1f6487b568e2b4df8fbaca366b950` and pushed `codex/update-protocol-v0.154.0`.
+- [ ] Create the PR and pass required hosted checks. Blocked: the connected GitHub integration rejected POST /repos/pmenglund/codex-sdk-go/pulls with HTTP 403, Resource not accessible by integration. Restore pull-request write permission before retrying.
 - [ ] Merge through the protected PR, monitor Release, and verify the immutable tag points to the gated merged commit.
 
 ## Surprises & Discoveries
@@ -44,7 +45,7 @@ The Go diff revealed that AttestationGenerateParams and ChatgptAuthTokensRefresh
 
 ## Outcomes & Retrospective
 
-Generated protocol/RPC output, compatibility adapters, regression tests, CLI checksums, and SDK version 0.154.0 are prepared and reviewed. The complete local updater passed, including deterministic generation and every quality gate; govulncheck reported no vulnerabilities. No exported protocol types were removed, the previous server-request aliases are preserved, and the opaque inventory remains unchanged. Protected PR delivery and hosted release verification remain outstanding.
+Generated protocol/RPC output, compatibility adapters, regression tests, CLI checksums, and SDK version 0.154.0 are prepared, reviewed, committed, and pushed to `codex/update-protocol-v0.154.0`. The complete local updater passed, including deterministic generation and every quality gate; govulncheck reported no vulnerabilities. No exported protocol types were removed, the previous server-request aliases are preserved, and the opaque inventory remains unchanged. GitHub rejected PR creation with HTTP 403 (Resource not accessible by integration). No PR, merge, or release was created. Restore the integration's pull-request write access, retry creating a PR from the existing branch to main, and then follow hosted checks and the automatic Release workflow. Linear separately requires reauthentication.
 
 ## Context and Orientation
 
@@ -100,3 +101,5 @@ Retain the existing go-jsonschema dependency and Go 1.26.8 minimum. Keep SDK beh
 Revision note: Created before generation after live source/remote inspection and tracker access checks.
 
 Revision note: Recorded schema review, compatibility corrections, passing complete local gate, and live GitHub protection evidence before the protected PR handoff. Detailed full-gate output is `/tmp/codex-protocol-full-gate.log`.
+
+Revision note: Recorded the successful branch push and exact GitHub PR permission blocker. The update skill requires stopping at missing GitHub permissions; do not use a direct-main push or an alternate publication path. The prepared comparison is https://github.com/pmenglund/codex-sdk-go/compare/main...codex/update-protocol-v0.154.0?expand=1.
