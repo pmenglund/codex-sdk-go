@@ -21,8 +21,8 @@ Workflow: `WORKFLOW.md`. This plan tracks the user's explicit update-codex-proto
 - [x] Completed compatibility/security/QA review of the complete diff and independent source-versus-export/AST inventory comparisons; fixed callback alias identity regressions. Verified protected-main checks, immutable tag rules, and automatic protected-branch-only E2E/publication settings.
 - [x] Committed the reviewed update as `acf6c73aced1f6487b568e2b4df8fbaca366b950` and pushed `codex/update-protocol-v0.154.0`.
 - [x] (2026-09-13) User restored GitHub access; created PR #9: https://github.com/pmenglund/codex-sdk-go/pull/9.
-- [ ] Pass required hosted checks.
-- [ ] Merge through the protected PR, monitor Release, and verify the immutable tag points to the gated merged commit.
+- [x] (2026-09-13) Required hosted Coverage report, Go 1.26, and Go 1.27 checks passed on PR head `8975c6e33ddaa12accd80377daf38bc3ee898715`; GitHub reported the PR mergeable with a clean merge state.
+- [x] (2026-09-13) Merged PR #9 through branch protection at `f9b0e060f8d7adeb30f535b40053c898c88f7548` and deleted the remote feature branch. Release run 34740181889 passed validation, Quality, credentialed E2E, and publication. Verified remote annotated tag v0.154.0 peels to that exact merged commit.
 
 ## Surprises & Discoveries
 
@@ -46,7 +46,7 @@ The Go diff revealed that AttestationGenerateParams and ChatgptAuthTokensRefresh
 
 ## Outcomes & Retrospective
 
-Generated protocol/RPC output, compatibility adapters, regression tests, CLI checksums, and SDK version 0.154.0 are prepared, reviewed, committed, and pushed to `codex/update-protocol-v0.154.0`. The complete local updater passed, including deterministic generation and every quality gate; govulncheck reported no vulnerabilities. No exported protocol types were removed, the previous server-request aliases are preserved, and the opaque inventory remains unchanged. The initial GitHub HTTP 403 was resolved after the user restored access. PR #9 is open and the hosted checks, protected merge, and automatic Release verification remain in progress. Linear separately requires reauthentication.
+SDK v0.154.0 is published from protected-main merge `f9b0e060f8d7adeb30f535b40053c898c88f7548` through PR #9. Generated protocol/RPC output, compatibility adapters, regression tests, CLI checksums, and documentation are merged. The complete local updater passed, including deterministic generation and every quality gate; govulncheck reported no vulnerabilities. No exported protocol types were removed, the previous server-request aliases are preserved, and the opaque inventory remains unchanged. The initial GitHub HTTP 403 was resolved after the user restored access. All required PR checks and automatic Release validation, Quality, credentialed E2E, and publication passed. The remote annotated tag was independently verified against the gated commit. Linear separately requires reauthentication; the tracker gap remains documented above.
 
 ## Context and Orientation
 
@@ -85,7 +85,7 @@ GeneratedCodexVersion must be 0.154.0 and every generated protocol/RPC header mu
 
 ## Idempotence and Recovery
 
-Preserve unrelated work and inspect status before staging. Never stage all paths, create/move local SDK tags, push main, or bypass failed checks. Reuse the unpublished SDK version for a corrective release; retry Release only with the exact failed candidate or reviewed corrective merge SHA. If environment approval unexpectedly blocks execution, restore the skill's configured protected-branches/no-reviewers policy while preserving other protections; do not approve a pending job on the user's behalf. Failures must remain recorded with an exact recovery action.
+Preserve unrelated work and inspect status before staging. Never stage all paths, create/move local SDK tags, push main, or bypass failed checks. Before publication, an unpublished SDK version may be retained for a corrective release; retry Release only with the exact failed candidate or reviewed corrective merge SHA. SDK v0.154.0 is now published and immutable. If a defect is discovered, direct consumers to the prior good version and publish a higher immutable version through the protected release workflow, adding a retract directive when appropriate and documenting the replacement. Never reuse or move v0.154.0. If environment approval unexpectedly blocks execution, restore the skill's configured protected-branches/no-reviewers policy while preserving other protections; do not approve a pending job on the user's behalf. Failures must remain recorded with an exact recovery action.
 
 ## Artifacts and Notes
 
@@ -106,3 +106,5 @@ Revision note: Recorded schema review, compatibility corrections, passing comple
 Revision note: Recorded the successful branch push and exact GitHub PR permission blocker. The update skill requires stopping at missing GitHub permissions; do not use a direct-main push or an alternate publication path. The prepared comparison is https://github.com/pmenglund/codex-sdk-go/compare/main...codex/update-protocol-v0.154.0?expand=1.
 
 Revision note (2026-09-13): User restored GitHub access and PR #9 was created successfully. The original permission blocker is resolved; hosted gates remain authoritative for merge and publication.
+
+Revision note (2026-09-13): Recorded completed protected merge and successful publication after observing https://github.com/pmenglund/codex-sdk-go/actions/runs/34740181889. `git ls-remote` returned tag object `cf8a488ae2544b10147f2cfd8521e56a2172bf2b` and peeled commit `f9b0e060f8d7adeb30f535b40053c898c88f7548` for v0.154.0. This documentation closeout preserves the release's immutable candidate and tag.
