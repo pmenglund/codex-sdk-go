@@ -85,7 +85,7 @@ GeneratedCodexVersion must be 0.154.0 and every generated protocol/RPC header mu
 
 ## Idempotence and Recovery
 
-Preserve unrelated work and inspect status before staging. Never stage all paths, create/move local SDK tags, push main, or bypass failed checks. Reuse the unpublished SDK version for a corrective release; retry Release only with the exact failed candidate or reviewed corrective merge SHA. If environment approval unexpectedly blocks execution, restore the skill's configured protected-branches/no-reviewers policy while preserving other protections; do not approve a pending job on the user's behalf. Failures must remain recorded with an exact recovery action.
+Preserve unrelated work and inspect status before staging. Never stage all paths, create/move local SDK tags, push main, or bypass failed checks. Before publication, an unpublished SDK version may be retained for a corrective release; retry Release only with the exact failed candidate or reviewed corrective merge SHA. SDK v0.154.0 is now published and immutable. If a defect is discovered, direct consumers to the prior good version and publish a higher immutable version through the protected release workflow, adding a retract directive when appropriate and documenting the replacement. Never reuse or move v0.154.0. If environment approval unexpectedly blocks execution, restore the skill's configured protected-branches/no-reviewers policy while preserving other protections; do not approve a pending job on the user's behalf. Failures must remain recorded with an exact recovery action.
 
 ## Artifacts and Notes
 
