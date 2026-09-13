@@ -364,6 +364,7 @@ type Turn struct {
 }
 
 // Thread represents the complete thread summary returned by the app-server.
+// Originator records the client that created it; nil means unavailable.
 type Thread struct {
 	ID             string       `json:"id"`
 	Extra          *ThreadExtra `json:"extra,omitempty"`
@@ -389,6 +390,7 @@ type Thread struct {
 	Path             *string           `json:"path,omitempty"`
 	Cwd              string            `json:"cwd"`
 	CLIVersion       string            `json:"cliVersion"`
+	Originator       *string           `json:"originator"`
 	Source           json.RawMessage   `json:"source"`
 	ThreadSource     *ThreadSource     `json:"threadSource,omitempty"`
 	AgentNickname    *string           `json:"agentNickname,omitempty"`
@@ -504,6 +506,7 @@ type ThreadListParams struct {
 	IsPinned       *bool                           `json:"-"`
 	Limit          *int                            `json:"limit,omitempty"`
 	ModelProviders *ThreadListParamsModelProviders `json:"modelProviders,omitempty"`
+	Originators    *ThreadListParamsOriginators    `json:"originators,omitempty"`
 	SearchTerm     *string                         `json:"searchTerm,omitempty"`
 	// SectionID distinguishes omitted (all sections), pointer-to-nil
 	// (unsectioned), and pointer-to-string (one section).
@@ -583,6 +586,15 @@ type ThreadItemsListResponse struct {
 
 // Nullable_GetAccountTokenUsageParams represents omitted account usage filters.
 type Nullable_GetAccountTokenUsageParams = *GetAccountTokenUsageParams
+
+// Nullable_GetAccountRateLimitsParams represents omitted account usage capabilities.
+type Nullable_GetAccountRateLimitsParams = *GetAccountRateLimitsParams
+
+// AttestationGenerateParams preserves the original server-request parameter alias.
+type AttestationGenerateParams = SanitizedAttestationGenerateParamsJSON
+
+// ChatgptAuthTokensRefreshParams preserves the original server-request parameter alias.
+type ChatgptAuthTokensRefreshParams = SanitizedChatgptAuthTokensRefreshParamsJSON
 
 // ThreadRevertResponse contains the updated thread and history cursors.
 type ThreadRevertResponse struct {

@@ -26,6 +26,29 @@ func lifecycleReplay(t *testing.T, method string, params, result any) (*Codex, *
 	return &Codex{client: client}, &Thread{client: client, id: "thr_1"}
 }
 
+func TestListThreadsOriginators(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		originators []string
+		params      string
+	}{
+		{"omitted", nil, `{}`},
+		{"empty", []string{}, `{"originators":[]}`},
+		{"filtered", []string{"codex_cli_rs", "custom-client"}, `{"originators":["codex_cli_rs","custom-client"]}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c, _ := lifecycleReplay(t, "thread/list", json.RawMessage(tt.params), json.RawMessage(`{"data":[{"id":"thr_1","originator":"custom-client"}]}`))
+			result, err := c.ListThreads(context.Background(), ThreadListOptions{Originators: tt.originators})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(result.Data) != 1 || result.Data[0].ID != "thr_1" || result.Data[0].Originator == nil || *result.Data[0].Originator != "custom-client" {
+				t.Fatalf("result = %#v", result)
+			}
+		})
+	}
+}
+
 func TestDirectLifecycleRequests(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range []struct {

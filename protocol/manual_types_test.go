@@ -15,7 +15,7 @@ func TestManualThreadResumeResponseRoundTripsCompletePayload(t *testing.T) {
             "ephemeral":true,"historyMode":"paginated","modelProvider":"openai","projectId":null,
             "createdAt":10,"updatedAt":20,"recencyAt":19,
             "status":{"type":"idle"},"path":"/tmp/thread.jsonl","cwd":"/tmp/project",
-            "cliVersion":"0.144.6","source":{"type":"cli"},"threadSource":"cli",
+            "cliVersion":"0.144.6","originator":null,"source":{"type":"cli"},"threadSource":"cli",
             "agentNickname":"Ada","agentRole":"reviewer",
             "gitInfo":{"sha":"abc","branch":"main","originUrl":"https://example.test/repo"},
             "name":"Full payload","section":{"id":"section_1","name":"Work"},"sectionEnteredAt":18,"turns":[{

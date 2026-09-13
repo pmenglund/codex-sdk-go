@@ -81,6 +81,45 @@ func TestAccountUsageReadOptionalFilter(t *testing.T) {
 	}
 }
 
+func TestAccountRateLimitsReadOptionalCapabilities(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+	for range 4 {
+		transport.enqueueResult(json.RawMessage(`{"ordinaryUsageAllowed":false,"rateLimits":{"normalModelSlug":"model_1"}}`))
+	}
+	ctx := context.Background()
+	if _, err := client.AccountRateLimitsRead(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.AccountRateLimitsReadWithParams(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.AccountRateLimitsReadWithParams(ctx, &protocol.GetAccountRateLimitsParams{}); err != nil {
+		t.Fatal(err)
+	}
+	enabled := true
+	result, err := client.AccountRateLimitsReadWithParams(ctx, &protocol.GetAccountRateLimitsParams{
+		SupportsLunaReserve:       &enabled,
+		ExcludeResetCreditDetails: &enabled,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.OrdinaryUsageAllowed == nil || *result.OrdinaryUsageAllowed || result.RateLimits.NormalModelSlug == nil || *result.RateLimits.NormalModelSlug != "model_1" {
+		t.Fatalf("rate limits = %#v", result)
+	}
+	requests := transport.writtenRequests()
+	if len(requests) != 4 {
+		t.Fatalf("requests = %d", len(requests))
+	}
+	for i, want := range []string{"", "", `{}`, `{"excludeResetCreditDetails":true,"supportsLunaReserve":true}`} {
+		if requests[i].Method != "account/rateLimits/read" || string(requests[i].Params) != want {
+			t.Errorf("request %d = %#v, want params %s", i, requests[i], want)
+		}
+	}
+}
+
 func TestPaginatedThreadHistoryRPC(t *testing.T) {
 	transport := newScriptedTransport()
 	client := NewClient(transport, ClientOptions{})

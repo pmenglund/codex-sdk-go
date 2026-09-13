@@ -294,9 +294,28 @@ before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
 
+### Updating to protocol 0.154.0
+
+This SDK targets Codex CLI 0.154.x. `AccountRateLimitsRead(ctx)` remains
+available; low-level `AccountRateLimitsReadWithParams` accepts optional
+`protocol.GetAccountRateLimitsParams` capabilities for Luna Reserve and
+background reads that exclude reset-credit details. Rate-limit responses expose
+nullable `OrdinaryUsageAllowed` and quota `NormalModelSlug` values. A missing
+ordinary-usage permission does not imply that usage has recovered.
+
+`protocol.Thread.Originator` identifies the client that created a thread.
+`ThreadListOptions.Originators` filters by exact originator on hosted backends;
+the local app-server rejects nonempty originator filters. Nil or empty filters
+leave originators unrestricted.
+
+The protocol also adds the `configuration_update` response-item variant,
+application network requirement types, and MCP tool-discovery errors. Detached
+review delivery is deprecated upstream; start a separate thread and request an
+inline review instead.
+
 ### Updating to protocol 0.153.4
 
-This SDK targets Codex CLI 0.153.x. Low-level RPC now includes paginated turn
+Protocol 0.153.4 introduced low-level RPC for paginated turn
 and item history, thread revert, plugin reconciliation, and new realtime,
 project, queue, and authentication-recovery notifications.
 

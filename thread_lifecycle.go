@@ -20,7 +20,10 @@ type ThreadListOptions struct {
 	IsPinned       *bool
 	Limit          *int
 	ModelProviders []string
-	SearchTerm     string
+	// Originators matches any supplied originator exactly on hosted backends.
+	// The local app-server rejects a nonempty list; nil or empty is unrestricted.
+	Originators []string
+	SearchTerm  string
 	// SectionID limits results to one persisted section. It cannot be combined
 	// with Unsectioned.
 	SectionID     string
@@ -64,6 +67,10 @@ func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
 	if o.ModelProviders != nil {
 		modelProviders := protocol.ThreadListParamsModelProviders(o.ModelProviders)
 		params.ModelProviders = &modelProviders
+	}
+	if o.Originators != nil {
+		originators := protocol.ThreadListParamsOriginators(o.Originators)
+		params.Originators = &originators
 	}
 	if o.Cursor != "" {
 		params.Cursor = stringPtr(o.Cursor)
