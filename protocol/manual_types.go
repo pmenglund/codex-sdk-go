@@ -404,6 +404,7 @@ type Thread struct {
 
 // ThreadStartResponse is the response payload for thread/start.
 type ThreadStartResponse struct {
+	DisabledPluginIDs       []string         `json:"disabledPluginIds,omitzero"`
 	ThreadID                string           `json:"threadId,omitempty"`
 	Thread                  *Thread          `json:"thread"`
 	Model                   string           `json:"model"`
@@ -428,27 +429,30 @@ type ThreadResponse = ThreadStartResponse
 
 // ThreadResumeResponse is the response payload for thread/resume.
 type ThreadResumeResponse struct {
-	ItemsBackwardsCursor    *string          `json:"itemsBackwardsCursor,omitempty"`
-	TurnsBackwardsCursor    *string          `json:"turnsBackwardsCursor,omitempty"`
-	ThreadID                string           `json:"threadId,omitempty"`
-	Thread                  *Thread          `json:"thread"`
-	Model                   string           `json:"model"`
-	ModelProvider           string           `json:"modelProvider"`
-	ServiceTier             *string          `json:"serviceTier,omitempty"`
-	Cwd                     string           `json:"cwd"`
-	RuntimeWorkspaceRoots   []string         `json:"runtimeWorkspaceRoots,omitempty"`
-	InstructionSources      []string         `json:"instructionSources,omitempty"`
-	ApprovalPolicy          json.RawMessage  `json:"approvalPolicy"`
-	ApprovalsReviewer       json.RawMessage  `json:"approvalsReviewer"`
-	Sandbox                 SandboxPolicy    `json:"sandbox"`
-	ActivePermissionProfile json.RawMessage  `json:"activePermissionProfile,omitempty"`
-	ReasoningEffort         *ReasoningEffort `json:"reasoningEffort,omitempty"`
-	MultiAgentMode          json.RawMessage  `json:"multiAgentMode,omitempty"`
-	InitialTurnsPage        *TurnsPage       `json:"initialTurnsPage,omitempty"`
+	CollaborationMode       *CollaborationMode `json:"collaborationMode,omitempty"`
+	DisabledPluginIDs       []string           `json:"disabledPluginIds,omitzero"`
+	ItemsBackwardsCursor    *string            `json:"itemsBackwardsCursor,omitempty"`
+	TurnsBackwardsCursor    *string            `json:"turnsBackwardsCursor,omitempty"`
+	ThreadID                string             `json:"threadId,omitempty"`
+	Thread                  *Thread            `json:"thread"`
+	Model                   string             `json:"model"`
+	ModelProvider           string             `json:"modelProvider"`
+	ServiceTier             *string            `json:"serviceTier,omitempty"`
+	Cwd                     string             `json:"cwd"`
+	RuntimeWorkspaceRoots   []string           `json:"runtimeWorkspaceRoots,omitempty"`
+	InstructionSources      []string           `json:"instructionSources,omitempty"`
+	ApprovalPolicy          json.RawMessage    `json:"approvalPolicy"`
+	ApprovalsReviewer       json.RawMessage    `json:"approvalsReviewer"`
+	Sandbox                 SandboxPolicy      `json:"sandbox"`
+	ActivePermissionProfile json.RawMessage    `json:"activePermissionProfile,omitempty"`
+	ReasoningEffort         *ReasoningEffort   `json:"reasoningEffort,omitempty"`
+	MultiAgentMode          json.RawMessage    `json:"multiAgentMode,omitempty"`
+	InitialTurnsPage        *TurnsPage         `json:"initialTurnsPage,omitempty"`
 }
 
 // ThreadForkResponse is the response payload for thread/fork.
 type ThreadForkResponse struct {
+	DisabledPluginIDs       []string         `json:"disabledPluginIds,omitzero"`
 	ThreadID                string           `json:"threadId,omitempty"`
 	Thread                  *Thread          `json:"thread"`
 	Model                   string           `json:"model"`
@@ -573,9 +577,172 @@ type ThreadTurnsListResponse struct {
 
 // ThreadItemEntry associates a history item with its turn.
 type ThreadItemEntry struct {
-	Item   ThreadItem `json:"item"`
-	TurnID string     `json:"turnId"`
+	StartedAtMs   *int64     `json:"startedAtMs,omitempty"`
+	CompletedAtMs *int64     `json:"completedAtMs,omitempty"`
+	Item          ThreadItem `json:"item"`
+	TurnID        string     `json:"turnId"`
 }
+
+// ThreadAttachment is an independently persisted attachment associated with a thread.
+type ThreadAttachment struct {
+	AttachmentType string          `json:"attachmentType"`
+	CreatedAt      int             `json:"createdAt"`
+	ID             string          `json:"id"`
+	IdentityKey    string          `json:"identityKey"`
+	Payload        json.RawMessage `json:"payload"`
+}
+
+// ThreadAttachmentAddParams creates or locates an attachment on its owning thread.
+type ThreadAttachmentAddParams struct {
+	AttachmentType string          `json:"attachmentType"`
+	IdentityKey    string          `json:"identityKey"`
+	Payload        json.RawMessage `json:"payload"`
+	ThreadID       string          `json:"threadId"`
+}
+
+// SanitizedThreadAttachmentAddParamsJSON preserves the generated spelling.
+type SanitizedThreadAttachmentAddParamsJSON = ThreadAttachmentAddParams
+
+// ThreadItemsListCursor preserves a string continuation cursor or an item anchor.
+type ThreadItemsListCursor struct {
+	raw json.RawMessage
+}
+
+// NewThreadItemsListCursor validates and wraps a string or item anchor.
+func NewThreadItemsListCursor(value any) (ThreadItemsListCursor, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return ThreadItemsListCursor{}, err
+	}
+	var result ThreadItemsListCursor
+	err = json.Unmarshal(data, &result)
+	return result, err
+}
+
+// UnmarshalJSON decodes a continuation string or validates an item anchor.
+func (value *ThreadItemsListCursor) UnmarshalJSON(data []byte) error {
+	var cursor *string
+	if json.Unmarshal(data, &cursor) == nil && cursor != nil {
+		value.raw = append(json.RawMessage(nil), data...)
+		return nil
+	}
+	var anchor ThreadItemsListAnchor
+	if err := json.Unmarshal(data, &anchor); err != nil {
+		return err
+	}
+	if anchor.Kind() == "" {
+		return errors.New("item cursor must be a string or item anchor")
+	}
+	value.raw = append(json.RawMessage(nil), data...)
+	return nil
+}
+
+// MarshalJSON returns the preserved cursor representation.
+func (value ThreadItemsListCursor) MarshalJSON() ([]byte, error) {
+	if len(value.raw) == 0 {
+		return []byte("null"), nil
+	}
+	return append([]byte(nil), value.raw...), nil
+}
+
+// ThreadItemsListParams configures history pagination, preserving string cursors.
+type ThreadItemsListParams struct {
+	Cursor ThreadItemsListParamsCursor `json:"cursor,omitempty"`
+	// CursorAnchor selects an exclusive item position instead of Cursor.
+	// It requires a nonempty TurnID and cannot be combined with Cursor.
+	CursorAnchor  *ThreadItemsListAnchor      `json:"-"`
+	Limit         ThreadItemsListParamsLimit  `json:"limit,omitempty"`
+	SortDirection *SortDirection              `json:"sortDirection,omitempty"`
+	ThreadID      string                      `json:"threadId"`
+	TurnID        ThreadItemsListParamsTurnID `json:"turnId,omitempty"`
+}
+
+// ThreadItemsListParamsCursor retains the former string cursor type.
+type ThreadItemsListParamsCursor *string
+
+// SanitizedThreadItemsListParamsJSON preserves the generated spelling.
+type SanitizedThreadItemsListParamsJSON = ThreadItemsListParams
+
+// SanitizedThreadItemsListParamsJSONLimit preserves the former limit spelling.
+type SanitizedThreadItemsListParamsJSONLimit = ThreadItemsListParamsLimit
+
+// SanitizedThreadItemsListParamsJSONTurnID preserves the former turn-ID spelling.
+type SanitizedThreadItemsListParamsJSONTurnID = ThreadItemsListParamsTurnID
+
+// SanitizedThreadItemsListParamsJSONCursor retains the former string cursor type.
+type SanitizedThreadItemsListParamsJSONCursor = ThreadItemsListParamsCursor
+
+type threadItemsListWire struct {
+	Cursor        json.RawMessage             `json:"cursor,omitempty"`
+	Limit         ThreadItemsListParamsLimit  `json:"limit,omitempty"`
+	SortDirection *SortDirection              `json:"sortDirection,omitempty"`
+	ThreadID      string                      `json:"threadId"`
+	TurnID        ThreadItemsListParamsTurnID `json:"turnId,omitempty"`
+}
+
+// MarshalJSON writes one cursor representation and validates anchor preconditions.
+func (value ThreadItemsListParams) MarshalJSON() ([]byte, error) {
+	wire := threadItemsListWire{Limit: value.Limit, SortDirection: value.SortDirection, ThreadID: value.ThreadID, TurnID: value.TurnID}
+	if value.CursorAnchor != nil {
+		if value.Cursor != nil || value.TurnID == nil || *value.TurnID == "" || value.CursorAnchor.Kind() == "" {
+			return nil, errors.New("item anchor requires a nonempty turnId and no string cursor")
+		}
+		data, err := json.Marshal(value.CursorAnchor)
+		if err != nil {
+			return nil, err
+		}
+		wire.Cursor = data
+	} else if value.Cursor != nil {
+		data, err := json.Marshal(value.Cursor)
+		if err != nil {
+			return nil, err
+		}
+		wire.Cursor = data
+	}
+	return json.Marshal(wire)
+}
+
+// UnmarshalJSON decodes either cursor representation without losing its shape.
+func (value *ThreadItemsListParams) UnmarshalJSON(data []byte) error {
+	var wire threadItemsListWire
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	result := ThreadItemsListParams{Limit: wire.Limit, SortDirection: wire.SortDirection, ThreadID: wire.ThreadID, TurnID: wire.TurnID}
+	if len(wire.Cursor) > 0 && string(wire.Cursor) != "null" {
+		var cursor ThreadItemsListCursor
+		if err := json.Unmarshal(wire.Cursor, &cursor); err != nil {
+			return err
+		}
+		var text string
+		if json.Unmarshal(wire.Cursor, &text) == nil {
+			result.Cursor = &text
+		} else {
+			var anchor ThreadItemsListAnchor
+			if err := json.Unmarshal(wire.Cursor, &anchor); err != nil {
+				return err
+			}
+			result.CursorAnchor = &anchor
+		}
+	}
+	if _, err := result.MarshalJSON(); err != nil {
+		return err
+	}
+	*value = result
+	return nil
+}
+
+// ToolExposureSurface identifies a model-facing tool surface.
+type ToolExposureSurface string
+
+const (
+	// ToolExposureSurfaceCodeMode exposes a tool to Code Mode scripts.
+	ToolExposureSurfaceCodeMode ToolExposureSurface = "code_mode"
+	// ToolExposureSurfaceDeferred exposes a tool through tool search.
+	ToolExposureSurfaceDeferred ToolExposureSurface = "deferred"
+	// ToolExposureSurfaceDirect exposes a tool in the initial model tool list.
+	ToolExposureSurfaceDirect ToolExposureSurface = "direct"
+)
 
 // ThreadItemsListResponse contains a page of items and directional cursors.
 type ThreadItemsListResponse struct {
@@ -691,6 +858,8 @@ type TurnStartParamsInputElem interface{}
 // TurnStartParams is maintained manually because the raw schema currently
 // exceeds the generator's capabilities.
 type TurnStartParams struct {
+	// DisabledPluginIDs preserves the saved list when nil and clears it when pointing to an empty slice.
+	DisabledPluginIDs   *[]string                  `json:"disabledPluginIds,omitempty"`
 	ThreadID            string                     `json:"threadId"`
 	Input               []TurnStartParamsInputElem `json:"input"`
 	ClientUserMessageID *string                    `json:"clientUserMessageId,omitempty"`
