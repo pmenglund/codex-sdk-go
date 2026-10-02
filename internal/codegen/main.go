@@ -28,10 +28,10 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "214941a1bf78eb429f79fc0599b321d7ab251ab90b3a6b25ab552e095deb2139"
+	approvedUnionInventorySHA256 = "0b3fbe996fafc3b6a356b643f52a9777cb49b5e89b8b08089e213c55281577ad"
 )
 
-var approvedOpaqueInterfaceInventorySHA256 = "a6f55f1b748d2bce87b46d67d107373fe4ffa17d13a8e20603a4e58d3d3c9319"
+var approvedOpaqueInterfaceInventorySHA256 = "3dd6c1d855fb38cc550c690e767621de8d9a8c8bc7befcfa9d6cdf38eb152539"
 
 func main() {
 	sdkRoot, err := repoRoot()
@@ -256,6 +256,8 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 }
 
 var requiredManualSchemaCoverage = map[string]struct{}{
+	"ThreadAttachment":                        {},
+	"ThreadAttachmentAddParams":               {},
 	"CommandExecutionRequestApprovalParams":   {},
 	"CommandExecutionRequestApprovalResponse": {},
 	"ErrorNotification":                       {},
@@ -267,6 +269,7 @@ var requiredManualSchemaCoverage = map[string]struct{}{
 	"ThreadForkParams":                        {},
 	"ThreadForkResponse":                      {},
 	"ThreadItemsListResponse":                 {},
+	"ThreadItemsListParams":                   {},
 	"ThreadListParams":                        {},
 	"ThreadListResponse":                      {},
 	"ThreadMetadataUpdateParams":              {},
@@ -292,6 +295,8 @@ var requiredManualSchemaCoverage = map[string]struct{}{
 var manualStructSchemaCoverageExclusions = map[string]struct{}{
 	"CommandExecutionApprovalDecision": {},
 	"ReviewDecision":                   {},
+	// ThreadItemsListCursor validates its string/anchor union in UnmarshalJSON.
+	"ThreadItemsListCursor": {},
 }
 
 func validateManualStructSchemaCoverage(schemaDir, repoRoot string) error {
@@ -620,14 +625,18 @@ type discriminatedUnionSchema struct {
 	OneOf    []struct {
 		Properties map[string]json.RawMessage `json:"properties"`
 		Required   []string                   `json:"required"`
+		AnyOf      []struct {
+			Required []string `json:"required"`
+		} `json:"anyOf"`
 	} `json:"oneOf"`
 }
 
 type discriminatedUnion struct {
-	Name          string
-	Discriminator string
-	Kinds         []string
-	Required      map[string][]string
+	Name                 string
+	Discriminator        string
+	Kinds                []string
+	Required             map[string][]string
+	RequiredAlternatives map[string][][]string
 }
 
 func collectDiscriminatedUnions(schemaDir string, requireCore bool) (map[string]discriminatedUnion, error) {
@@ -734,6 +743,7 @@ func parseDiscriminatedUnion(name string, data []byte) (discriminatedUnion, bool
 	}
 	kinds := candidates[discriminator]
 	required := make(map[string][]string, len(kinds))
+	alternatives := make(map[string][][]string)
 	seen := make(map[string]struct{}, len(kinds))
 	for _, kind := range kinds {
 		if _, duplicate := seen[kind]; duplicate {
@@ -752,9 +762,17 @@ func parseDiscriminatedUnion(name string, data []byte) (discriminatedUnion, bool
 		fields = append(fields, variant.Required...)
 		sort.Strings(fields)
 		required[discriminatorProperty.Enum[0]] = fields
+		for _, alternative := range variant.AnyOf {
+			if len(alternative.Required) == 0 {
+				return discriminatedUnion{}, false, fmt.Errorf("%s has unsupported nested anyOf without required fields", name)
+			}
+			fields := append([]string(nil), alternative.Required...)
+			sort.Strings(fields)
+			alternatives[discriminatorProperty.Enum[0]] = append(alternatives[discriminatorProperty.Enum[0]], fields)
+		}
 	}
 	sort.Strings(kinds)
-	return discriminatedUnion{Name: name, Discriminator: discriminator, Kinds: kinds, Required: required}, true, nil
+	return discriminatedUnion{Name: name, Discriminator: discriminator, Kinds: kinds, Required: required, RequiredAlternatives: alternatives}, true, nil
 }
 
 func renderDiscriminatedUnionTypes(unions map[string]discriminatedUnion, codexCommit string) []byte {
@@ -772,6 +790,7 @@ func renderDiscriminatedUnionTypes(unions map[string]discriminatedUnion, codexCo
 	b.WriteString("\tvar kind string; if err := json.Unmarshal(rawKind, &kind); err != nil || kind == \"\" { return \"\", nil, fmt.Errorf(\"%s discriminator must be a non-empty string\", discriminator) }\n")
 	b.WriteString("\treturn kind, append(json.RawMessage(nil), data...), nil\n}\n\n")
 	b.WriteString("func requireDiscriminatedUnionFields(data json.RawMessage, union, kind string, fields ...string) error { var object map[string]json.RawMessage; if err := json.Unmarshal(data, &object); err != nil { return err }; for _, field := range fields { if _, ok := object[field]; !ok { return fmt.Errorf(\"%s variant %q is missing required field %q\", union, kind, field) } }; return nil }\n\n")
+	b.WriteString("func requireDiscriminatedUnionAlternative(data json.RawMessage, union, kind string, alternatives ...[]string) error { for _, fields := range alternatives { if requireDiscriminatedUnionFields(data, union, kind, fields...) == nil { return nil } }; return fmt.Errorf(\"%s variant %q is missing a required alternative\", union, kind) }\n\n")
 
 	names := make([]string, 0, len(unions))
 	for name := range unions {
@@ -780,12 +799,12 @@ func renderDiscriminatedUnionTypes(unions map[string]discriminatedUnion, codexCo
 	sort.Strings(names)
 	for _, name := range names {
 		union := unions[name]
-		renderDiscriminatedUnion(&b, union.Name, union.Discriminator, union.Kinds, union.Required)
+		renderDiscriminatedUnion(&b, union.Name, union.Discriminator, union.Kinds, union.Required, union.RequiredAlternatives)
 	}
 	return []byte(b.String())
 }
 
-func renderDiscriminatedUnion(b *strings.Builder, name, discriminator string, kinds []string, required map[string][]string) {
+func renderDiscriminatedUnion(b *strings.Builder, name, discriminator string, kinds []string, required map[string][]string, alternatives map[string][][]string) {
 	fmt.Fprintf(b, "// %sKind identifies a known %s variant.\n", name, name)
 	fmt.Fprintf(b, "type %sKind string\n\nconst (\n", name)
 	for _, kind := range kinds {
@@ -809,6 +828,17 @@ func renderDiscriminatedUnion(b *strings.Builder, name, discriminator string, ki
 			fmt.Fprintf(b, ", %q", field)
 		}
 		b.WriteString("); err != nil { return err }\n")
+		if choices := alternatives[kind]; len(choices) > 0 {
+			fmt.Fprintf(b, "\t\tif err := requireDiscriminatedUnionAlternative(raw, %q, kind", name)
+			for _, choice := range choices {
+				b.WriteString(", []string{")
+				for _, field := range choice {
+					fmt.Fprintf(b, "%q,", field)
+				}
+				b.WriteString("}")
+			}
+			b.WriteString("); err != nil { return err }\n")
+		}
 	}
 	fmt.Fprintf(b, "\t}; value.kind = %sKind(kind); value.raw = raw; return nil }\n\n", name)
 	fmt.Fprintf(b, "func (value %s) MarshalJSON() ([]byte, error) { if len(value.raw) == 0 { return []byte(\"null\"), nil }; return append([]byte(nil), value.raw...), nil }\n\n", name)
@@ -1533,6 +1563,9 @@ func methodBaseName(method string) string {
 
 func clientResponseOverrides() map[string]string {
 	return map[string]string{
+		"account/gatewayOAuth/cancel":              "GatewayOAuthCancelResponse",
+		"account/gatewayOAuth/login":               "GatewayOAuthLoginResponse",
+		"account/gatewayOAuth/read":                "GatewayOAuthReadResponse",
 		"account/logout":                           "LogoutAccountResponse",
 		"account/rateLimits/read":                  "GetAccountRateLimitsResponse",
 		"account/usage/read":                       "GetAccountTokenUsageResponse",
@@ -1735,6 +1768,17 @@ func clientMethodName(method rpcMethod) string {
 
 func manualProtocolTypes() map[string]struct{} {
 	return map[string]struct{}{
+		"ThreadAttachment":                                 {},
+		"ThreadAttachmentAddParams":                        {},
+		"SanitizedThreadAttachmentAddParamsJSON":           {},
+		"ThreadItemsListCursor":                            {},
+		"ThreadItemsListParams":                            {},
+		"ThreadItemsListParamsCursor":                      {},
+		"SanitizedThreadItemsListParamsJSON":               {},
+		"SanitizedThreadItemsListParamsJSONLimit":          {},
+		"SanitizedThreadItemsListParamsJSONTurnID":         {},
+		"SanitizedThreadItemsListParamsJSONCursor":         {},
+		"ToolExposureSurface":                              {},
 		"ApplyPatchApprovalParams":                         {},
 		"ApplyPatchApprovalResponse":                       {},
 		"AttestationGenerateParams":                        {},

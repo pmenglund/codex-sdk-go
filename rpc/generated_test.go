@@ -52,6 +52,72 @@ func TestGeneratedClientRequests(t *testing.T) {
 	}
 }
 
+func TestProtocol0160GatewayAndAttachments(t *testing.T) {
+	transport := newScriptedTransport()
+	client := NewClient(transport, ClientOptions{})
+	defer client.Close()
+	ctx := context.Background()
+	transport.enqueueResult(json.RawMessage(`{"providerId":"gateway","providerName":"Gateway","required":true,"status":"succeeded"}`))
+	status, err := client.AccountGatewayOAuthRead(ctx)
+	if err != nil || status == nil || status.Status == nil || *status.Status != protocol.GatewayOAuthStatusSucceeded || !status.Required {
+		t.Fatalf("gateway status = %#v, %v", status, err)
+	}
+	transport.enqueueResult(json.RawMessage(`{}`))
+	if _, err := client.AccountGatewayOAuthLogin(ctx); err != nil {
+		t.Fatal(err)
+	}
+	transport.enqueueResult(json.RawMessage(`{}`))
+	if _, err := client.AccountGatewayOAuthCancel(ctx); err != nil {
+		t.Fatal(err)
+	}
+	transport.enqueueResult(json.RawMessage(`{"attachment":{"id":"a","attachmentType":"link","identityKey":"key","payload":{"url":"https://example.com"},"createdAt":1},"outcome":"existing"}`))
+	added, err := client.ThreadAttachmentAdd(ctx, protocol.ThreadAttachmentAddParams{ThreadID: "thread", AttachmentType: "link", IdentityKey: "key", Payload: json.RawMessage(`{"url":"https://example.com"}`)})
+	if err != nil || added == nil || added.Attachment.ID != "a" || added.Outcome != protocol.ThreadAttachmentAddOutcomeExisting {
+		t.Fatalf("attachment = %#v, %v", added, err)
+	}
+	transport.enqueueResult(json.RawMessage(`{"data":[{"id":"a","attachmentType":"link","identityKey":"key","payload":null,"createdAt":1}],"nextCursor":"next"}`))
+	page, err := client.ThreadAttachmentList(ctx, protocol.ThreadAttachmentListParams{ThreadID: "thread"})
+	if err != nil || page == nil || len(page.Data) != 1 || page.NextCursor == nil || *page.NextCursor != "next" {
+		t.Fatalf("attachment page = %#v, %v", page, err)
+	}
+	transport.enqueueResult(json.RawMessage(`{}`))
+	if _, err := client.ThreadAttachmentRemove(ctx, protocol.ThreadAttachmentRemoveParams{ThreadID: "thread", AttachmentType: "link", IdentityKey: "key"}); err != nil {
+		t.Fatal(err)
+	}
+	requests := transport.writtenRequests()
+	wantMethods := []string{"account/gatewayOAuth/read", "account/gatewayOAuth/login", "account/gatewayOAuth/cancel", "thread/attachment/add", "thread/attachment/list", "thread/attachment/remove"}
+	wantParams := []string{"", "", "", `{"attachmentType":"link","identityKey":"key","payload":{"url":"https://example.com"},"threadId":"thread"}`, `{"threadId":"thread"}`, `{"attachmentType":"link","identityKey":"key","threadId":"thread"}`}
+	if len(requests) != len(wantMethods) {
+		t.Fatalf("requests = %d", len(requests))
+	}
+	for i, request := range requests {
+		if request.Method != wantMethods[i] || string(request.Params) != wantParams[i] {
+			t.Errorf("request %d = %s %s", i, request.Method, request.Params)
+		}
+	}
+	for _, tt := range []struct{ method, payload string }{
+		{"account/gatewayOAuth/changed", `{"providerId":"gateway","status":"started","authUrl":"https://example.com/login"}`},
+		{"thread/attachment/updated", `{"threadId":"thread","attachmentId":"a","attachmentType":"link","identityKey":"key","operation":"deleted"}`},
+	} {
+		note, err := parseServerNotification(tt.method, json.RawMessage(tt.payload))
+		if err != nil {
+			t.Fatal(err)
+		}
+		switch payload := note.Params.(type) {
+		case protocol.GatewayOAuthChangedNotification:
+			if payload.AuthURL == nil || *payload.AuthURL != "https://example.com/login" {
+				t.Fatalf("gateway notification = %#v", payload)
+			}
+		case protocol.ThreadAttachmentUpdatedNotification:
+			if payload.Operation != protocol.ThreadAttachmentOperationDeleted || payload.AttachmentID != "a" {
+				t.Fatalf("attachment notification = %#v", payload)
+			}
+		default:
+			t.Fatalf("notification type = %T", note.Params)
+		}
+	}
+}
+
 func TestAccountUsageReadOptionalFilter(t *testing.T) {
 	transport := newScriptedTransport()
 	client := NewClient(transport, ClientOptions{})

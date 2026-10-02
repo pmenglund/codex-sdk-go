@@ -294,9 +294,39 @@ before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
 
+### Updating to protocol 0.160.0
+
+This SDK targets Codex CLI 0.160.x. Low-level RPC adds gateway OAuth status,
+login, and cancellation, plus thread attachment add/list/remove calls and their
+notifications. Attachment payloads use `json.RawMessage` to preserve arbitrary JSON
+numbers and future fields. Upstream removed `thread/rollback`; its generated method and
+types are removed. Use `ThreadRevert` with an explicit `BeforeTurnID` instead.
+
+History pagination still accepts `ThreadItemsListParams.Cursor` as a string
+pointer. For an exclusive item position, construct a
+`protocol.ThreadItemsListAnchor` with `protocol.NewThreadItemsListAnchor`, set
+`CursorAnchor`, and provide a nonempty `TurnID`. Supplying both cursor forms is
+an error. History entries expose optional `StartedAtMs` and `CompletedAtMs`.
+
+Image inputs and function outputs accept either a URL or an uploaded file ID
+through the existing raw-preserving union constructors. At least one image
+source is required. Lifecycle responses retain `DisabledPluginIDs`, and resume
+responses expose `CollaborationMode`. In low-level `TurnStartParams`, a nil
+`DisabledPluginIDs` preserves the saved list; a pointer to an empty slice clears
+it. These saved plugin IDs do not yet filter plugin capabilities upstream.
+
+MCP tool calls expose descriptor UI metadata, and resource reads can select an
+explicit app/account target. Its nullable `LinkID` is required on the wire;
+null requests no-auth access subject to the app's policy. Personality selection
+is deprecated upstream: `friendly` and `pragmatic` no longer select a style.
+`ConfigRequirements.WindowsSandboxPrivateDesktop` and its helper type are
+removed upstream. `AllowedWindowsSandboxImplementations` now uses
+`WindowsSandboxImplementation`, which includes `mxc`, instead of
+`WindowsSandboxSetupMode`.
+
 ### Updating to protocol 0.154.0
 
-This SDK targets Codex CLI 0.154.x. `AccountRateLimitsRead(ctx)` remains
+Protocol 0.154.0 introduced the following additions. `AccountRateLimitsRead(ctx)` remains
 available; low-level `AccountRateLimitsReadWithParams` accepts optional
 `protocol.GetAccountRateLimitsParams` capabilities for Luna Reserve and
 background reads that exclude reset-credit details. Rate-limit responses expose

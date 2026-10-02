@@ -41,6 +41,27 @@ func TestDiscriminatedUnionSingleVariant(t *testing.T) {
 	}
 }
 
+func TestDiscriminatedUnionNestedRequiredAlternatives(t *testing.T) {
+	data := []byte(`{"oneOf":[{"properties":{"type":{"enum":["image"]}},"required":["type"],"anyOf":[{"required":["url"]},{"required":["fileId"]}]}]}`)
+	union, ok, err := parseDiscriminatedUnion("UserInput", data)
+	if err != nil || !ok {
+		t.Fatalf("parse union: %v, %v", ok, err)
+	}
+	if !reflect.DeepEqual(union.RequiredAlternatives["image"], [][]string{{"url"}, {"fileId"}}) {
+		t.Fatalf("alternatives = %v", union.RequiredAlternatives)
+	}
+	source := renderDiscriminatedUnionTypes(map[string]discriminatedUnion{"UserInput": union}, testCodexCommit)
+	if _, err := format.Source(source); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(source), `requireDiscriminatedUnionAlternative(raw, "UserInput", kind, []string{"url",}, []string{"fileId",})`) {
+		t.Fatalf("missing image alternative validation:\n%s", source)
+	}
+	if _, _, err := parseDiscriminatedUnion("UserInput", []byte(`{"oneOf":[{"properties":{"type":{"enum":["image"]}},"anyOf":[{"$ref":"#/definitions/Image"}]}]}`)); err == nil {
+		t.Fatal("accepted unsupported nested anyOf")
+	}
+}
+
 const testCodexCommit = "0123456789abcdef0123456789abcdef01234567"
 const testCodexVersion = "1.2.3"
 
