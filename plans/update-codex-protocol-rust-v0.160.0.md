@@ -24,8 +24,8 @@ Workflow: `WORKFLOW.md`. This plan records the explicit maintenance invocation o
 - [x] (2026-10-01) Authoritative updater proved two identical generations and passed the complete Go 1.26.8 local gate, including race tests, Staticcheck, govulncheck, metadata fixtures, and diff hygiene.
 - [x] (2026-10-01) Completed QA and architecture reviews; addressed guard coverage and attachment precision findings, with reviewer confirmation.
 - [x] (2026-10-01) PR #12 passed hosted Go 1.26/1.27 and Coverage report and merged at d46f707316fa4d16ef040a8778850e80ec61b515. Feature branch deleted.
-- [ ] Merge corrective archive E2E regression update and rerun Release on its exact protected-main SHA.
-- [ ] Monitor Release through publication and verify immutable tag identity.
+- [x] (2026-10-01) Corrective PR #13 passed all hosted checks and merged at 3c76dc94c216fe6f8a7e0afef861697cbf756567; Release manually dispatched for that exact SHA.
+- [x] (2026-10-01) Release run 36949513046 passed validation, Quality, trusted E2E, and publication. Remote annotated v0.160.0 peels to the exact corrective merge SHA.
 
 ## Surprises & Discoveries
 
@@ -53,9 +53,13 @@ Preserve aliases where Go type identity matters, and retain obsolete source fiel
 
 ## Outcomes & Retrospective
 
-Compatibility implementation and complete local verification are complete. The authoritative updater passed deterministic generation, formatting, metadata/installer fixtures, vet, unit/race tests, Staticcheck 0.8.1, govulncheck 1.3.0, and diff hygiene using Go 1.26.8. Four release/tag fixture suites also pass. Final protocol race tests pass after QA requested explicit empty-turn-ID and zero-anchor marshal rejection cases.
+SDK v0.160.0 is published from protected-main commit `3c76dc94c216fe6f8a7e0afef861697cbf756567`. [Protocol PR #12](https://github.com/pmenglund/codex-sdk-go/pull/12) and [corrective E2E PR #13](https://github.com/pmenglund/codex-sdk-go/pull/13) passed required hosted checks and merged through protection. Both remote feature branches were deleted.
 
-QA independently verified source-schema coverage and focused generator/protocol/RPC tests. Its two missing guard regressions were added. Raw union constructors intentionally validate discriminators and required-member presence, following the existing raw-preserving convention; they do not perform complete schema type validation. Architecture review identified and resolved attachment number precision loss. The complete authoritative gate passed again after this fix, including two identical generations and no reported vulnerabilities. Protected PR #12 merged; Release publication remains pending the corrected archive E2E gate described in the revision notes.
+The authoritative updater passed two identical generations, formatting, metadata/installer fixtures, vet, unit/race tests, Staticcheck 0.8.1, govulncheck 1.3.0, and diff hygiene using Go 1.26.8. Source inventory/manual coverage and release/tag fixtures passed. QA requested two invalid-anchor regressions; architecture review identified attachment large-number precision loss. Both findings were fixed, and architecture confirmed resolution. Raw union validation intentionally checks discriminator and required-member presence rather than enforcing complete schema types.
+
+The initial release correctly withheld publication when the obsolete empty-thread archive rejection test failed. Exact upstream source and local real-CLI tests confirmed changed archive behavior. The corrective regression preserves full archive/restore and credential-isolation assertions, passed focused real-CLI race tests, and received independent QA confirmation with no findings.
+
+[Final Release run 36949513046](https://github.com/pmenglund/codex-sdk-go/actions/runs/36949513046) passed all gates, including trusted E2E and publication. Remote tag object `6148c6eebb7dcd7a85a296f85de8eafa8bf49f35` is annotated and peels to the gated candidate `3c76dc94c216fe6f8a7e0afef861697cbf756567`, independently verified with HTTPS `git ls-remote`. No local tag was created or moved, no gate was bypassed, and no protection setting changed. This documentation closeout changes no SDK version and triggers no release.
 
 ## Context and Orientation
 
@@ -130,3 +134,5 @@ Revision note: Final authoritative updater passed after the attachment fix; arch
 Revision note: Release run https://github.com/pmenglund/codex-sdk-go/actions/runs/36948713306 passed validation and Quality but failed TestRealCodexUnmaterializedArchiveRejected, so publication was skipped. Upstream thread_processor.rs persists a loaded non-ephemeral thread before archive; the older rejection expectation was obsolete. Corrective branch codex/fix-v0.160.0-archive-e2e retains the unpublished SDK 0.160.0 version and replaces the expectation with archive/list/restore/empty-history assertions through both SDK methods, preserving zero model requests. Local tests against the exact-source 0.160.0 binary pass with a credential-free mock provider; all unit/race suites pass. After protected corrective merge, manually dispatch Release with the exact corrective merge SHA; do not rerun the obsolete failed candidate.
 
 Revision note: Corrective focused mock-provider archive/credential-isolation race tests passed. QA independently confirmed upstream behavior and the focused empty-thread regression, with no findings.
+
+Revision note: Completed publication and independently verified remote annotated tag identity; recorded final outcomes through a protected documentation closeout PR.
