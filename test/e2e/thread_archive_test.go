@@ -5,7 +5,6 @@ package e2e
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,6 @@ import (
 
 	codex "github.com/pmenglund/codex-sdk-go"
 	"github.com/pmenglund/codex-sdk-go/protocol"
-	"github.com/pmenglund/codex-sdk-go/rpc"
 	"github.com/pmenglund/codex-sdk-go/test"
 )
 
@@ -104,21 +102,45 @@ func newArchiveTestClient(t *testing.T, recorder *test.RequestRecorder) (*codex.
 	return client, ctx, stderr, &requests
 }
 
-func TestRealCodexUnmaterializedArchiveRejected(t *testing.T) {
+func TestRealCodexEmptyThreadArchiveRoundTrip(t *testing.T) {
 	client, ctx, stderr, requests := newArchiveTestClient(t, nil)
 	for _, viaThread := range []bool{false, true} {
-		thread := test.StartThread(t, client, ctx, stderr, t.TempDir())
+		cwd := t.TempDir()
+		thread := test.StartThread(t, client, ctx, stderr, cwd)
 		var err error
 		if viaThread {
 			_, err = thread.Archive(ctx)
 		} else {
 			_, err = client.ArchiveThread(ctx, thread.ID())
 		}
-		var responseErr *rpc.ResponseError
-		if !errors.As(err, &responseErr) || responseErr.Detail.Code != -32600 || !test.IsExpectedUnmaterializedThreadError(err) {
+		// Codex 0.160.0 persists a loaded non-ephemeral thread before archiving it.
+		if err != nil {
 			t.Fatalf("empty thread archive (thread helper=%v): %v\nstderr:\n%s", viaThread, err, stderr.String())
 		}
-		// A rejected archive is not followed by unarchive: the thread still owns its writer.
+		assertArchiveListing(t, ctx, client, thread.ID(), cwd, true)
+		var restored *protocol.ThreadUnarchiveResponse
+		if viaThread {
+			restored, err = thread.Unarchive(ctx)
+		} else {
+			restored, err = client.UnarchiveThread(ctx, thread.ID())
+		}
+		if err != nil || restored == nil || restored.Thread.ID != thread.ID() {
+			t.Fatalf("empty thread unarchive (thread helper=%v): %#v, %v", viaThread, restored, err)
+		}
+		archived := true
+		listing, err := client.ListThreads(ctx, codex.ThreadListOptions{Archived: &archived, Cwd: cwd})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, listed := range listing.Data {
+			if listed.ID == thread.ID() {
+				t.Fatal("restored empty thread is still archived")
+			}
+		}
+		read, err := client.ReadThread(ctx, thread.ID(), codex.ThreadReadOptions{IncludeTurns: true})
+		if err != nil || read == nil || len(read.Thread.Turns) != 0 {
+			t.Fatalf("restored empty history=%#v, err=%v", read, err)
+		}
 	}
 	if requests.Load() != 0 {
 		t.Fatalf("empty-thread test unexpectedly sent %d model requests", requests.Load())

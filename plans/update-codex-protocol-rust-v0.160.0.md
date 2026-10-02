@@ -23,7 +23,8 @@ Workflow: `WORKFLOW.md`. This plan records the explicit maintenance invocation o
 - [x] (2026-10-01) Added manual compatibility and wire/RPC regressions, reproduced failures before fixes, and updated official CLI digests, SDK 0.160.0, and migration documentation.
 - [x] (2026-10-01) Authoritative updater proved two identical generations and passed the complete Go 1.26.8 local gate, including race tests, Staticcheck, govulncheck, metadata fixtures, and diff hygiene.
 - [x] (2026-10-01) Completed QA and architecture reviews; addressed guard coverage and attachment precision findings, with reviewer confirmation.
-- [ ] Complete protected PR handoff.
+- [x] (2026-10-01) PR #12 passed hosted Go 1.26/1.27 and Coverage report and merged at d46f707316fa4d16ef040a8778850e80ec61b515. Feature branch deleted.
+- [ ] Merge corrective archive E2E regression update and rerun Release on its exact protected-main SHA.
 - [ ] Monitor Release through publication and verify immutable tag identity.
 
 ## Surprises & Discoveries
@@ -54,7 +55,7 @@ Preserve aliases where Go type identity matters, and retain obsolete source fiel
 
 Compatibility implementation and complete local verification are complete. The authoritative updater passed deterministic generation, formatting, metadata/installer fixtures, vet, unit/race tests, Staticcheck 0.8.1, govulncheck 1.3.0, and diff hygiene using Go 1.26.8. Four release/tag fixture suites also pass. Final protocol race tests pass after QA requested explicit empty-turn-ID and zero-anchor marshal rejection cases.
 
-QA independently verified source-schema coverage and focused generator/protocol/RPC tests. Its two missing guard regressions were added. Raw union constructors intentionally validate discriminators and required-member presence, following the existing raw-preserving convention; they do not perform complete schema type validation. Architecture review identified and resolved attachment number precision loss. The complete authoritative gate passed again after this fix, including two identical generations and no reported vulnerabilities. Protected handoff and publication remain pending.
+QA independently verified source-schema coverage and focused generator/protocol/RPC tests. Its two missing guard regressions were added. Raw union constructors intentionally validate discriminators and required-member presence, following the existing raw-preserving convention; they do not perform complete schema type validation. Architecture review identified and resolved attachment number precision loss. The complete authoritative gate passed again after this fix, including two identical generations and no reported vulnerabilities. Protected PR #12 merged; Release publication remains pending the corrected archive E2E gate described in the revision notes.
 
 ## Context and Orientation
 
@@ -125,3 +126,7 @@ Revision note: Recorded the successful authoritative local gate and addressed QA
 Revision note: Addressed architecture review attachment payload precision loss with raw JSON and reviewed the reduced opaque inventory; source coverage and focused regression tests pass.
 
 Revision note: Final authoritative updater passed after the attachment fix; architecture reviewer confirmed resolution and no new findings. Final gate log: /private/tmp/codex-01600-final-gate.log.
+
+Revision note: Release run https://github.com/pmenglund/codex-sdk-go/actions/runs/36948713306 passed validation and Quality but failed TestRealCodexUnmaterializedArchiveRejected, so publication was skipped. Upstream thread_processor.rs persists a loaded non-ephemeral thread before archive; the older rejection expectation was obsolete. Corrective branch codex/fix-v0.160.0-archive-e2e retains the unpublished SDK 0.160.0 version and replaces the expectation with archive/list/restore/empty-history assertions through both SDK methods, preserving zero model requests. Local tests against the exact-source 0.160.0 binary pass with a credential-free mock provider; all unit/race suites pass. After protected corrective merge, manually dispatch Release with the exact corrective merge SHA; do not rerun the obsolete failed candidate.
+
+Revision note: Corrective focused mock-provider archive/credential-isolation race tests passed. QA independently confirmed upstream behavior and the focused empty-thread regression, with no findings.
