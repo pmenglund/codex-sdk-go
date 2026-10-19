@@ -233,12 +233,12 @@ migration window. Prefer canonical declarations such as
 `protocol.MCPServerOAuthLoginParams` and canonical methods such as
 `rpc.Client.MCPServerOAuthLogin`.
 
-These API changes are currently unreleased and require the first SDK release
-after `v0.145.0`; `protocol.GeneratedCodexVersion` continues to describe the
-upstream wire schema, not the SDK release number. This API-hardening work also
-includes `Options.CompatibilityPolicy` and changes `StartLogin` to accept
-JSON-marshalable login parameters; code using unkeyed `Options` literals,
-interface method sets, or assigned `StartLogin` method values must be updated.
+When migrating from older SDK APIs, account for the typed unions and canonical
+names above, `Options.CompatibilityPolicy`, and `StartLogin`'s JSON-marshalable
+login parameters. Update code that uses unkeyed `Options` literals, affected
+interface method sets, or assigned `StartLogin` method values.
+`protocol.GeneratedCodexVersion` identifies the upstream wire schema; the Go
+module tag identifies the SDK release.
 
 ## Approvals
 
@@ -495,3 +495,28 @@ the client option is larger. Custom transports return an already allocated
 string, so they must enforce their own read/allocation limit; the client option
 then rejects oversized returned values. Oversized messages close the client
 with an error matching `rpc.ErrMessageTooLarge`.
+
+## Tests and coverage
+
+Run the tests and produce the same raw coverage profile used by CI:
+
+```bash
+go test -covermode=atomic -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+```
+
+The published [Codecov report](https://codecov.io/gh/pmenglund/codex-sdk-go)
+measures handwritten implementation code. Its project and patch coverage
+targets are both 80%. The exclusions in [codecov.yml](codecov.yml) are:
+
+- `**/*_gen.go`: generated protocol and RPC source, checked through generator
+  tests and deterministic regeneration.
+- `examples/**/*`: runnable examples and their test helpers.
+- `test/**/*`: credentialed end-to-end tests and shared test support.
+
+Handwritten code in the root package, `rpc`, `protocol/manual_types.go`, and
+`internal/codegen` remains in scope. Excluded examples still have tests in the
+normal suite; credentialed end-to-end tests run in the separate Trusted E2E
+workflow. The raw Go profile includes generated source, examples, and untagged
+test support, so its percentage can differ from Codecov's. Include these
+exclusions when reporting or comparing coverage figures.

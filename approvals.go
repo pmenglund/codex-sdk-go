@@ -141,22 +141,27 @@ func rejectingReviewDecision() protocol.ReviewDecision {
 	})
 }
 
+// ItemCommandExecutionRequestApproval declines the command execution request.
 func (RejectingApprovalHandler) ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	return &protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("decline")}, nil
 }
 
+// ItemFileChangeRequestApproval declines the file-change request.
 func (RejectingApprovalHandler) ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
 	return &protocol.FileChangeRequestApprovalResponse{Decision: protocol.FileChangeApprovalDecisionDecline}, nil
 }
 
+// ItemPermissionsRequestApproval grants no additional permissions.
 func (RejectingApprovalHandler) ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
 	return &protocol.PermissionsRequestApprovalResponse{Permissions: map[string]any{}}, nil
 }
 
+// ApplyPatchApproval denies the legacy patch request with a policy rejection.
 func (RejectingApprovalHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	return &protocol.ApplyPatchApprovalResponse{Decision: rejectingReviewDecision()}, nil
 }
 
+// ExecCommandApproval denies the legacy command request with a policy rejection.
 func (RejectingApprovalHandler) ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	return &protocol.ExecCommandApprovalResponse{Decision: rejectingReviewDecision()}, nil
 }
@@ -165,10 +170,15 @@ func (RejectingApprovalHandler) ExecCommandApproval(context.Context, protocol.Ex
 // policies to ServerRequestCallbacks. Both AutoApproveHandler and
 // UnsafeLoggingAutoApproveHandler implement it.
 type ApprovalCallbackHandler interface {
+	// ApplyPatchApproval decides whether to allow a legacy patch request.
 	ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error)
+	// ExecCommandApproval decides whether to allow a legacy command request.
 	ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error)
+	// ItemCommandExecutionRequestApproval decides whether to allow command execution.
 	ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error)
+	// ItemFileChangeRequestApproval decides whether to allow file changes.
 	ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error)
+	// ItemPermissionsRequestApproval decides which additional permissions to grant.
 	ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error)
 }
 
@@ -200,14 +210,17 @@ func RejectingApprovalCallbacks() *ServerRequestCallbacks {
 	}
 }
 
+// ItemToolCall returns an error requiring an application-specific tool handler.
 func (RejectingApprovalHandler) ItemToolCall(context.Context, protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
 	return nil, errors.New("tool calls require a custom handler")
 }
 
+// ItemToolRequestUserInput returns an error requiring a custom user-input handler.
 func (RejectingApprovalHandler) ItemToolRequestUserInput(context.Context, protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
 	return nil, errors.New("tool user input requires a custom handler")
 }
 
+// MCPServerElicitationRequest returns an error requiring a custom elicitation handler.
 func (RejectingApprovalHandler) MCPServerElicitationRequest(context.Context, protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	return nil, errors.New("mcp elicitation requires a custom handler")
 }
@@ -219,10 +232,12 @@ func (h RejectingApprovalHandler) McpServerElicitationRequest(ctx context.Contex
 	return h.MCPServerElicitationRequest(ctx, params)
 }
 
+// AccountChatgptAuthTokensRefresh returns an error requiring a custom token-refresh handler.
 func (RejectingApprovalHandler) AccountChatgptAuthTokensRefresh(context.Context, protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
 	return nil, errors.New("chatgpt auth token refresh requires a custom handler")
 }
 
+// AttestationGenerate returns an error requiring a custom attestation handler.
 func (RejectingApprovalHandler) AttestationGenerate(context.Context, protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
 	return nil, errors.New("attestation generation requires a custom handler")
 }
@@ -239,11 +254,13 @@ func NewUnsafeLoggingAutoApproveHandler(logger *slog.Logger) UnsafeLoggingAutoAp
 	return UnsafeLoggingAutoApproveHandler{AutoApproveHandler: AutoApproveHandler{Logger: logger}}
 }
 
+// ItemCommandExecutionRequestApproval accepts command execution and logs the command and directory.
 func (h UnsafeLoggingAutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "command_execution", "command", optionalString(params.Command), "cwd", optionalString(params.Cwd))
 	return h.AutoApproveHandler.ItemCommandExecutionRequestApproval(ctx, params)
 }
 
+// ItemFileChangeRequestApproval accepts file changes and logs the grant root.
 func (h UnsafeLoggingAutoApproveHandler) ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
 	var grantRoot any
 	if params.GrantRoot != nil {
@@ -253,16 +270,19 @@ func (h UnsafeLoggingAutoApproveHandler) ItemFileChangeRequestApproval(ctx conte
 	return h.AutoApproveHandler.ItemFileChangeRequestApproval(ctx, params)
 }
 
+// ItemPermissionsRequestApproval grants and logs the requested permissions.
 func (h UnsafeLoggingAutoApproveHandler) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
 	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "permissions", "permissions", params.Permissions)
 	return h.AutoApproveHandler.ItemPermissionsRequestApproval(ctx, params)
 }
 
+// ApplyPatchApproval accepts a legacy patch request and logs its changes and grant root.
 func (h UnsafeLoggingAutoApproveHandler) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "legacy_patch", "file_changes", params.FileChanges, "grant_root", params.GrantRoot)
 	return h.AutoApproveHandler.ApplyPatchApproval(ctx, params)
 }
 
+// ExecCommandApproval accepts a legacy command request and logs its command and directory.
 func (h UnsafeLoggingAutoApproveHandler) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "legacy_command", "command", params.Command, "cwd", params.Cwd)
 	return h.AutoApproveHandler.ExecCommandApproval(ctx, params)

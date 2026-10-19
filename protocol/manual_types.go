@@ -10,14 +10,22 @@ import (
 type ReviewDecisionKind string
 
 const (
-	ReviewDecisionKindApproved                    ReviewDecisionKind = "approved"
+	// ReviewDecisionKindApproved identifies a one-time approval.
+	ReviewDecisionKindApproved ReviewDecisionKind = "approved"
+	// ReviewDecisionKindApprovedExecpolicyAmendment identifies approval with a command-policy amendment.
 	ReviewDecisionKindApprovedExecpolicyAmendment ReviewDecisionKind = "approved_execpolicy_amendment"
-	ReviewDecisionKindApprovedForSession          ReviewDecisionKind = "approved_for_session"
-	ReviewDecisionKindApprovedMCPPolicyAmendment  ReviewDecisionKind = "approved_mcp_policy_amendment"
-	ReviewDecisionKindNetworkPolicyAmendment      ReviewDecisionKind = "network_policy_amendment"
-	ReviewDecisionKindDenied                      ReviewDecisionKind = "denied"
-	ReviewDecisionKindTimedOut                    ReviewDecisionKind = "timed_out"
-	ReviewDecisionKindAbort                       ReviewDecisionKind = "abort"
+	// ReviewDecisionKindApprovedForSession identifies approval for the session.
+	ReviewDecisionKindApprovedForSession ReviewDecisionKind = "approved_for_session"
+	// ReviewDecisionKindApprovedMCPPolicyAmendment identifies approval with an MCP-policy amendment.
+	ReviewDecisionKindApprovedMCPPolicyAmendment ReviewDecisionKind = "approved_mcp_policy_amendment"
+	// ReviewDecisionKindNetworkPolicyAmendment identifies a network-policy amendment.
+	ReviewDecisionKindNetworkPolicyAmendment ReviewDecisionKind = "network_policy_amendment"
+	// ReviewDecisionKindDenied identifies a rejected request.
+	ReviewDecisionKindDenied ReviewDecisionKind = "denied"
+	// ReviewDecisionKindTimedOut identifies an approval request that timed out.
+	ReviewDecisionKindTimedOut ReviewDecisionKind = "timed_out"
+	// ReviewDecisionKindAbort identifies a request to abort the operation.
+	ReviewDecisionKindAbort ReviewDecisionKind = "abort"
 )
 
 // ReviewDecision preserves simple, structured, and future legacy approval
@@ -52,6 +60,7 @@ func MustReviewDecision(value any) ReviewDecision {
 	return decision
 }
 
+// UnmarshalJSON decodes a decision while preserving well-formed future variants.
 func (d *ReviewDecision) UnmarshalJSON(data []byte) error {
 	return d.decode(data, false)
 }
@@ -134,6 +143,7 @@ func (d ReviewDecision) Kind() ReviewDecisionKind { return d.kind }
 // IsKnown reports whether Kind is defined by the pinned protocol.
 func (d ReviewDecision) IsKnown() bool { return d.known }
 
+// MarshalJSON returns the original decision JSON, or null for a zero value.
 func (d ReviewDecision) MarshalJSON() ([]byte, error) {
 	if len(d.raw) == 0 {
 		return []byte("null"), nil
@@ -150,12 +160,18 @@ func (d ReviewDecision) RawJSON() json.RawMessage {
 type CommandExecutionApprovalDecisionKind string
 
 const (
-	CommandExecutionApprovalDecisionKindAccept                        CommandExecutionApprovalDecisionKind = "accept"
-	CommandExecutionApprovalDecisionKindAcceptForSession              CommandExecutionApprovalDecisionKind = "acceptForSession"
-	CommandExecutionApprovalDecisionKindDecline                       CommandExecutionApprovalDecisionKind = "decline"
-	CommandExecutionApprovalDecisionKindCancel                        CommandExecutionApprovalDecisionKind = "cancel"
+	// CommandExecutionApprovalDecisionKindAccept identifies a one-time approval.
+	CommandExecutionApprovalDecisionKindAccept CommandExecutionApprovalDecisionKind = "accept"
+	// CommandExecutionApprovalDecisionKindAcceptForSession identifies approval for the session.
+	CommandExecutionApprovalDecisionKindAcceptForSession CommandExecutionApprovalDecisionKind = "acceptForSession"
+	// CommandExecutionApprovalDecisionKindDecline identifies a rejected command.
+	CommandExecutionApprovalDecisionKindDecline CommandExecutionApprovalDecisionKind = "decline"
+	// CommandExecutionApprovalDecisionKindCancel identifies cancellation of the command.
+	CommandExecutionApprovalDecisionKindCancel CommandExecutionApprovalDecisionKind = "cancel"
+	// CommandExecutionApprovalDecisionKindAcceptWithExecpolicyAmendment identifies approval with a command-policy amendment.
 	CommandExecutionApprovalDecisionKindAcceptWithExecpolicyAmendment CommandExecutionApprovalDecisionKind = "acceptWithExecpolicyAmendment"
-	CommandExecutionApprovalDecisionKindApplyNetworkPolicyAmendment   CommandExecutionApprovalDecisionKind = "applyNetworkPolicyAmendment"
+	// CommandExecutionApprovalDecisionKindApplyNetworkPolicyAmendment identifies a network-policy amendment.
+	CommandExecutionApprovalDecisionKindApplyNetworkPolicyAmendment CommandExecutionApprovalDecisionKind = "applyNetworkPolicyAmendment"
 )
 
 // CommandExecutionApprovalDecision preserves simple, structured, and future
@@ -191,6 +207,7 @@ func MustCommandExecutionApprovalDecision(value any) CommandExecutionApprovalDec
 	return decision
 }
 
+// UnmarshalJSON decodes a decision while preserving well-formed future variants.
 func (d *CommandExecutionApprovalDecision) UnmarshalJSON(data []byte) error {
 	return d.decode(data, false)
 }
@@ -296,6 +313,7 @@ func (d CommandExecutionApprovalDecision) Kind() CommandExecutionApprovalDecisio
 // IsKnown reports whether Kind is defined by the pinned protocol.
 func (d CommandExecutionApprovalDecision) IsKnown() bool { return d.known }
 
+// MarshalJSON returns the original decision JSON, or null for a zero value.
 func (d CommandExecutionApprovalDecision) MarshalJSON() ([]byte, error) {
 	if len(d.raw) == 0 {
 		return []byte("null"), nil
@@ -312,10 +330,14 @@ func (d CommandExecutionApprovalDecision) RawJSON() json.RawMessage {
 type FileChangeApprovalDecision string
 
 const (
-	FileChangeApprovalDecisionAccept           FileChangeApprovalDecision = "accept"
+	// FileChangeApprovalDecisionAccept approves the requested file changes.
+	FileChangeApprovalDecisionAccept FileChangeApprovalDecision = "accept"
+	// FileChangeApprovalDecisionAcceptForSession approves file changes for the session.
 	FileChangeApprovalDecisionAcceptForSession FileChangeApprovalDecision = "acceptForSession"
-	FileChangeApprovalDecisionDecline          FileChangeApprovalDecision = "decline"
-	FileChangeApprovalDecisionCancel           FileChangeApprovalDecision = "cancel"
+	// FileChangeApprovalDecisionDecline rejects the requested file changes.
+	FileChangeApprovalDecisionDecline FileChangeApprovalDecision = "decline"
+	// FileChangeApprovalDecisionCancel cancels the file-change request.
+	FileChangeApprovalDecisionCancel FileChangeApprovalDecision = "cancel"
 )
 
 // MCPServerElicitationRequestParams preserves the complete mixed elicitation
@@ -336,19 +358,26 @@ type GitInfo struct {
 type TurnStatus string
 
 const (
-	TurnStatusCompleted   TurnStatus = "completed"
+	// TurnStatusCompleted indicates a completed turn.
+	TurnStatusCompleted TurnStatus = "completed"
+	// TurnStatusInterrupted indicates an interrupted turn.
 	TurnStatusInterrupted TurnStatus = "interrupted"
-	TurnStatusFailed      TurnStatus = "failed"
-	TurnStatusInProgress  TurnStatus = "inProgress"
+	// TurnStatusFailed indicates a failed turn.
+	TurnStatusFailed TurnStatus = "failed"
+	// TurnStatusInProgress indicates a turn that is still running.
+	TurnStatusInProgress TurnStatus = "inProgress"
 )
 
 // TurnItemsView describes how much of a turn's item history is present.
 type TurnItemsView string
 
 const (
+	// TurnItemsViewNotLoaded indicates that turn items have not been loaded.
 	TurnItemsViewNotLoaded TurnItemsView = "notLoaded"
-	TurnItemsViewSummary   TurnItemsView = "summary"
-	TurnItemsViewFull      TurnItemsView = "full"
+	// TurnItemsViewSummary identifies a summary view of turn items.
+	TurnItemsViewSummary TurnItemsView = "summary"
+	// TurnItemsViewFull identifies the complete turn item history.
+	TurnItemsViewFull TurnItemsView = "full"
 )
 
 // Turn is the complete turn summary returned inside thread payloads.

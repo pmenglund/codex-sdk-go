@@ -32,8 +32,11 @@ var ErrMessageTooLarge = errors.New("rpc message exceeds size limit")
 // and Close must unblock in-flight reads and writes so bounded SDK cleanup
 // cannot leave transport goroutines running.
 type Transport interface {
+	// ReadLine reads one JSON-RPC line within the transport's allocation limit.
 	ReadLine() (string, error)
+	// WriteLine writes one JSON-RPC line.
 	WriteLine(line string) error
+	// Close releases the transport and unblocks pending reads and writes.
 	Close() error
 }
 
@@ -43,6 +46,7 @@ type Transport interface {
 // until Transport.Close unblocks it.
 type ContextTransport interface {
 	Transport
+	// WriteLineContext writes one JSON-RPC line, observing context cancellation.
 	WriteLineContext(ctx context.Context, line string) error
 }
 

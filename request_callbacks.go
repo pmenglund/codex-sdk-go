@@ -34,60 +34,89 @@ type ServerRequestCallbacks struct {
 	RequestMCPServerElicitation func(context.Context, protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error)
 }
 
+// AccountChatgptAuthTokensRefresh calls RefreshAuthTokens or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
 	if h.RefreshAuthTokens == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.RefreshAuthTokens(ctx, params)
 }
+
+// ApplyPatchApproval calls ApprovePatch or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	if h.ApprovePatch == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.ApprovePatch(ctx, params)
 }
+
+// AttestationGenerate calls GenerateAttestation or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
 	if h.GenerateAttestation == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.GenerateAttestation(ctx, params)
 }
+
+// ExecCommandApproval calls ApproveCommand or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	if h.ApproveCommand == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.ApproveCommand(ctx, params)
 }
+
+// ItemCommandExecutionRequestApproval calls ApproveCommandExecution or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	if h.ApproveCommandExecution == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.ApproveCommandExecution(ctx, params)
 }
+
+// ItemFileChangeRequestApproval calls ApproveFileChange or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
 	if h.ApproveFileChange == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.ApproveFileChange(ctx, params)
 }
+
+// ItemPermissionsRequestApproval calls ApprovePermissions or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
 	if h.ApprovePermissions == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.ApprovePermissions(ctx, params)
 }
+
+// ItemToolCall calls CallTool or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
 	if h.CallTool == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.CallTool(ctx, params)
 }
+
+// ItemToolRequestUserInput calls RequestUserInput or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
 	if h.RequestUserInput == nil {
 		return nil, rpc.ErrServerRequestUnsupported
 	}
 	return h.RequestUserInput(ctx, params)
 }
+
+// MCPServerElicitationRequest calls RequestMCPServerElicitation or returns
+// rpc.ErrServerRequestUnsupported when the callback is unset.
 func (h ServerRequestCallbacks) MCPServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	if h.RequestMCPServerElicitation == nil {
 		return nil, rpc.ErrServerRequestUnsupported

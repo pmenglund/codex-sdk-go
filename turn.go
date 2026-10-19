@@ -69,6 +69,7 @@ type TurnError struct {
 	Raw       json.RawMessage
 }
 
+// Error describes the turn failure, falling back to ErrTurnFailed's message.
 func (e *TurnError) Error() string {
 	if e != nil && e.Detail != nil && e.Detail.Message != "" {
 		return e.Detail.Message

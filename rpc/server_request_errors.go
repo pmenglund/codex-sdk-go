@@ -25,6 +25,7 @@ const (
 // ServerRequestMethodError reports an unsupported server-request method.
 type ServerRequestMethodError struct{ Method string }
 
+// Error identifies the unsupported server-request method.
 func (e *ServerRequestMethodError) Error() string {
 	return fmt.Sprintf("unsupported server request %q", e.Method)
 }
@@ -35,9 +36,12 @@ type ServerRequestParamsError struct {
 	Err    error
 }
 
+// Error describes the parameter-decoding failure and its request method.
 func (e *ServerRequestParamsError) Error() string {
 	return fmt.Sprintf("decode server request %q parameters: %v", e.Method, e.Err)
 }
+
+// Unwrap returns the underlying parameter-decoding error.
 func (e *ServerRequestParamsError) Unwrap() error { return e.Err }
 
 // ServerRequestHandlerError reports an error returned by an application handler.
@@ -46,9 +50,12 @@ type ServerRequestHandlerError struct {
 	Err    error
 }
 
+// Error describes the application handler failure and its request method.
 func (e *ServerRequestHandlerError) Error() string {
 	return fmt.Sprintf("handle server request %q: %v", e.Method, e.Err)
 }
+
+// Unwrap returns the underlying application handler error.
 func (e *ServerRequestHandlerError) Unwrap() error { return e.Err }
 
 func classifyServerRequestError(err error) (int64, string) {

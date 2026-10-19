@@ -127,6 +127,7 @@ type ResponseError struct {
 	Detail JSONRPCErrorDetail
 }
 
+// Error formats the JSON-RPC error code and message.
 func (err *ResponseError) Error() string {
 	return fmt.Sprintf("json-rpc error %d: %s", err.Detail.Code, err.Detail.Message)
 }
