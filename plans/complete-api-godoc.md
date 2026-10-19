@@ -19,6 +19,7 @@ Workflow: `WORKFLOW.md`. Issue: COLIN-227, https://linear.app/bothnia/issue/COLI
 - [x] (2026-10-19 UTC) Added failing regression tests for all public declarations and interface methods and for RPC documentation generated from wire method names; confirmed failures before repair.
 - [x] (2026-10-19 UTC) Completed generator and handwritten comments, regenerated pinned RPC output twice with matching bytes and identical non-comment tokens, and updated README and the durable documentation rule.
 - [x] (2026-10-19 UTC) Verified comment-only product changes, passed local checks and independent QA review, resolved its test finding, and prepared the 18 task-owned files for a scoped commit.
+- [x] (2026-10-19 UTC) Committed the repair, then rebased it onto current `origin/main` after the user authorized merging and pushing. Selected the protected PR workflow; final PR and remote-merge evidence is tracked in COLIN-227.
 
 ## Surprises & Discoveries
 
@@ -38,6 +39,8 @@ Use a temporary, uncommitted package-main harness to invoke `generateRPCStubs` w
 
 Document the three exact Codecov exclusions and the existing 80 percent project and patch targets without pinning a changing coverage percentage or claiming acceptance by an external listing. Replace the obsolete unreleased claim with migration guidance that is independent of the latest release number.
 
+The user's merge-and-push follow-up targets the default branch, named `main` in this repository. Live protection requires successful `Go 1.26`, `Go 1.27`, and `Coverage report` checks and an up-to-date branch. Push the feature branch and merge its reviewed head through an ordinary PR after these checks pass. Use GitHub's rebase merge and fast-forward local `main` to the verified remote result. Preserve the source branch. Store final integration evidence in COLIN-227 instead of creating a separate documentation-closeout PR.
+
 ## Outcomes & Retrospective
 
 All requested documentation is complete. The inventory now checks 3,184 exported declarations and named interface methods with zero missing comments or wrong prefixes. RPC methods identify their wire requests, handwritten comments describe actual behavior, and README migration and coverage text matches the current source and policy.
@@ -46,7 +49,7 @@ The 13 changed product Go files retain identical non-comment tokens. Two pinned 
 
 Independent `review-qa` found that matching a shared client comment once did not separately protect interface and concrete method descriptions. The test now requires both copies for each ordinary or optional-parameter client method. A temporary source overlay changed only the concrete comment to generic prose and the strengthened test rejected it. The final full unit suite and affected generator race tests pass. QA found no other issues.
 
-Delivery is a locally verified scoped commit on `codex/colin-227-api-godoc`, in `/private/tmp/codex-sdk-go-colin-227`. The shared release-closeout checkout remains clean and on its own branch. Pushing, merging, and publishing a release are outside this request.
+The repair is locally verified on `codex/colin-227-api-godoc`, in `/private/tmp/codex-sdk-go-colin-227`. The user's follow-up authorizes pushing and merging through protected `main`; final integration evidence is recorded in COLIN-227. No SDK version or release input changes are included.
 
 ## Context and Orientation
 
@@ -102,3 +105,5 @@ Revision note: Created after reviewing the independent planner recommendation an
 Revision note: Implemented the documentation and regression guards, recorded passing local checks, and isolated the task after a concurrent branch switch. Remaining work is analyzer verification, comment-only comparison, independent QA review, and the scoped commit.
 
 Revision note: Completed all local checks, verified zero documentation gaps and comment-only product changes, addressed the QA finding with a mutation-checked regression, and prepared named-path staging for local delivery. No change to coverage configuration, release inputs, dependencies, or runtime behavior is included.
+
+Revision note: Extended delivery to the user's authorized remote merge. Rebased onto `origin/main` at `121ebab` without conflicts, confirmed live protection, and retained the already reviewed implementation. CI and exact-head PR merge provide the final remote integration checks.
