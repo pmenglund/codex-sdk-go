@@ -6,9 +6,13 @@ import "github.com/pmenglund/codex-sdk-go/protocol"
 type ApprovalPolicy = string
 
 const (
-	ApprovalPolicyNever     ApprovalPolicy = "never"
+	// ApprovalPolicyNever selects the never-ask approval policy.
+	ApprovalPolicyNever ApprovalPolicy = "never"
+	// ApprovalPolicyOnFailure selects the on-failure approval policy.
 	ApprovalPolicyOnFailure ApprovalPolicy = "on-failure"
+	// ApprovalPolicyOnRequest lets the app-server request approval when needed.
 	ApprovalPolicyOnRequest ApprovalPolicy = "on-request"
+	// ApprovalPolicyUntrusted requests approval for commands outside the trusted set.
 	ApprovalPolicyUntrusted ApprovalPolicy = "untrusted"
 )
 
@@ -16,8 +20,11 @@ const (
 type SandboxMode = protocol.SandboxMode
 
 const (
-	SandboxModeReadOnly         SandboxMode = protocol.SandboxModeReadOnly
-	SandboxModeWorkspaceWrite   SandboxMode = protocol.SandboxModeWorkspaceWrite
+	// SandboxModeReadOnly selects the read-only sandbox.
+	SandboxModeReadOnly SandboxMode = protocol.SandboxModeReadOnly
+	// SandboxModeWorkspaceWrite permits writes within the workspace sandbox.
+	SandboxModeWorkspaceWrite SandboxMode = protocol.SandboxModeWorkspaceWrite
+	// SandboxModeDangerFullAccess disables sandbox restrictions.
 	SandboxModeDangerFullAccess SandboxMode = protocol.SandboxModeDangerFullAccess
 )
 
@@ -25,10 +32,16 @@ const (
 type ReasoningEffort = protocol.ReasoningEffort
 
 const (
-	ReasoningEffortNone    ReasoningEffort = "none"
+	// ReasoningEffortNone requests no model reasoning effort.
+	ReasoningEffortNone ReasoningEffort = "none"
+	// ReasoningEffortMinimal requests minimal model reasoning effort.
 	ReasoningEffortMinimal ReasoningEffort = "minimal"
-	ReasoningEffortLow     ReasoningEffort = "low"
-	ReasoningEffortMedium  ReasoningEffort = "medium"
-	ReasoningEffortHigh    ReasoningEffort = "high"
-	ReasoningEffortXHigh   ReasoningEffort = "xhigh"
+	// ReasoningEffortLow requests low model reasoning effort.
+	ReasoningEffortLow ReasoningEffort = "low"
+	// ReasoningEffortMedium requests medium model reasoning effort.
+	ReasoningEffortMedium ReasoningEffort = "medium"
+	// ReasoningEffortHigh requests high model reasoning effort.
+	ReasoningEffortHigh ReasoningEffort = "high"
+	// ReasoningEffortXHigh requests extra-high model reasoning effort.
+	ReasoningEffortXHigh ReasoningEffort = "xhigh"
 )

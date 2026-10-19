@@ -25,6 +25,7 @@ type CodexCompatibilityError struct {
 	Cause            error
 }
 
+// Error describes the failed CLI compatibility check and any probe error.
 func (e *CodexCompatibilityError) Error() string {
 	message := fmt.Sprintf("codex CLI compatibility check failed for %q: %s", e.Path, e.Reason)
 	if e.RuntimeVersion != "" {

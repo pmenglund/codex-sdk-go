@@ -1593,8 +1593,10 @@ func renderClientRequests(methods []rpcMethod, codexCommit string) []byte {
 	b.WriteString("type ClientRequests interface {\n")
 	for _, method := range methods {
 		if strings.HasPrefix(method.ParamsType, "*") {
+			fmt.Fprintf(&b, "\t// %s calls %s without optional filters.\n", methodName(method.Method), method.Method)
 			fmt.Fprintf(&b, "\t%s(ctx context.Context) (*protocol.%s, error)\n", methodName(method.Method), method.ResponseType)
 		}
+		fmt.Fprintf(&b, "\t// %s calls %s on the app-server.\n", clientMethodName(method), method.Method)
 		if method.ParamsType == "" {
 			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context) (*protocol.%s, error)\n", clientMethodName(method), method.ResponseType))
 		} else {
@@ -1603,11 +1605,11 @@ func renderClientRequests(methods []rpcMethod, codexCommit string) []byte {
 	}
 	b.WriteString("}\n\n")
 
-	b.WriteString("// Client implements ClientRequests using JSON-RPC.\n")
 	for _, method := range methods {
 		if strings.HasPrefix(method.ParamsType, "*") {
 			fmt.Fprintf(&b, "// %s reads without optional filters. Use %s to supply parameters.\nfunc (c *Client) %s(ctx context.Context) (*protocol.%s, error) { return c.%s(ctx, nil) }\n\n", methodName(method.Method), clientMethodName(method), methodName(method.Method), method.ResponseType, clientMethodName(method))
 		}
+		fmt.Fprintf(&b, "// %s calls %s on the app-server.\n", clientMethodName(method), method.Method)
 		if method.ParamsType == "" {
 			b.WriteString(fmt.Sprintf("func (c *Client) %s(ctx context.Context) (*protocol.%s, error) {\n", clientMethodName(method), method.ResponseType))
 		} else {
@@ -1656,6 +1658,7 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 		}
 		fmt.Fprintf(&b, "// %sHandler handles %s using canonical Go initialisms.\n", canonical, method.Method)
 		fmt.Fprintf(&b, "type %sHandler interface {\n", canonical)
+		fmt.Fprintf(&b, "\t// %s handles the %s request from the app-server.\n", canonical, method.Method)
 		if method.ParamsType == "" {
 			fmt.Fprintf(&b, "\t%s(ctx context.Context) (*protocol.%s, error)\n", canonical, method.ResponseType)
 		} else {
@@ -1667,6 +1670,7 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 	b.WriteString("// ServerRequestHandler handles requests initiated by the app-server. Embed\n// UnimplementedServerRequestHandler so newly added methods do not break implementations.\n// Canonical-initialism capability interfaces take precedence over legacy method spellings.\n//\n// Deprecated: embed UnimplementedServerRequestHandler and override only required methods.\n")
 	b.WriteString("type ServerRequestHandler interface {\n")
 	for _, method := range methods {
+		fmt.Fprintf(&b, "\t// %s handles the %s request from the app-server.\n", rawMethodBaseName(method.Method), method.Method)
 		if method.ParamsType == "" {
 			b.WriteString(fmt.Sprintf("\t%s(ctx context.Context) (*protocol.%s, error)\n", rawMethodBaseName(method.Method), method.ResponseType))
 		} else {
@@ -1678,6 +1682,7 @@ func renderServerRequests(methods []rpcMethod, codexCommit string) []byte {
 	b.WriteString("type UnimplementedServerRequestHandler struct{}\n\n")
 	for _, method := range methods {
 		name := rawMethodBaseName(method.Method)
+		fmt.Fprintf(&b, "// %s returns ErrServerRequestUnsupported for %s.\n", name, method.Method)
 		if method.ParamsType == "" {
 			fmt.Fprintf(&b, "func (UnimplementedServerRequestHandler) %s(context.Context) (*protocol.%s, error) { return nil, ErrServerRequestUnsupported }\n\n", name, method.ResponseType)
 		} else {
@@ -1907,6 +1912,9 @@ func writeGoFile(dir, name string, contents []byte) error {
 	if err != nil {
 		return fmt.Errorf("format generated Go file %s: %w", name, err)
 	}
+	if err := validateExportedDeclarationComments(formatted); err != nil {
+		return fmt.Errorf("validate generated Go file %s: %w", name, err)
+	}
 	return writeFile(dir, name, formatted)
 }
 
@@ -2031,6 +2039,15 @@ func validateExportedDeclarationComments(contents []byte) error {
 					}
 					if !exportedDeclarationCommentStartsWith(doc, specification.Name.Name) {
 						missing = append(missing, specification.Name.Name)
+					}
+					if iface, ok := specification.Type.(*ast.InterfaceType); ok {
+						for _, method := range iface.Methods.List {
+							for _, name := range method.Names {
+								if name.IsExported() && !exportedDeclarationCommentStartsWith(method.Doc, name.Name) {
+									missing = append(missing, specification.Name.Name+"."+name.Name)
+								}
+							}
+						}
 					}
 				case *ast.ValueSpec:
 					doc := specification.Doc

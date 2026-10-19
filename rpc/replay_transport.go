@@ -13,7 +13,9 @@ import (
 type TranscriptDirection string
 
 const (
-	TranscriptRead  TranscriptDirection = "read"
+	// TranscriptRead marks a line received from the app-server.
+	TranscriptRead TranscriptDirection = "read"
+	// TranscriptWrite marks a line sent to the app-server.
 	TranscriptWrite TranscriptDirection = "write"
 )
 

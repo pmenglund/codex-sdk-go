@@ -13,6 +13,7 @@ import (
 
 // MCPServerElicitationRequestHandler handles mcpServer/elicitation/request using canonical Go initialisms.
 type MCPServerElicitationRequestHandler interface {
+	// MCPServerElicitationRequest handles the mcpServer/elicitation/request request from the app-server.
 	MCPServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error)
 }
 
@@ -22,57 +23,77 @@ type MCPServerElicitationRequestHandler interface {
 //
 // Deprecated: embed UnimplementedServerRequestHandler and override only required methods.
 type ServerRequestHandler interface {
+	// AccountChatgptAuthTokensRefresh handles the account/chatgptAuthTokens/refresh request from the app-server.
 	AccountChatgptAuthTokensRefresh(ctx context.Context, params protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error)
+	// ApplyPatchApproval handles the applyPatchApproval request from the app-server.
 	ApplyPatchApproval(ctx context.Context, params protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error)
+	// AttestationGenerate handles the attestation/generate request from the app-server.
 	AttestationGenerate(ctx context.Context, params protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error)
+	// ExecCommandApproval handles the execCommandApproval request from the app-server.
 	ExecCommandApproval(ctx context.Context, params protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error)
+	// ItemCommandExecutionRequestApproval handles the item/commandExecution/requestApproval request from the app-server.
 	ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error)
+	// ItemFileChangeRequestApproval handles the item/fileChange/requestApproval request from the app-server.
 	ItemFileChangeRequestApproval(ctx context.Context, params protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error)
+	// ItemPermissionsRequestApproval handles the item/permissions/requestApproval request from the app-server.
 	ItemPermissionsRequestApproval(ctx context.Context, params protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error)
+	// ItemToolCall handles the item/tool/call request from the app-server.
 	ItemToolCall(ctx context.Context, params protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error)
+	// ItemToolRequestUserInput handles the item/tool/requestUserInput request from the app-server.
 	ItemToolRequestUserInput(ctx context.Context, params protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error)
+	// McpServerElicitationRequest handles the mcpServer/elicitation/request request from the app-server.
 	McpServerElicitationRequest(ctx context.Context, params protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error)
 }
 
 // UnimplementedServerRequestHandler provides forward-compatible default methods.
 type UnimplementedServerRequestHandler struct{}
 
+// AccountChatgptAuthTokensRefresh returns ErrServerRequestUnsupported for account/chatgptAuthTokens/refresh.
 func (UnimplementedServerRequestHandler) AccountChatgptAuthTokensRefresh(context.Context, protocol.ChatgptAuthTokensRefreshParams) (*protocol.ChatgptAuthTokensRefreshResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ApplyPatchApproval returns ErrServerRequestUnsupported for applyPatchApproval.
 func (UnimplementedServerRequestHandler) ApplyPatchApproval(context.Context, protocol.ApplyPatchApprovalParams) (*protocol.ApplyPatchApprovalResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// AttestationGenerate returns ErrServerRequestUnsupported for attestation/generate.
 func (UnimplementedServerRequestHandler) AttestationGenerate(context.Context, protocol.AttestationGenerateParams) (*protocol.AttestationGenerateResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ExecCommandApproval returns ErrServerRequestUnsupported for execCommandApproval.
 func (UnimplementedServerRequestHandler) ExecCommandApproval(context.Context, protocol.ExecCommandApprovalParams) (*protocol.ExecCommandApprovalResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ItemCommandExecutionRequestApproval returns ErrServerRequestUnsupported for item/commandExecution/requestApproval.
 func (UnimplementedServerRequestHandler) ItemCommandExecutionRequestApproval(context.Context, protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ItemFileChangeRequestApproval returns ErrServerRequestUnsupported for item/fileChange/requestApproval.
 func (UnimplementedServerRequestHandler) ItemFileChangeRequestApproval(context.Context, protocol.FileChangeRequestApprovalParams) (*protocol.FileChangeRequestApprovalResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ItemPermissionsRequestApproval returns ErrServerRequestUnsupported for item/permissions/requestApproval.
 func (UnimplementedServerRequestHandler) ItemPermissionsRequestApproval(context.Context, protocol.PermissionsRequestApprovalParams) (*protocol.PermissionsRequestApprovalResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ItemToolCall returns ErrServerRequestUnsupported for item/tool/call.
 func (UnimplementedServerRequestHandler) ItemToolCall(context.Context, protocol.DynamicToolCallParams) (*protocol.DynamicToolCallResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// ItemToolRequestUserInput returns ErrServerRequestUnsupported for item/tool/requestUserInput.
 func (UnimplementedServerRequestHandler) ItemToolRequestUserInput(context.Context, protocol.ToolRequestUserInputParams) (*protocol.ToolRequestUserInputResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }
 
+// McpServerElicitationRequest returns ErrServerRequestUnsupported for mcpServer/elicitation/request.
 func (UnimplementedServerRequestHandler) McpServerElicitationRequest(context.Context, protocol.MCPServerElicitationRequestParams) (*protocol.MCPServerElicitationRequestResponse, error) {
 	return nil, ErrServerRequestUnsupported
 }

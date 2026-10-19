@@ -15,116 +15,223 @@ import (
 //
 // Deprecated: define a narrow interface containing only the methods your code consumes.
 type ClientRequests interface {
+	// AccountGatewayOAuthCancel calls account/gatewayOAuth/cancel on the app-server.
 	AccountGatewayOAuthCancel(ctx context.Context) (*protocol.GatewayOAuthCancelResponse, error)
+	// AccountGatewayOAuthLogin calls account/gatewayOAuth/login on the app-server.
 	AccountGatewayOAuthLogin(ctx context.Context) (*protocol.GatewayOAuthLoginResponse, error)
+	// AccountGatewayOAuthRead calls account/gatewayOAuth/read on the app-server.
 	AccountGatewayOAuthRead(ctx context.Context) (*protocol.GatewayOAuthReadResponse, error)
+	// AccountLoginCancel calls account/login/cancel on the app-server.
 	AccountLoginCancel(ctx context.Context, params protocol.CancelLoginAccountParams) (*protocol.CancelLoginAccountResponse, error)
+	// AccountLoginStart calls account/login/start on the app-server.
 	AccountLoginStart(ctx context.Context, params protocol.LoginAccountParams) (*protocol.LoginAccountResponse, error)
+	// AccountLogout calls account/logout on the app-server.
 	AccountLogout(ctx context.Context) (*protocol.LogoutAccountResponse, error)
+	// AccountRateLimitResetCreditConsume calls account/rateLimitResetCredit/consume on the app-server.
 	AccountRateLimitResetCreditConsume(ctx context.Context, params protocol.ConsumeAccountRateLimitResetCreditParams) (*protocol.ConsumeAccountRateLimitResetCreditResponse, error)
+	// AccountRateLimitsRead calls account/rateLimits/read without optional filters.
 	AccountRateLimitsRead(ctx context.Context) (*protocol.GetAccountRateLimitsResponse, error)
+	// AccountRateLimitsReadWithParams calls account/rateLimits/read on the app-server.
 	AccountRateLimitsReadWithParams(ctx context.Context, params *protocol.GetAccountRateLimitsParams) (*protocol.GetAccountRateLimitsResponse, error)
+	// AccountRead calls account/read on the app-server.
 	AccountRead(ctx context.Context, params protocol.GetAccountParams) (*protocol.GetAccountResponse, error)
+	// AccountSendAddCreditsNudgeEmail calls account/sendAddCreditsNudgeEmail on the app-server.
 	AccountSendAddCreditsNudgeEmail(ctx context.Context, params protocol.SendAddCreditsNudgeEmailParams) (*protocol.SendAddCreditsNudgeEmailResponse, error)
+	// AccountUsageRead calls account/usage/read without optional filters.
 	AccountUsageRead(ctx context.Context) (*protocol.GetAccountTokenUsageResponse, error)
+	// AccountUsageReadWithParams calls account/usage/read on the app-server.
 	AccountUsageReadWithParams(ctx context.Context, params *protocol.GetAccountTokenUsageParams) (*protocol.GetAccountTokenUsageResponse, error)
+	// AccountWorkspaceMessagesRead calls account/workspaceMessages/read on the app-server.
 	AccountWorkspaceMessagesRead(ctx context.Context) (*protocol.GetWorkspaceMessagesResponse, error)
+	// AppInstalled calls app/installed on the app-server.
 	AppInstalled(ctx context.Context, params protocol.AppsInstalledParams) (*protocol.AppsInstalledResponse, error)
+	// AppList calls app/list on the app-server.
 	AppList(ctx context.Context, params protocol.AppsListParams) (*protocol.AppsListResponse, error)
+	// AppRead calls app/read on the app-server.
 	AppRead(ctx context.Context, params protocol.AppsReadParams) (*protocol.AppsReadResponse, error)
+	// CommandExec calls command/exec on the app-server.
 	CommandExec(ctx context.Context, params protocol.CommandExecParams) (*protocol.CommandExecResponse, error)
+	// CommandExecResize calls command/exec/resize on the app-server.
 	CommandExecResize(ctx context.Context, params protocol.CommandExecResizeParams) (*protocol.CommandExecResizeResponse, error)
+	// CommandExecTerminate calls command/exec/terminate on the app-server.
 	CommandExecTerminate(ctx context.Context, params protocol.CommandExecTerminateParams) (*protocol.CommandExecTerminateResponse, error)
+	// CommandExecWrite calls command/exec/write on the app-server.
 	CommandExecWrite(ctx context.Context, params protocol.CommandExecWriteParams) (*protocol.CommandExecWriteResponse, error)
+	// ConfigBatchWrite calls config/batchWrite on the app-server.
 	ConfigBatchWrite(ctx context.Context, params protocol.ConfigBatchWriteParams) (*protocol.ConfigWriteResponse, error)
+	// ConfigMCPServerReload calls config/mcpServer/reload on the app-server.
 	ConfigMCPServerReload(ctx context.Context) (*protocol.MCPServerRefreshResponse, error)
+	// ConfigRead calls config/read on the app-server.
 	ConfigRead(ctx context.Context, params protocol.ConfigReadParams) (*protocol.ConfigReadResponse, error)
+	// ConfigValueWrite calls config/value/write on the app-server.
 	ConfigValueWrite(ctx context.Context, params protocol.ConfigValueWriteParams) (*protocol.ConfigWriteResponse, error)
+	// ConfigRequirementsRead calls configRequirements/read on the app-server.
 	ConfigRequirementsRead(ctx context.Context) (*protocol.ConfigRequirementsReadResponse, error)
+	// ExperimentalFeatureEnablementSet calls experimentalFeature/enablement/set on the app-server.
 	ExperimentalFeatureEnablementSet(ctx context.Context, params protocol.ExperimentalFeatureEnablementSetParams) (*protocol.ExperimentalFeatureEnablementSetResponse, error)
+	// ExperimentalFeatureList calls experimentalFeature/list on the app-server.
 	ExperimentalFeatureList(ctx context.Context, params protocol.ExperimentalFeatureListParams) (*protocol.ExperimentalFeatureListResponse, error)
+	// ExternalAgentConfigDetect calls externalAgentConfig/detect on the app-server.
 	ExternalAgentConfigDetect(ctx context.Context, params protocol.ExternalAgentConfigDetectParams) (*protocol.ExternalAgentConfigDetectResponse, error)
+	// ExternalAgentConfigImport calls externalAgentConfig/import on the app-server.
 	ExternalAgentConfigImport(ctx context.Context, params protocol.ExternalAgentConfigImportParams) (*protocol.ExternalAgentConfigImportResponse, error)
+	// ExternalAgentConfigImportReadHistories calls externalAgentConfig/import/readHistories on the app-server.
 	ExternalAgentConfigImportReadHistories(ctx context.Context) (*protocol.ExternalAgentConfigImportHistoriesReadResponse, error)
+	// ExternalAgentConfigImportRecordHistory calls externalAgentConfig/import/recordHistory on the app-server.
 	ExternalAgentConfigImportRecordHistory(ctx context.Context, params protocol.ExternalAgentConfigImportHistoryRecordParams) (*protocol.ExternalAgentConfigImportHistoryRecordResponse, error)
+	// FeedbackUpload calls feedback/upload on the app-server.
 	FeedbackUpload(ctx context.Context, params protocol.FeedbackUploadParams) (*protocol.FeedbackUploadResponse, error)
+	// FsCopy calls fs/copy on the app-server.
 	FsCopy(ctx context.Context, params protocol.FsCopyParams) (*protocol.FsCopyResponse, error)
+	// FsCreateDirectory calls fs/createDirectory on the app-server.
 	FsCreateDirectory(ctx context.Context, params protocol.FsCreateDirectoryParams) (*protocol.FsCreateDirectoryResponse, error)
+	// FsGetMetadata calls fs/getMetadata on the app-server.
 	FsGetMetadata(ctx context.Context, params protocol.FsGetMetadataParams) (*protocol.FsGetMetadataResponse, error)
+	// FsReadDirectory calls fs/readDirectory on the app-server.
 	FsReadDirectory(ctx context.Context, params protocol.FsReadDirectoryParams) (*protocol.FsReadDirectoryResponse, error)
+	// FsReadFile calls fs/readFile on the app-server.
 	FsReadFile(ctx context.Context, params protocol.FsReadFileParams) (*protocol.FsReadFileResponse, error)
+	// FsRemove calls fs/remove on the app-server.
 	FsRemove(ctx context.Context, params protocol.FsRemoveParams) (*protocol.FsRemoveResponse, error)
+	// FsUnwatch calls fs/unwatch on the app-server.
 	FsUnwatch(ctx context.Context, params protocol.FsUnwatchParams) (*protocol.FsUnwatchResponse, error)
+	// FsWatch calls fs/watch on the app-server.
 	FsWatch(ctx context.Context, params protocol.FsWatchParams) (*protocol.FsWatchResponse, error)
+	// FsWriteFile calls fs/writeFile on the app-server.
 	FsWriteFile(ctx context.Context, params protocol.FsWriteFileParams) (*protocol.FsWriteFileResponse, error)
+	// FuzzyFileSearch calls fuzzyFileSearch on the app-server.
 	FuzzyFileSearch(ctx context.Context, params protocol.FuzzyFileSearchParams) (*protocol.FuzzyFileSearchResponse, error)
+	// HooksList calls hooks/list on the app-server.
 	HooksList(ctx context.Context, params protocol.HooksListParams) (*protocol.HooksListResponse, error)
+	// Initialize calls initialize on the app-server.
 	Initialize(ctx context.Context, params protocol.InitializeParams) (*protocol.InitializeResponse, error)
+	// MarketplaceAdd calls marketplace/add on the app-server.
 	MarketplaceAdd(ctx context.Context, params protocol.MarketplaceAddParams) (*protocol.MarketplaceAddResponse, error)
+	// MarketplaceRemove calls marketplace/remove on the app-server.
 	MarketplaceRemove(ctx context.Context, params protocol.MarketplaceRemoveParams) (*protocol.MarketplaceRemoveResponse, error)
+	// MarketplaceUpgrade calls marketplace/upgrade on the app-server.
 	MarketplaceUpgrade(ctx context.Context, params protocol.MarketplaceUpgradeParams) (*protocol.MarketplaceUpgradeResponse, error)
+	// MCPServerOAuthLogin calls mcpServer/oauth/login on the app-server.
 	MCPServerOAuthLogin(ctx context.Context, params protocol.MCPServerOAuthLoginParams) (*protocol.MCPServerOAuthLoginResponse, error)
+	// MCPServerResourceRead calls mcpServer/resource/read on the app-server.
 	MCPServerResourceRead(ctx context.Context, params protocol.MCPResourceReadParams) (*protocol.MCPResourceReadResponse, error)
+	// MCPServerToolCall calls mcpServer/tool/call on the app-server.
 	MCPServerToolCall(ctx context.Context, params protocol.MCPServerToolCallParams) (*protocol.MCPServerToolCallResponse, error)
+	// MCPServerStatusList calls mcpServerStatus/list on the app-server.
 	MCPServerStatusList(ctx context.Context, params protocol.ListMCPServerStatusParams) (*protocol.ListMCPServerStatusResponse, error)
+	// ModelList calls model/list on the app-server.
 	ModelList(ctx context.Context, params protocol.ModelListParams) (*protocol.ModelListResponse, error)
+	// ModelProviderCapabilitiesRead calls modelProvider/capabilities/read on the app-server.
 	ModelProviderCapabilitiesRead(ctx context.Context, params protocol.ModelProviderCapabilitiesReadParams) (*protocol.ModelProviderCapabilitiesReadResponse, error)
+	// PermissionProfileList calls permissionProfile/list on the app-server.
 	PermissionProfileList(ctx context.Context, params protocol.PermissionProfileListParams) (*protocol.PermissionProfileListResponse, error)
+	// PluginInstall calls plugin/install on the app-server.
 	PluginInstall(ctx context.Context, params protocol.PluginInstallParams) (*protocol.PluginInstallResponse, error)
+	// PluginInstalled calls plugin/installed on the app-server.
 	PluginInstalled(ctx context.Context, params protocol.PluginInstalledParams) (*protocol.PluginInstalledResponse, error)
+	// PluginList calls plugin/list on the app-server.
 	PluginList(ctx context.Context, params protocol.PluginListParams) (*protocol.PluginListResponse, error)
+	// PluginRead calls plugin/read on the app-server.
 	PluginRead(ctx context.Context, params protocol.PluginReadParams) (*protocol.PluginReadResponse, error)
+	// PluginReconcile calls plugin/reconcile on the app-server.
 	PluginReconcile(ctx context.Context, params protocol.PluginReconcileParams) (*protocol.PluginReconcileResponse, error)
+	// PluginShareCheckout calls plugin/share/checkout on the app-server.
 	PluginShareCheckout(ctx context.Context, params protocol.PluginShareCheckoutParams) (*protocol.PluginShareCheckoutResponse, error)
+	// PluginShareDelete calls plugin/share/delete on the app-server.
 	PluginShareDelete(ctx context.Context, params protocol.PluginShareDeleteParams) (*protocol.PluginShareDeleteResponse, error)
+	// PluginShareList calls plugin/share/list on the app-server.
 	PluginShareList(ctx context.Context, params protocol.PluginShareListParams) (*protocol.PluginShareListResponse, error)
+	// PluginShareSave calls plugin/share/save on the app-server.
 	PluginShareSave(ctx context.Context, params protocol.PluginShareSaveParams) (*protocol.PluginShareSaveResponse, error)
+	// PluginShareUpdateTargets calls plugin/share/updateTargets on the app-server.
 	PluginShareUpdateTargets(ctx context.Context, params protocol.PluginShareUpdateTargetsParams) (*protocol.PluginShareUpdateTargetsResponse, error)
+	// PluginSkillRead calls plugin/skill/read on the app-server.
 	PluginSkillRead(ctx context.Context, params protocol.PluginSkillReadParams) (*protocol.PluginSkillReadResponse, error)
+	// PluginUninstall calls plugin/uninstall on the app-server.
 	PluginUninstall(ctx context.Context, params protocol.PluginUninstallParams) (*protocol.PluginUninstallResponse, error)
+	// ReviewStart calls review/start on the app-server.
 	ReviewStart(ctx context.Context, params protocol.ReviewStartParams) (*protocol.ReviewStartResponse, error)
+	// SkillsConfigWrite calls skills/config/write on the app-server.
 	SkillsConfigWrite(ctx context.Context, params protocol.SkillsConfigWriteParams) (*protocol.SkillsConfigWriteResponse, error)
+	// SkillsExtraRootsSet calls skills/extraRoots/set on the app-server.
 	SkillsExtraRootsSet(ctx context.Context, params protocol.SkillsExtraRootsSetParams) (*protocol.SkillsExtraRootsSetResponse, error)
+	// SkillsList calls skills/list on the app-server.
 	SkillsList(ctx context.Context, params protocol.SkillsListParams) (*protocol.SkillsListResponse, error)
+	// ThreadApproveGuardianDeniedAction calls thread/approveGuardianDeniedAction on the app-server.
 	ThreadApproveGuardianDeniedAction(ctx context.Context, params protocol.ThreadApproveGuardianDeniedActionParams) (*protocol.ThreadApproveGuardianDeniedActionResponse, error)
+	// ThreadArchive calls thread/archive on the app-server.
 	ThreadArchive(ctx context.Context, params protocol.ThreadArchiveParams) (*protocol.ThreadArchiveResponse, error)
+	// ThreadAttachmentAdd calls thread/attachment/add on the app-server.
 	ThreadAttachmentAdd(ctx context.Context, params protocol.ThreadAttachmentAddParams) (*protocol.ThreadAttachmentAddResponse, error)
+	// ThreadAttachmentList calls thread/attachment/list on the app-server.
 	ThreadAttachmentList(ctx context.Context, params protocol.ThreadAttachmentListParams) (*protocol.ThreadAttachmentListResponse, error)
+	// ThreadAttachmentRemove calls thread/attachment/remove on the app-server.
 	ThreadAttachmentRemove(ctx context.Context, params protocol.ThreadAttachmentRemoveParams) (*protocol.ThreadAttachmentRemoveResponse, error)
+	// ThreadAttachmentOwnerList calls thread/attachmentOwner/list on the app-server.
 	ThreadAttachmentOwnerList(ctx context.Context, params protocol.ThreadAttachmentOwnerListParams) (*protocol.ThreadAttachmentOwnerListResponse, error)
+	// ThreadCompactStart calls thread/compact/start on the app-server.
 	ThreadCompactStart(ctx context.Context, params protocol.ThreadCompactStartParams) (*protocol.ThreadCompactStartResponse, error)
+	// ThreadDelete calls thread/delete on the app-server.
 	ThreadDelete(ctx context.Context, params protocol.ThreadDeleteParams) (*protocol.ThreadDeleteResponse, error)
+	// ThreadFork calls thread/fork on the app-server.
 	ThreadFork(ctx context.Context, params protocol.ThreadForkParams) (*protocol.ThreadForkResponse, error)
+	// ThreadGoalClear calls thread/goal/clear on the app-server.
 	ThreadGoalClear(ctx context.Context, params protocol.ThreadGoalClearParams) (*protocol.ThreadGoalClearResponse, error)
+	// ThreadGoalGet calls thread/goal/get on the app-server.
 	ThreadGoalGet(ctx context.Context, params protocol.ThreadGoalGetParams) (*protocol.ThreadGoalGetResponse, error)
+	// ThreadGoalSet calls thread/goal/set on the app-server.
 	ThreadGoalSet(ctx context.Context, params protocol.ThreadGoalSetParams) (*protocol.ThreadGoalSetResponse, error)
+	// ThreadInjectItems calls thread/inject_items on the app-server.
 	ThreadInjectItems(ctx context.Context, params protocol.ThreadInjectItemsParams) (*protocol.ThreadInjectItemsResponse, error)
+	// ThreadItemsList calls thread/items/list on the app-server.
 	ThreadItemsList(ctx context.Context, params protocol.ThreadItemsListParams) (*protocol.ThreadItemsListResponse, error)
+	// ThreadList calls thread/list on the app-server.
 	ThreadList(ctx context.Context, params protocol.ThreadListParams) (*protocol.ThreadListResponse, error)
+	// ThreadLoadedList calls thread/loaded/list on the app-server.
 	ThreadLoadedList(ctx context.Context, params protocol.ThreadLoadedListParams) (*protocol.ThreadLoadedListResponse, error)
+	// ThreadMetadataUpdate calls thread/metadata/update on the app-server.
 	ThreadMetadataUpdate(ctx context.Context, params protocol.ThreadMetadataUpdateParams) (*protocol.ThreadMetadataUpdateResponse, error)
+	// ThreadNameSet calls thread/name/set on the app-server.
 	ThreadNameSet(ctx context.Context, params protocol.ThreadSetNameParams) (*protocol.ThreadSetNameResponse, error)
+	// ThreadRead calls thread/read on the app-server.
 	ThreadRead(ctx context.Context, params protocol.ThreadReadParams) (*protocol.ThreadReadResponse, error)
+	// ThreadResume calls thread/resume on the app-server.
 	ThreadResume(ctx context.Context, params protocol.ThreadResumeParams) (*protocol.ThreadResumeResponse, error)
+	// ThreadRevert calls thread/revert on the app-server.
 	ThreadRevert(ctx context.Context, params protocol.ThreadRevertParams) (*protocol.ThreadRevertResponse, error)
+	// ThreadSectionMove calls thread/section/move on the app-server.
 	ThreadSectionMove(ctx context.Context, params protocol.ThreadSectionMoveParams) (*protocol.ThreadSectionMoveResponse, error)
+	// ThreadShellCommand calls thread/shellCommand on the app-server.
 	ThreadShellCommand(ctx context.Context, params protocol.ThreadShellCommandParams) (*protocol.ThreadShellCommandResponse, error)
+	// ThreadStart calls thread/start on the app-server.
 	ThreadStart(ctx context.Context, params protocol.ThreadStartParams) (*protocol.ThreadStartResponse, error)
+	// ThreadTurnsList calls thread/turns/list on the app-server.
 	ThreadTurnsList(ctx context.Context, params protocol.ThreadTurnsListParams) (*protocol.ThreadTurnsListResponse, error)
+	// ThreadUnarchive calls thread/unarchive on the app-server.
 	ThreadUnarchive(ctx context.Context, params protocol.ThreadUnarchiveParams) (*protocol.ThreadUnarchiveResponse, error)
+	// ThreadUnsubscribe calls thread/unsubscribe on the app-server.
 	ThreadUnsubscribe(ctx context.Context, params protocol.ThreadUnsubscribeParams) (*protocol.ThreadUnsubscribeResponse, error)
+	// ThreadSectionCreate calls threadSection/create on the app-server.
 	ThreadSectionCreate(ctx context.Context, params protocol.ThreadSectionCreateParams) (*protocol.ThreadSectionCreateResponse, error)
+	// ThreadSectionDelete calls threadSection/delete on the app-server.
 	ThreadSectionDelete(ctx context.Context, params protocol.ThreadSectionDeleteParams) (*protocol.ThreadSectionDeleteResponse, error)
+	// ThreadSectionList calls threadSection/list on the app-server.
 	ThreadSectionList(ctx context.Context, params protocol.ThreadSectionListParams) (*protocol.ThreadSectionListResponse, error)
+	// ThreadSectionUpdate calls threadSection/update on the app-server.
 	ThreadSectionUpdate(ctx context.Context, params protocol.ThreadSectionUpdateParams) (*protocol.ThreadSectionUpdateResponse, error)
+	// TurnInterrupt calls turn/interrupt on the app-server.
 	TurnInterrupt(ctx context.Context, params protocol.TurnInterruptParams) (*protocol.TurnInterruptResponse, error)
+	// TurnStart calls turn/start on the app-server.
 	TurnStart(ctx context.Context, params protocol.TurnStartParams) (*protocol.TurnStartResponse, error)
+	// TurnSteer calls turn/steer on the app-server.
 	TurnSteer(ctx context.Context, params protocol.TurnSteerParams) (*protocol.TurnSteerResponse, error)
+	// WindowsSandboxReadiness calls windowsSandbox/readiness on the app-server.
 	WindowsSandboxReadiness(ctx context.Context) (*protocol.WindowsSandboxReadinessResponse, error)
+	// WindowsSandboxSetupStart calls windowsSandbox/setupStart on the app-server.
 	WindowsSandboxSetupStart(ctx context.Context, params protocol.WindowsSandboxSetupStartParams) (*protocol.WindowsSandboxSetupStartResponse, error)
 }
 
-// Client implements ClientRequests using JSON-RPC.
+// AccountGatewayOAuthCancel calls account/gatewayOAuth/cancel on the app-server.
 func (c *Client) AccountGatewayOAuthCancel(ctx context.Context) (*protocol.GatewayOAuthCancelResponse, error) {
 	var result protocol.GatewayOAuthCancelResponse
 	if err := c.Call(ctx, "account/gatewayOAuth/cancel", nil, &result); err != nil {
@@ -140,6 +247,7 @@ func (c *Client) AccountGatewayOauthCancel(ctx context.Context) (*protocol.Gatew
 	return c.AccountGatewayOAuthCancel(ctx)
 }
 
+// AccountGatewayOAuthLogin calls account/gatewayOAuth/login on the app-server.
 func (c *Client) AccountGatewayOAuthLogin(ctx context.Context) (*protocol.GatewayOAuthLoginResponse, error) {
 	var result protocol.GatewayOAuthLoginResponse
 	if err := c.Call(ctx, "account/gatewayOAuth/login", nil, &result); err != nil {
@@ -155,6 +263,7 @@ func (c *Client) AccountGatewayOauthLogin(ctx context.Context) (*protocol.Gatewa
 	return c.AccountGatewayOAuthLogin(ctx)
 }
 
+// AccountGatewayOAuthRead calls account/gatewayOAuth/read on the app-server.
 func (c *Client) AccountGatewayOAuthRead(ctx context.Context) (*protocol.GatewayOAuthReadResponse, error) {
 	var result protocol.GatewayOAuthReadResponse
 	if err := c.Call(ctx, "account/gatewayOAuth/read", nil, &result); err != nil {
@@ -170,6 +279,7 @@ func (c *Client) AccountGatewayOauthRead(ctx context.Context) (*protocol.Gateway
 	return c.AccountGatewayOAuthRead(ctx)
 }
 
+// AccountLoginCancel calls account/login/cancel on the app-server.
 func (c *Client) AccountLoginCancel(ctx context.Context, params protocol.CancelLoginAccountParams) (*protocol.CancelLoginAccountResponse, error) {
 	var result protocol.CancelLoginAccountResponse
 	if err := c.Call(ctx, "account/login/cancel", params, &result); err != nil {
@@ -178,6 +288,7 @@ func (c *Client) AccountLoginCancel(ctx context.Context, params protocol.CancelL
 	return &result, nil
 }
 
+// AccountLoginStart calls account/login/start on the app-server.
 func (c *Client) AccountLoginStart(ctx context.Context, params protocol.LoginAccountParams) (*protocol.LoginAccountResponse, error) {
 	var result protocol.LoginAccountResponse
 	if err := c.Call(ctx, "account/login/start", params, &result); err != nil {
@@ -186,6 +297,7 @@ func (c *Client) AccountLoginStart(ctx context.Context, params protocol.LoginAcc
 	return &result, nil
 }
 
+// AccountLogout calls account/logout on the app-server.
 func (c *Client) AccountLogout(ctx context.Context) (*protocol.LogoutAccountResponse, error) {
 	var result protocol.LogoutAccountResponse
 	if err := c.Call(ctx, "account/logout", nil, &result); err != nil {
@@ -194,6 +306,7 @@ func (c *Client) AccountLogout(ctx context.Context) (*protocol.LogoutAccountResp
 	return &result, nil
 }
 
+// AccountRateLimitResetCreditConsume calls account/rateLimitResetCredit/consume on the app-server.
 func (c *Client) AccountRateLimitResetCreditConsume(ctx context.Context, params protocol.ConsumeAccountRateLimitResetCreditParams) (*protocol.ConsumeAccountRateLimitResetCreditResponse, error) {
 	var result protocol.ConsumeAccountRateLimitResetCreditResponse
 	if err := c.Call(ctx, "account/rateLimitResetCredit/consume", params, &result); err != nil {
@@ -207,6 +320,7 @@ func (c *Client) AccountRateLimitsRead(ctx context.Context) (*protocol.GetAccoun
 	return c.AccountRateLimitsReadWithParams(ctx, nil)
 }
 
+// AccountRateLimitsReadWithParams calls account/rateLimits/read on the app-server.
 func (c *Client) AccountRateLimitsReadWithParams(ctx context.Context, params *protocol.GetAccountRateLimitsParams) (*protocol.GetAccountRateLimitsResponse, error) {
 	var result protocol.GetAccountRateLimitsResponse
 	var requestParams any
@@ -219,6 +333,7 @@ func (c *Client) AccountRateLimitsReadWithParams(ctx context.Context, params *pr
 	return &result, nil
 }
 
+// AccountRead calls account/read on the app-server.
 func (c *Client) AccountRead(ctx context.Context, params protocol.GetAccountParams) (*protocol.GetAccountResponse, error) {
 	var result protocol.GetAccountResponse
 	if err := c.Call(ctx, "account/read", params, &result); err != nil {
@@ -227,6 +342,7 @@ func (c *Client) AccountRead(ctx context.Context, params protocol.GetAccountPara
 	return &result, nil
 }
 
+// AccountSendAddCreditsNudgeEmail calls account/sendAddCreditsNudgeEmail on the app-server.
 func (c *Client) AccountSendAddCreditsNudgeEmail(ctx context.Context, params protocol.SendAddCreditsNudgeEmailParams) (*protocol.SendAddCreditsNudgeEmailResponse, error) {
 	var result protocol.SendAddCreditsNudgeEmailResponse
 	if err := c.Call(ctx, "account/sendAddCreditsNudgeEmail", params, &result); err != nil {
@@ -240,6 +356,7 @@ func (c *Client) AccountUsageRead(ctx context.Context) (*protocol.GetAccountToke
 	return c.AccountUsageReadWithParams(ctx, nil)
 }
 
+// AccountUsageReadWithParams calls account/usage/read on the app-server.
 func (c *Client) AccountUsageReadWithParams(ctx context.Context, params *protocol.GetAccountTokenUsageParams) (*protocol.GetAccountTokenUsageResponse, error) {
 	var result protocol.GetAccountTokenUsageResponse
 	var requestParams any
@@ -252,6 +369,7 @@ func (c *Client) AccountUsageReadWithParams(ctx context.Context, params *protoco
 	return &result, nil
 }
 
+// AccountWorkspaceMessagesRead calls account/workspaceMessages/read on the app-server.
 func (c *Client) AccountWorkspaceMessagesRead(ctx context.Context) (*protocol.GetWorkspaceMessagesResponse, error) {
 	var result protocol.GetWorkspaceMessagesResponse
 	if err := c.Call(ctx, "account/workspaceMessages/read", nil, &result); err != nil {
@@ -260,6 +378,7 @@ func (c *Client) AccountWorkspaceMessagesRead(ctx context.Context) (*protocol.Ge
 	return &result, nil
 }
 
+// AppInstalled calls app/installed on the app-server.
 func (c *Client) AppInstalled(ctx context.Context, params protocol.AppsInstalledParams) (*protocol.AppsInstalledResponse, error) {
 	var result protocol.AppsInstalledResponse
 	if err := c.Call(ctx, "app/installed", params, &result); err != nil {
@@ -268,6 +387,7 @@ func (c *Client) AppInstalled(ctx context.Context, params protocol.AppsInstalled
 	return &result, nil
 }
 
+// AppList calls app/list on the app-server.
 func (c *Client) AppList(ctx context.Context, params protocol.AppsListParams) (*protocol.AppsListResponse, error) {
 	var result protocol.AppsListResponse
 	if err := c.Call(ctx, "app/list", params, &result); err != nil {
@@ -276,6 +396,7 @@ func (c *Client) AppList(ctx context.Context, params protocol.AppsListParams) (*
 	return &result, nil
 }
 
+// AppRead calls app/read on the app-server.
 func (c *Client) AppRead(ctx context.Context, params protocol.AppsReadParams) (*protocol.AppsReadResponse, error) {
 	var result protocol.AppsReadResponse
 	if err := c.Call(ctx, "app/read", params, &result); err != nil {
@@ -284,6 +405,7 @@ func (c *Client) AppRead(ctx context.Context, params protocol.AppsReadParams) (*
 	return &result, nil
 }
 
+// CommandExec calls command/exec on the app-server.
 func (c *Client) CommandExec(ctx context.Context, params protocol.CommandExecParams) (*protocol.CommandExecResponse, error) {
 	var result protocol.CommandExecResponse
 	if err := c.Call(ctx, "command/exec", params, &result); err != nil {
@@ -292,6 +414,7 @@ func (c *Client) CommandExec(ctx context.Context, params protocol.CommandExecPar
 	return &result, nil
 }
 
+// CommandExecResize calls command/exec/resize on the app-server.
 func (c *Client) CommandExecResize(ctx context.Context, params protocol.CommandExecResizeParams) (*protocol.CommandExecResizeResponse, error) {
 	var result protocol.CommandExecResizeResponse
 	if err := c.Call(ctx, "command/exec/resize", params, &result); err != nil {
@@ -300,6 +423,7 @@ func (c *Client) CommandExecResize(ctx context.Context, params protocol.CommandE
 	return &result, nil
 }
 
+// CommandExecTerminate calls command/exec/terminate on the app-server.
 func (c *Client) CommandExecTerminate(ctx context.Context, params protocol.CommandExecTerminateParams) (*protocol.CommandExecTerminateResponse, error) {
 	var result protocol.CommandExecTerminateResponse
 	if err := c.Call(ctx, "command/exec/terminate", params, &result); err != nil {
@@ -308,6 +432,7 @@ func (c *Client) CommandExecTerminate(ctx context.Context, params protocol.Comma
 	return &result, nil
 }
 
+// CommandExecWrite calls command/exec/write on the app-server.
 func (c *Client) CommandExecWrite(ctx context.Context, params protocol.CommandExecWriteParams) (*protocol.CommandExecWriteResponse, error) {
 	var result protocol.CommandExecWriteResponse
 	if err := c.Call(ctx, "command/exec/write", params, &result); err != nil {
@@ -316,6 +441,7 @@ func (c *Client) CommandExecWrite(ctx context.Context, params protocol.CommandEx
 	return &result, nil
 }
 
+// ConfigBatchWrite calls config/batchWrite on the app-server.
 func (c *Client) ConfigBatchWrite(ctx context.Context, params protocol.ConfigBatchWriteParams) (*protocol.ConfigWriteResponse, error) {
 	var result protocol.ConfigWriteResponse
 	if err := c.Call(ctx, "config/batchWrite", params, &result); err != nil {
@@ -324,6 +450,7 @@ func (c *Client) ConfigBatchWrite(ctx context.Context, params protocol.ConfigBat
 	return &result, nil
 }
 
+// ConfigMCPServerReload calls config/mcpServer/reload on the app-server.
 func (c *Client) ConfigMCPServerReload(ctx context.Context) (*protocol.MCPServerRefreshResponse, error) {
 	var result protocol.MCPServerRefreshResponse
 	if err := c.Call(ctx, "config/mcpServer/reload", nil, &result); err != nil {
@@ -339,6 +466,7 @@ func (c *Client) ConfigMcpServerReload(ctx context.Context) (*protocol.MCPServer
 	return c.ConfigMCPServerReload(ctx)
 }
 
+// ConfigRead calls config/read on the app-server.
 func (c *Client) ConfigRead(ctx context.Context, params protocol.ConfigReadParams) (*protocol.ConfigReadResponse, error) {
 	var result protocol.ConfigReadResponse
 	if err := c.Call(ctx, "config/read", params, &result); err != nil {
@@ -347,6 +475,7 @@ func (c *Client) ConfigRead(ctx context.Context, params protocol.ConfigReadParam
 	return &result, nil
 }
 
+// ConfigValueWrite calls config/value/write on the app-server.
 func (c *Client) ConfigValueWrite(ctx context.Context, params protocol.ConfigValueWriteParams) (*protocol.ConfigWriteResponse, error) {
 	var result protocol.ConfigWriteResponse
 	if err := c.Call(ctx, "config/value/write", params, &result); err != nil {
@@ -355,6 +484,7 @@ func (c *Client) ConfigValueWrite(ctx context.Context, params protocol.ConfigVal
 	return &result, nil
 }
 
+// ConfigRequirementsRead calls configRequirements/read on the app-server.
 func (c *Client) ConfigRequirementsRead(ctx context.Context) (*protocol.ConfigRequirementsReadResponse, error) {
 	var result protocol.ConfigRequirementsReadResponse
 	if err := c.Call(ctx, "configRequirements/read", nil, &result); err != nil {
@@ -363,6 +493,7 @@ func (c *Client) ConfigRequirementsRead(ctx context.Context) (*protocol.ConfigRe
 	return &result, nil
 }
 
+// ExperimentalFeatureEnablementSet calls experimentalFeature/enablement/set on the app-server.
 func (c *Client) ExperimentalFeatureEnablementSet(ctx context.Context, params protocol.ExperimentalFeatureEnablementSetParams) (*protocol.ExperimentalFeatureEnablementSetResponse, error) {
 	var result protocol.ExperimentalFeatureEnablementSetResponse
 	if err := c.Call(ctx, "experimentalFeature/enablement/set", params, &result); err != nil {
@@ -371,6 +502,7 @@ func (c *Client) ExperimentalFeatureEnablementSet(ctx context.Context, params pr
 	return &result, nil
 }
 
+// ExperimentalFeatureList calls experimentalFeature/list on the app-server.
 func (c *Client) ExperimentalFeatureList(ctx context.Context, params protocol.ExperimentalFeatureListParams) (*protocol.ExperimentalFeatureListResponse, error) {
 	var result protocol.ExperimentalFeatureListResponse
 	if err := c.Call(ctx, "experimentalFeature/list", params, &result); err != nil {
@@ -379,6 +511,7 @@ func (c *Client) ExperimentalFeatureList(ctx context.Context, params protocol.Ex
 	return &result, nil
 }
 
+// ExternalAgentConfigDetect calls externalAgentConfig/detect on the app-server.
 func (c *Client) ExternalAgentConfigDetect(ctx context.Context, params protocol.ExternalAgentConfigDetectParams) (*protocol.ExternalAgentConfigDetectResponse, error) {
 	var result protocol.ExternalAgentConfigDetectResponse
 	if err := c.Call(ctx, "externalAgentConfig/detect", params, &result); err != nil {
@@ -387,6 +520,7 @@ func (c *Client) ExternalAgentConfigDetect(ctx context.Context, params protocol.
 	return &result, nil
 }
 
+// ExternalAgentConfigImport calls externalAgentConfig/import on the app-server.
 func (c *Client) ExternalAgentConfigImport(ctx context.Context, params protocol.ExternalAgentConfigImportParams) (*protocol.ExternalAgentConfigImportResponse, error) {
 	var result protocol.ExternalAgentConfigImportResponse
 	if err := c.Call(ctx, "externalAgentConfig/import", params, &result); err != nil {
@@ -395,6 +529,7 @@ func (c *Client) ExternalAgentConfigImport(ctx context.Context, params protocol.
 	return &result, nil
 }
 
+// ExternalAgentConfigImportReadHistories calls externalAgentConfig/import/readHistories on the app-server.
 func (c *Client) ExternalAgentConfigImportReadHistories(ctx context.Context) (*protocol.ExternalAgentConfigImportHistoriesReadResponse, error) {
 	var result protocol.ExternalAgentConfigImportHistoriesReadResponse
 	if err := c.Call(ctx, "externalAgentConfig/import/readHistories", nil, &result); err != nil {
@@ -403,6 +538,7 @@ func (c *Client) ExternalAgentConfigImportReadHistories(ctx context.Context) (*p
 	return &result, nil
 }
 
+// ExternalAgentConfigImportRecordHistory calls externalAgentConfig/import/recordHistory on the app-server.
 func (c *Client) ExternalAgentConfigImportRecordHistory(ctx context.Context, params protocol.ExternalAgentConfigImportHistoryRecordParams) (*protocol.ExternalAgentConfigImportHistoryRecordResponse, error) {
 	var result protocol.ExternalAgentConfigImportHistoryRecordResponse
 	if err := c.Call(ctx, "externalAgentConfig/import/recordHistory", params, &result); err != nil {
@@ -411,6 +547,7 @@ func (c *Client) ExternalAgentConfigImportRecordHistory(ctx context.Context, par
 	return &result, nil
 }
 
+// FeedbackUpload calls feedback/upload on the app-server.
 func (c *Client) FeedbackUpload(ctx context.Context, params protocol.FeedbackUploadParams) (*protocol.FeedbackUploadResponse, error) {
 	var result protocol.FeedbackUploadResponse
 	if err := c.Call(ctx, "feedback/upload", params, &result); err != nil {
@@ -419,6 +556,7 @@ func (c *Client) FeedbackUpload(ctx context.Context, params protocol.FeedbackUpl
 	return &result, nil
 }
 
+// FsCopy calls fs/copy on the app-server.
 func (c *Client) FsCopy(ctx context.Context, params protocol.FsCopyParams) (*protocol.FsCopyResponse, error) {
 	var result protocol.FsCopyResponse
 	if err := c.Call(ctx, "fs/copy", params, &result); err != nil {
@@ -427,6 +565,7 @@ func (c *Client) FsCopy(ctx context.Context, params protocol.FsCopyParams) (*pro
 	return &result, nil
 }
 
+// FsCreateDirectory calls fs/createDirectory on the app-server.
 func (c *Client) FsCreateDirectory(ctx context.Context, params protocol.FsCreateDirectoryParams) (*protocol.FsCreateDirectoryResponse, error) {
 	var result protocol.FsCreateDirectoryResponse
 	if err := c.Call(ctx, "fs/createDirectory", params, &result); err != nil {
@@ -435,6 +574,7 @@ func (c *Client) FsCreateDirectory(ctx context.Context, params protocol.FsCreate
 	return &result, nil
 }
 
+// FsGetMetadata calls fs/getMetadata on the app-server.
 func (c *Client) FsGetMetadata(ctx context.Context, params protocol.FsGetMetadataParams) (*protocol.FsGetMetadataResponse, error) {
 	var result protocol.FsGetMetadataResponse
 	if err := c.Call(ctx, "fs/getMetadata", params, &result); err != nil {
@@ -443,6 +583,7 @@ func (c *Client) FsGetMetadata(ctx context.Context, params protocol.FsGetMetadat
 	return &result, nil
 }
 
+// FsReadDirectory calls fs/readDirectory on the app-server.
 func (c *Client) FsReadDirectory(ctx context.Context, params protocol.FsReadDirectoryParams) (*protocol.FsReadDirectoryResponse, error) {
 	var result protocol.FsReadDirectoryResponse
 	if err := c.Call(ctx, "fs/readDirectory", params, &result); err != nil {
@@ -451,6 +592,7 @@ func (c *Client) FsReadDirectory(ctx context.Context, params protocol.FsReadDire
 	return &result, nil
 }
 
+// FsReadFile calls fs/readFile on the app-server.
 func (c *Client) FsReadFile(ctx context.Context, params protocol.FsReadFileParams) (*protocol.FsReadFileResponse, error) {
 	var result protocol.FsReadFileResponse
 	if err := c.Call(ctx, "fs/readFile", params, &result); err != nil {
@@ -459,6 +601,7 @@ func (c *Client) FsReadFile(ctx context.Context, params protocol.FsReadFileParam
 	return &result, nil
 }
 
+// FsRemove calls fs/remove on the app-server.
 func (c *Client) FsRemove(ctx context.Context, params protocol.FsRemoveParams) (*protocol.FsRemoveResponse, error) {
 	var result protocol.FsRemoveResponse
 	if err := c.Call(ctx, "fs/remove", params, &result); err != nil {
@@ -467,6 +610,7 @@ func (c *Client) FsRemove(ctx context.Context, params protocol.FsRemoveParams) (
 	return &result, nil
 }
 
+// FsUnwatch calls fs/unwatch on the app-server.
 func (c *Client) FsUnwatch(ctx context.Context, params protocol.FsUnwatchParams) (*protocol.FsUnwatchResponse, error) {
 	var result protocol.FsUnwatchResponse
 	if err := c.Call(ctx, "fs/unwatch", params, &result); err != nil {
@@ -475,6 +619,7 @@ func (c *Client) FsUnwatch(ctx context.Context, params protocol.FsUnwatchParams)
 	return &result, nil
 }
 
+// FsWatch calls fs/watch on the app-server.
 func (c *Client) FsWatch(ctx context.Context, params protocol.FsWatchParams) (*protocol.FsWatchResponse, error) {
 	var result protocol.FsWatchResponse
 	if err := c.Call(ctx, "fs/watch", params, &result); err != nil {
@@ -483,6 +628,7 @@ func (c *Client) FsWatch(ctx context.Context, params protocol.FsWatchParams) (*p
 	return &result, nil
 }
 
+// FsWriteFile calls fs/writeFile on the app-server.
 func (c *Client) FsWriteFile(ctx context.Context, params protocol.FsWriteFileParams) (*protocol.FsWriteFileResponse, error) {
 	var result protocol.FsWriteFileResponse
 	if err := c.Call(ctx, "fs/writeFile", params, &result); err != nil {
@@ -491,6 +637,7 @@ func (c *Client) FsWriteFile(ctx context.Context, params protocol.FsWriteFilePar
 	return &result, nil
 }
 
+// FuzzyFileSearch calls fuzzyFileSearch on the app-server.
 func (c *Client) FuzzyFileSearch(ctx context.Context, params protocol.FuzzyFileSearchParams) (*protocol.FuzzyFileSearchResponse, error) {
 	var result protocol.FuzzyFileSearchResponse
 	if err := c.Call(ctx, "fuzzyFileSearch", params, &result); err != nil {
@@ -499,6 +646,7 @@ func (c *Client) FuzzyFileSearch(ctx context.Context, params protocol.FuzzyFileS
 	return &result, nil
 }
 
+// HooksList calls hooks/list on the app-server.
 func (c *Client) HooksList(ctx context.Context, params protocol.HooksListParams) (*protocol.HooksListResponse, error) {
 	var result protocol.HooksListResponse
 	if err := c.Call(ctx, "hooks/list", params, &result); err != nil {
@@ -507,6 +655,7 @@ func (c *Client) HooksList(ctx context.Context, params protocol.HooksListParams)
 	return &result, nil
 }
 
+// Initialize calls initialize on the app-server.
 func (c *Client) Initialize(ctx context.Context, params protocol.InitializeParams) (*protocol.InitializeResponse, error) {
 	var result protocol.InitializeResponse
 	if err := c.Call(ctx, "initialize", params, &result); err != nil {
@@ -515,6 +664,7 @@ func (c *Client) Initialize(ctx context.Context, params protocol.InitializeParam
 	return &result, nil
 }
 
+// MarketplaceAdd calls marketplace/add on the app-server.
 func (c *Client) MarketplaceAdd(ctx context.Context, params protocol.MarketplaceAddParams) (*protocol.MarketplaceAddResponse, error) {
 	var result protocol.MarketplaceAddResponse
 	if err := c.Call(ctx, "marketplace/add", params, &result); err != nil {
@@ -523,6 +673,7 @@ func (c *Client) MarketplaceAdd(ctx context.Context, params protocol.Marketplace
 	return &result, nil
 }
 
+// MarketplaceRemove calls marketplace/remove on the app-server.
 func (c *Client) MarketplaceRemove(ctx context.Context, params protocol.MarketplaceRemoveParams) (*protocol.MarketplaceRemoveResponse, error) {
 	var result protocol.MarketplaceRemoveResponse
 	if err := c.Call(ctx, "marketplace/remove", params, &result); err != nil {
@@ -531,6 +682,7 @@ func (c *Client) MarketplaceRemove(ctx context.Context, params protocol.Marketpl
 	return &result, nil
 }
 
+// MarketplaceUpgrade calls marketplace/upgrade on the app-server.
 func (c *Client) MarketplaceUpgrade(ctx context.Context, params protocol.MarketplaceUpgradeParams) (*protocol.MarketplaceUpgradeResponse, error) {
 	var result protocol.MarketplaceUpgradeResponse
 	if err := c.Call(ctx, "marketplace/upgrade", params, &result); err != nil {
@@ -539,6 +691,7 @@ func (c *Client) MarketplaceUpgrade(ctx context.Context, params protocol.Marketp
 	return &result, nil
 }
 
+// MCPServerOAuthLogin calls mcpServer/oauth/login on the app-server.
 func (c *Client) MCPServerOAuthLogin(ctx context.Context, params protocol.MCPServerOAuthLoginParams) (*protocol.MCPServerOAuthLoginResponse, error) {
 	var result protocol.MCPServerOAuthLoginResponse
 	if err := c.Call(ctx, "mcpServer/oauth/login", params, &result); err != nil {
@@ -554,6 +707,7 @@ func (c *Client) McpServerOauthLogin(ctx context.Context, params protocol.MCPSer
 	return c.MCPServerOAuthLogin(ctx, params)
 }
 
+// MCPServerResourceRead calls mcpServer/resource/read on the app-server.
 func (c *Client) MCPServerResourceRead(ctx context.Context, params protocol.MCPResourceReadParams) (*protocol.MCPResourceReadResponse, error) {
 	var result protocol.MCPResourceReadResponse
 	if err := c.Call(ctx, "mcpServer/resource/read", params, &result); err != nil {
@@ -569,6 +723,7 @@ func (c *Client) McpServerResourceRead(ctx context.Context, params protocol.MCPR
 	return c.MCPServerResourceRead(ctx, params)
 }
 
+// MCPServerToolCall calls mcpServer/tool/call on the app-server.
 func (c *Client) MCPServerToolCall(ctx context.Context, params protocol.MCPServerToolCallParams) (*protocol.MCPServerToolCallResponse, error) {
 	var result protocol.MCPServerToolCallResponse
 	if err := c.Call(ctx, "mcpServer/tool/call", params, &result); err != nil {
@@ -584,6 +739,7 @@ func (c *Client) McpServerToolCall(ctx context.Context, params protocol.MCPServe
 	return c.MCPServerToolCall(ctx, params)
 }
 
+// MCPServerStatusList calls mcpServerStatus/list on the app-server.
 func (c *Client) MCPServerStatusList(ctx context.Context, params protocol.ListMCPServerStatusParams) (*protocol.ListMCPServerStatusResponse, error) {
 	var result protocol.ListMCPServerStatusResponse
 	if err := c.Call(ctx, "mcpServerStatus/list", params, &result); err != nil {
@@ -599,6 +755,7 @@ func (c *Client) McpServerStatusList(ctx context.Context, params protocol.ListMC
 	return c.MCPServerStatusList(ctx, params)
 }
 
+// ModelList calls model/list on the app-server.
 func (c *Client) ModelList(ctx context.Context, params protocol.ModelListParams) (*protocol.ModelListResponse, error) {
 	var result protocol.ModelListResponse
 	if err := c.Call(ctx, "model/list", params, &result); err != nil {
@@ -607,6 +764,7 @@ func (c *Client) ModelList(ctx context.Context, params protocol.ModelListParams)
 	return &result, nil
 }
 
+// ModelProviderCapabilitiesRead calls modelProvider/capabilities/read on the app-server.
 func (c *Client) ModelProviderCapabilitiesRead(ctx context.Context, params protocol.ModelProviderCapabilitiesReadParams) (*protocol.ModelProviderCapabilitiesReadResponse, error) {
 	var result protocol.ModelProviderCapabilitiesReadResponse
 	if err := c.Call(ctx, "modelProvider/capabilities/read", params, &result); err != nil {
@@ -615,6 +773,7 @@ func (c *Client) ModelProviderCapabilitiesRead(ctx context.Context, params proto
 	return &result, nil
 }
 
+// PermissionProfileList calls permissionProfile/list on the app-server.
 func (c *Client) PermissionProfileList(ctx context.Context, params protocol.PermissionProfileListParams) (*protocol.PermissionProfileListResponse, error) {
 	var result protocol.PermissionProfileListResponse
 	if err := c.Call(ctx, "permissionProfile/list", params, &result); err != nil {
@@ -623,6 +782,7 @@ func (c *Client) PermissionProfileList(ctx context.Context, params protocol.Perm
 	return &result, nil
 }
 
+// PluginInstall calls plugin/install on the app-server.
 func (c *Client) PluginInstall(ctx context.Context, params protocol.PluginInstallParams) (*protocol.PluginInstallResponse, error) {
 	var result protocol.PluginInstallResponse
 	if err := c.Call(ctx, "plugin/install", params, &result); err != nil {
@@ -631,6 +791,7 @@ func (c *Client) PluginInstall(ctx context.Context, params protocol.PluginInstal
 	return &result, nil
 }
 
+// PluginInstalled calls plugin/installed on the app-server.
 func (c *Client) PluginInstalled(ctx context.Context, params protocol.PluginInstalledParams) (*protocol.PluginInstalledResponse, error) {
 	var result protocol.PluginInstalledResponse
 	if err := c.Call(ctx, "plugin/installed", params, &result); err != nil {
@@ -639,6 +800,7 @@ func (c *Client) PluginInstalled(ctx context.Context, params protocol.PluginInst
 	return &result, nil
 }
 
+// PluginList calls plugin/list on the app-server.
 func (c *Client) PluginList(ctx context.Context, params protocol.PluginListParams) (*protocol.PluginListResponse, error) {
 	var result protocol.PluginListResponse
 	if err := c.Call(ctx, "plugin/list", params, &result); err != nil {
@@ -647,6 +809,7 @@ func (c *Client) PluginList(ctx context.Context, params protocol.PluginListParam
 	return &result, nil
 }
 
+// PluginRead calls plugin/read on the app-server.
 func (c *Client) PluginRead(ctx context.Context, params protocol.PluginReadParams) (*protocol.PluginReadResponse, error) {
 	var result protocol.PluginReadResponse
 	if err := c.Call(ctx, "plugin/read", params, &result); err != nil {
@@ -655,6 +818,7 @@ func (c *Client) PluginRead(ctx context.Context, params protocol.PluginReadParam
 	return &result, nil
 }
 
+// PluginReconcile calls plugin/reconcile on the app-server.
 func (c *Client) PluginReconcile(ctx context.Context, params protocol.PluginReconcileParams) (*protocol.PluginReconcileResponse, error) {
 	var result protocol.PluginReconcileResponse
 	if err := c.Call(ctx, "plugin/reconcile", params, &result); err != nil {
@@ -663,6 +827,7 @@ func (c *Client) PluginReconcile(ctx context.Context, params protocol.PluginReco
 	return &result, nil
 }
 
+// PluginShareCheckout calls plugin/share/checkout on the app-server.
 func (c *Client) PluginShareCheckout(ctx context.Context, params protocol.PluginShareCheckoutParams) (*protocol.PluginShareCheckoutResponse, error) {
 	var result protocol.PluginShareCheckoutResponse
 	if err := c.Call(ctx, "plugin/share/checkout", params, &result); err != nil {
@@ -671,6 +836,7 @@ func (c *Client) PluginShareCheckout(ctx context.Context, params protocol.Plugin
 	return &result, nil
 }
 
+// PluginShareDelete calls plugin/share/delete on the app-server.
 func (c *Client) PluginShareDelete(ctx context.Context, params protocol.PluginShareDeleteParams) (*protocol.PluginShareDeleteResponse, error) {
 	var result protocol.PluginShareDeleteResponse
 	if err := c.Call(ctx, "plugin/share/delete", params, &result); err != nil {
@@ -679,6 +845,7 @@ func (c *Client) PluginShareDelete(ctx context.Context, params protocol.PluginSh
 	return &result, nil
 }
 
+// PluginShareList calls plugin/share/list on the app-server.
 func (c *Client) PluginShareList(ctx context.Context, params protocol.PluginShareListParams) (*protocol.PluginShareListResponse, error) {
 	var result protocol.PluginShareListResponse
 	if err := c.Call(ctx, "plugin/share/list", params, &result); err != nil {
@@ -687,6 +854,7 @@ func (c *Client) PluginShareList(ctx context.Context, params protocol.PluginShar
 	return &result, nil
 }
 
+// PluginShareSave calls plugin/share/save on the app-server.
 func (c *Client) PluginShareSave(ctx context.Context, params protocol.PluginShareSaveParams) (*protocol.PluginShareSaveResponse, error) {
 	var result protocol.PluginShareSaveResponse
 	if err := c.Call(ctx, "plugin/share/save", params, &result); err != nil {
@@ -695,6 +863,7 @@ func (c *Client) PluginShareSave(ctx context.Context, params protocol.PluginShar
 	return &result, nil
 }
 
+// PluginShareUpdateTargets calls plugin/share/updateTargets on the app-server.
 func (c *Client) PluginShareUpdateTargets(ctx context.Context, params protocol.PluginShareUpdateTargetsParams) (*protocol.PluginShareUpdateTargetsResponse, error) {
 	var result protocol.PluginShareUpdateTargetsResponse
 	if err := c.Call(ctx, "plugin/share/updateTargets", params, &result); err != nil {
@@ -703,6 +872,7 @@ func (c *Client) PluginShareUpdateTargets(ctx context.Context, params protocol.P
 	return &result, nil
 }
 
+// PluginSkillRead calls plugin/skill/read on the app-server.
 func (c *Client) PluginSkillRead(ctx context.Context, params protocol.PluginSkillReadParams) (*protocol.PluginSkillReadResponse, error) {
 	var result protocol.PluginSkillReadResponse
 	if err := c.Call(ctx, "plugin/skill/read", params, &result); err != nil {
@@ -711,6 +881,7 @@ func (c *Client) PluginSkillRead(ctx context.Context, params protocol.PluginSkil
 	return &result, nil
 }
 
+// PluginUninstall calls plugin/uninstall on the app-server.
 func (c *Client) PluginUninstall(ctx context.Context, params protocol.PluginUninstallParams) (*protocol.PluginUninstallResponse, error) {
 	var result protocol.PluginUninstallResponse
 	if err := c.Call(ctx, "plugin/uninstall", params, &result); err != nil {
@@ -719,6 +890,7 @@ func (c *Client) PluginUninstall(ctx context.Context, params protocol.PluginUnin
 	return &result, nil
 }
 
+// ReviewStart calls review/start on the app-server.
 func (c *Client) ReviewStart(ctx context.Context, params protocol.ReviewStartParams) (*protocol.ReviewStartResponse, error) {
 	var result protocol.ReviewStartResponse
 	if err := c.Call(ctx, "review/start", params, &result); err != nil {
@@ -727,6 +899,7 @@ func (c *Client) ReviewStart(ctx context.Context, params protocol.ReviewStartPar
 	return &result, nil
 }
 
+// SkillsConfigWrite calls skills/config/write on the app-server.
 func (c *Client) SkillsConfigWrite(ctx context.Context, params protocol.SkillsConfigWriteParams) (*protocol.SkillsConfigWriteResponse, error) {
 	var result protocol.SkillsConfigWriteResponse
 	if err := c.Call(ctx, "skills/config/write", params, &result); err != nil {
@@ -735,6 +908,7 @@ func (c *Client) SkillsConfigWrite(ctx context.Context, params protocol.SkillsCo
 	return &result, nil
 }
 
+// SkillsExtraRootsSet calls skills/extraRoots/set on the app-server.
 func (c *Client) SkillsExtraRootsSet(ctx context.Context, params protocol.SkillsExtraRootsSetParams) (*protocol.SkillsExtraRootsSetResponse, error) {
 	var result protocol.SkillsExtraRootsSetResponse
 	if err := c.Call(ctx, "skills/extraRoots/set", params, &result); err != nil {
@@ -743,6 +917,7 @@ func (c *Client) SkillsExtraRootsSet(ctx context.Context, params protocol.Skills
 	return &result, nil
 }
 
+// SkillsList calls skills/list on the app-server.
 func (c *Client) SkillsList(ctx context.Context, params protocol.SkillsListParams) (*protocol.SkillsListResponse, error) {
 	var result protocol.SkillsListResponse
 	if err := c.Call(ctx, "skills/list", params, &result); err != nil {
@@ -751,6 +926,7 @@ func (c *Client) SkillsList(ctx context.Context, params protocol.SkillsListParam
 	return &result, nil
 }
 
+// ThreadApproveGuardianDeniedAction calls thread/approveGuardianDeniedAction on the app-server.
 func (c *Client) ThreadApproveGuardianDeniedAction(ctx context.Context, params protocol.ThreadApproveGuardianDeniedActionParams) (*protocol.ThreadApproveGuardianDeniedActionResponse, error) {
 	var result protocol.ThreadApproveGuardianDeniedActionResponse
 	if err := c.Call(ctx, "thread/approveGuardianDeniedAction", params, &result); err != nil {
@@ -759,6 +935,7 @@ func (c *Client) ThreadApproveGuardianDeniedAction(ctx context.Context, params p
 	return &result, nil
 }
 
+// ThreadArchive calls thread/archive on the app-server.
 func (c *Client) ThreadArchive(ctx context.Context, params protocol.ThreadArchiveParams) (*protocol.ThreadArchiveResponse, error) {
 	var result protocol.ThreadArchiveResponse
 	if err := c.Call(ctx, "thread/archive", params, &result); err != nil {
@@ -767,6 +944,7 @@ func (c *Client) ThreadArchive(ctx context.Context, params protocol.ThreadArchiv
 	return &result, nil
 }
 
+// ThreadAttachmentAdd calls thread/attachment/add on the app-server.
 func (c *Client) ThreadAttachmentAdd(ctx context.Context, params protocol.ThreadAttachmentAddParams) (*protocol.ThreadAttachmentAddResponse, error) {
 	var result protocol.ThreadAttachmentAddResponse
 	if err := c.Call(ctx, "thread/attachment/add", params, &result); err != nil {
@@ -775,6 +953,7 @@ func (c *Client) ThreadAttachmentAdd(ctx context.Context, params protocol.Thread
 	return &result, nil
 }
 
+// ThreadAttachmentList calls thread/attachment/list on the app-server.
 func (c *Client) ThreadAttachmentList(ctx context.Context, params protocol.ThreadAttachmentListParams) (*protocol.ThreadAttachmentListResponse, error) {
 	var result protocol.ThreadAttachmentListResponse
 	if err := c.Call(ctx, "thread/attachment/list", params, &result); err != nil {
@@ -783,6 +962,7 @@ func (c *Client) ThreadAttachmentList(ctx context.Context, params protocol.Threa
 	return &result, nil
 }
 
+// ThreadAttachmentRemove calls thread/attachment/remove on the app-server.
 func (c *Client) ThreadAttachmentRemove(ctx context.Context, params protocol.ThreadAttachmentRemoveParams) (*protocol.ThreadAttachmentRemoveResponse, error) {
 	var result protocol.ThreadAttachmentRemoveResponse
 	if err := c.Call(ctx, "thread/attachment/remove", params, &result); err != nil {
@@ -791,6 +971,7 @@ func (c *Client) ThreadAttachmentRemove(ctx context.Context, params protocol.Thr
 	return &result, nil
 }
 
+// ThreadAttachmentOwnerList calls thread/attachmentOwner/list on the app-server.
 func (c *Client) ThreadAttachmentOwnerList(ctx context.Context, params protocol.ThreadAttachmentOwnerListParams) (*protocol.ThreadAttachmentOwnerListResponse, error) {
 	var result protocol.ThreadAttachmentOwnerListResponse
 	if err := c.Call(ctx, "thread/attachmentOwner/list", params, &result); err != nil {
@@ -799,6 +980,7 @@ func (c *Client) ThreadAttachmentOwnerList(ctx context.Context, params protocol.
 	return &result, nil
 }
 
+// ThreadCompactStart calls thread/compact/start on the app-server.
 func (c *Client) ThreadCompactStart(ctx context.Context, params protocol.ThreadCompactStartParams) (*protocol.ThreadCompactStartResponse, error) {
 	var result protocol.ThreadCompactStartResponse
 	if err := c.Call(ctx, "thread/compact/start", params, &result); err != nil {
@@ -807,6 +989,7 @@ func (c *Client) ThreadCompactStart(ctx context.Context, params protocol.ThreadC
 	return &result, nil
 }
 
+// ThreadDelete calls thread/delete on the app-server.
 func (c *Client) ThreadDelete(ctx context.Context, params protocol.ThreadDeleteParams) (*protocol.ThreadDeleteResponse, error) {
 	var result protocol.ThreadDeleteResponse
 	if err := c.Call(ctx, "thread/delete", params, &result); err != nil {
@@ -815,6 +998,7 @@ func (c *Client) ThreadDelete(ctx context.Context, params protocol.ThreadDeleteP
 	return &result, nil
 }
 
+// ThreadFork calls thread/fork on the app-server.
 func (c *Client) ThreadFork(ctx context.Context, params protocol.ThreadForkParams) (*protocol.ThreadForkResponse, error) {
 	var result protocol.ThreadForkResponse
 	if err := c.Call(ctx, "thread/fork", params, &result); err != nil {
@@ -823,6 +1007,7 @@ func (c *Client) ThreadFork(ctx context.Context, params protocol.ThreadForkParam
 	return &result, nil
 }
 
+// ThreadGoalClear calls thread/goal/clear on the app-server.
 func (c *Client) ThreadGoalClear(ctx context.Context, params protocol.ThreadGoalClearParams) (*protocol.ThreadGoalClearResponse, error) {
 	var result protocol.ThreadGoalClearResponse
 	if err := c.Call(ctx, "thread/goal/clear", params, &result); err != nil {
@@ -831,6 +1016,7 @@ func (c *Client) ThreadGoalClear(ctx context.Context, params protocol.ThreadGoal
 	return &result, nil
 }
 
+// ThreadGoalGet calls thread/goal/get on the app-server.
 func (c *Client) ThreadGoalGet(ctx context.Context, params protocol.ThreadGoalGetParams) (*protocol.ThreadGoalGetResponse, error) {
 	var result protocol.ThreadGoalGetResponse
 	if err := c.Call(ctx, "thread/goal/get", params, &result); err != nil {
@@ -839,6 +1025,7 @@ func (c *Client) ThreadGoalGet(ctx context.Context, params protocol.ThreadGoalGe
 	return &result, nil
 }
 
+// ThreadGoalSet calls thread/goal/set on the app-server.
 func (c *Client) ThreadGoalSet(ctx context.Context, params protocol.ThreadGoalSetParams) (*protocol.ThreadGoalSetResponse, error) {
 	var result protocol.ThreadGoalSetResponse
 	if err := c.Call(ctx, "thread/goal/set", params, &result); err != nil {
@@ -847,6 +1034,7 @@ func (c *Client) ThreadGoalSet(ctx context.Context, params protocol.ThreadGoalSe
 	return &result, nil
 }
 
+// ThreadInjectItems calls thread/inject_items on the app-server.
 func (c *Client) ThreadInjectItems(ctx context.Context, params protocol.ThreadInjectItemsParams) (*protocol.ThreadInjectItemsResponse, error) {
 	var result protocol.ThreadInjectItemsResponse
 	if err := c.Call(ctx, "thread/inject_items", params, &result); err != nil {
@@ -855,6 +1043,7 @@ func (c *Client) ThreadInjectItems(ctx context.Context, params protocol.ThreadIn
 	return &result, nil
 }
 
+// ThreadItemsList calls thread/items/list on the app-server.
 func (c *Client) ThreadItemsList(ctx context.Context, params protocol.ThreadItemsListParams) (*protocol.ThreadItemsListResponse, error) {
 	var result protocol.ThreadItemsListResponse
 	if err := c.Call(ctx, "thread/items/list", params, &result); err != nil {
@@ -863,6 +1052,7 @@ func (c *Client) ThreadItemsList(ctx context.Context, params protocol.ThreadItem
 	return &result, nil
 }
 
+// ThreadList calls thread/list on the app-server.
 func (c *Client) ThreadList(ctx context.Context, params protocol.ThreadListParams) (*protocol.ThreadListResponse, error) {
 	var result protocol.ThreadListResponse
 	if err := c.Call(ctx, "thread/list", params, &result); err != nil {
@@ -871,6 +1061,7 @@ func (c *Client) ThreadList(ctx context.Context, params protocol.ThreadListParam
 	return &result, nil
 }
 
+// ThreadLoadedList calls thread/loaded/list on the app-server.
 func (c *Client) ThreadLoadedList(ctx context.Context, params protocol.ThreadLoadedListParams) (*protocol.ThreadLoadedListResponse, error) {
 	var result protocol.ThreadLoadedListResponse
 	if err := c.Call(ctx, "thread/loaded/list", params, &result); err != nil {
@@ -879,6 +1070,7 @@ func (c *Client) ThreadLoadedList(ctx context.Context, params protocol.ThreadLoa
 	return &result, nil
 }
 
+// ThreadMetadataUpdate calls thread/metadata/update on the app-server.
 func (c *Client) ThreadMetadataUpdate(ctx context.Context, params protocol.ThreadMetadataUpdateParams) (*protocol.ThreadMetadataUpdateResponse, error) {
 	var result protocol.ThreadMetadataUpdateResponse
 	if err := c.Call(ctx, "thread/metadata/update", params, &result); err != nil {
@@ -887,6 +1079,7 @@ func (c *Client) ThreadMetadataUpdate(ctx context.Context, params protocol.Threa
 	return &result, nil
 }
 
+// ThreadNameSet calls thread/name/set on the app-server.
 func (c *Client) ThreadNameSet(ctx context.Context, params protocol.ThreadSetNameParams) (*protocol.ThreadSetNameResponse, error) {
 	var result protocol.ThreadSetNameResponse
 	if err := c.Call(ctx, "thread/name/set", params, &result); err != nil {
@@ -895,6 +1088,7 @@ func (c *Client) ThreadNameSet(ctx context.Context, params protocol.ThreadSetNam
 	return &result, nil
 }
 
+// ThreadRead calls thread/read on the app-server.
 func (c *Client) ThreadRead(ctx context.Context, params protocol.ThreadReadParams) (*protocol.ThreadReadResponse, error) {
 	var result protocol.ThreadReadResponse
 	if err := c.Call(ctx, "thread/read", params, &result); err != nil {
@@ -903,6 +1097,7 @@ func (c *Client) ThreadRead(ctx context.Context, params protocol.ThreadReadParam
 	return &result, nil
 }
 
+// ThreadResume calls thread/resume on the app-server.
 func (c *Client) ThreadResume(ctx context.Context, params protocol.ThreadResumeParams) (*protocol.ThreadResumeResponse, error) {
 	var result protocol.ThreadResumeResponse
 	if err := c.Call(ctx, "thread/resume", params, &result); err != nil {
@@ -911,6 +1106,7 @@ func (c *Client) ThreadResume(ctx context.Context, params protocol.ThreadResumeP
 	return &result, nil
 }
 
+// ThreadRevert calls thread/revert on the app-server.
 func (c *Client) ThreadRevert(ctx context.Context, params protocol.ThreadRevertParams) (*protocol.ThreadRevertResponse, error) {
 	var result protocol.ThreadRevertResponse
 	if err := c.Call(ctx, "thread/revert", params, &result); err != nil {
@@ -919,6 +1115,7 @@ func (c *Client) ThreadRevert(ctx context.Context, params protocol.ThreadRevertP
 	return &result, nil
 }
 
+// ThreadSectionMove calls thread/section/move on the app-server.
 func (c *Client) ThreadSectionMove(ctx context.Context, params protocol.ThreadSectionMoveParams) (*protocol.ThreadSectionMoveResponse, error) {
 	var result protocol.ThreadSectionMoveResponse
 	if err := c.Call(ctx, "thread/section/move", params, &result); err != nil {
@@ -927,6 +1124,7 @@ func (c *Client) ThreadSectionMove(ctx context.Context, params protocol.ThreadSe
 	return &result, nil
 }
 
+// ThreadShellCommand calls thread/shellCommand on the app-server.
 func (c *Client) ThreadShellCommand(ctx context.Context, params protocol.ThreadShellCommandParams) (*protocol.ThreadShellCommandResponse, error) {
 	var result protocol.ThreadShellCommandResponse
 	if err := c.Call(ctx, "thread/shellCommand", params, &result); err != nil {
@@ -935,6 +1133,7 @@ func (c *Client) ThreadShellCommand(ctx context.Context, params protocol.ThreadS
 	return &result, nil
 }
 
+// ThreadStart calls thread/start on the app-server.
 func (c *Client) ThreadStart(ctx context.Context, params protocol.ThreadStartParams) (*protocol.ThreadStartResponse, error) {
 	var result protocol.ThreadStartResponse
 	if err := c.Call(ctx, "thread/start", params, &result); err != nil {
@@ -943,6 +1142,7 @@ func (c *Client) ThreadStart(ctx context.Context, params protocol.ThreadStartPar
 	return &result, nil
 }
 
+// ThreadTurnsList calls thread/turns/list on the app-server.
 func (c *Client) ThreadTurnsList(ctx context.Context, params protocol.ThreadTurnsListParams) (*protocol.ThreadTurnsListResponse, error) {
 	var result protocol.ThreadTurnsListResponse
 	if err := c.Call(ctx, "thread/turns/list", params, &result); err != nil {
@@ -951,6 +1151,7 @@ func (c *Client) ThreadTurnsList(ctx context.Context, params protocol.ThreadTurn
 	return &result, nil
 }
 
+// ThreadUnarchive calls thread/unarchive on the app-server.
 func (c *Client) ThreadUnarchive(ctx context.Context, params protocol.ThreadUnarchiveParams) (*protocol.ThreadUnarchiveResponse, error) {
 	var result protocol.ThreadUnarchiveResponse
 	if err := c.Call(ctx, "thread/unarchive", params, &result); err != nil {
@@ -959,6 +1160,7 @@ func (c *Client) ThreadUnarchive(ctx context.Context, params protocol.ThreadUnar
 	return &result, nil
 }
 
+// ThreadUnsubscribe calls thread/unsubscribe on the app-server.
 func (c *Client) ThreadUnsubscribe(ctx context.Context, params protocol.ThreadUnsubscribeParams) (*protocol.ThreadUnsubscribeResponse, error) {
 	var result protocol.ThreadUnsubscribeResponse
 	if err := c.Call(ctx, "thread/unsubscribe", params, &result); err != nil {
@@ -967,6 +1169,7 @@ func (c *Client) ThreadUnsubscribe(ctx context.Context, params protocol.ThreadUn
 	return &result, nil
 }
 
+// ThreadSectionCreate calls threadSection/create on the app-server.
 func (c *Client) ThreadSectionCreate(ctx context.Context, params protocol.ThreadSectionCreateParams) (*protocol.ThreadSectionCreateResponse, error) {
 	var result protocol.ThreadSectionCreateResponse
 	if err := c.Call(ctx, "threadSection/create", params, &result); err != nil {
@@ -975,6 +1178,7 @@ func (c *Client) ThreadSectionCreate(ctx context.Context, params protocol.Thread
 	return &result, nil
 }
 
+// ThreadSectionDelete calls threadSection/delete on the app-server.
 func (c *Client) ThreadSectionDelete(ctx context.Context, params protocol.ThreadSectionDeleteParams) (*protocol.ThreadSectionDeleteResponse, error) {
 	var result protocol.ThreadSectionDeleteResponse
 	if err := c.Call(ctx, "threadSection/delete", params, &result); err != nil {
@@ -983,6 +1187,7 @@ func (c *Client) ThreadSectionDelete(ctx context.Context, params protocol.Thread
 	return &result, nil
 }
 
+// ThreadSectionList calls threadSection/list on the app-server.
 func (c *Client) ThreadSectionList(ctx context.Context, params protocol.ThreadSectionListParams) (*protocol.ThreadSectionListResponse, error) {
 	var result protocol.ThreadSectionListResponse
 	if err := c.Call(ctx, "threadSection/list", params, &result); err != nil {
@@ -991,6 +1196,7 @@ func (c *Client) ThreadSectionList(ctx context.Context, params protocol.ThreadSe
 	return &result, nil
 }
 
+// ThreadSectionUpdate calls threadSection/update on the app-server.
 func (c *Client) ThreadSectionUpdate(ctx context.Context, params protocol.ThreadSectionUpdateParams) (*protocol.ThreadSectionUpdateResponse, error) {
 	var result protocol.ThreadSectionUpdateResponse
 	if err := c.Call(ctx, "threadSection/update", params, &result); err != nil {
@@ -999,6 +1205,7 @@ func (c *Client) ThreadSectionUpdate(ctx context.Context, params protocol.Thread
 	return &result, nil
 }
 
+// TurnInterrupt calls turn/interrupt on the app-server.
 func (c *Client) TurnInterrupt(ctx context.Context, params protocol.TurnInterruptParams) (*protocol.TurnInterruptResponse, error) {
 	var result protocol.TurnInterruptResponse
 	if err := c.Call(ctx, "turn/interrupt", params, &result); err != nil {
@@ -1007,6 +1214,7 @@ func (c *Client) TurnInterrupt(ctx context.Context, params protocol.TurnInterrup
 	return &result, nil
 }
 
+// TurnStart calls turn/start on the app-server.
 func (c *Client) TurnStart(ctx context.Context, params protocol.TurnStartParams) (*protocol.TurnStartResponse, error) {
 	var result protocol.TurnStartResponse
 	if err := c.Call(ctx, "turn/start", params, &result); err != nil {
@@ -1015,6 +1223,7 @@ func (c *Client) TurnStart(ctx context.Context, params protocol.TurnStartParams)
 	return &result, nil
 }
 
+// TurnSteer calls turn/steer on the app-server.
 func (c *Client) TurnSteer(ctx context.Context, params protocol.TurnSteerParams) (*protocol.TurnSteerResponse, error) {
 	var result protocol.TurnSteerResponse
 	if err := c.Call(ctx, "turn/steer", params, &result); err != nil {
@@ -1023,6 +1232,7 @@ func (c *Client) TurnSteer(ctx context.Context, params protocol.TurnSteerParams)
 	return &result, nil
 }
 
+// WindowsSandboxReadiness calls windowsSandbox/readiness on the app-server.
 func (c *Client) WindowsSandboxReadiness(ctx context.Context) (*protocol.WindowsSandboxReadinessResponse, error) {
 	var result protocol.WindowsSandboxReadinessResponse
 	if err := c.Call(ctx, "windowsSandbox/readiness", nil, &result); err != nil {
@@ -1031,6 +1241,7 @@ func (c *Client) WindowsSandboxReadiness(ctx context.Context) (*protocol.Windows
 	return &result, nil
 }
 
+// WindowsSandboxSetupStart calls windowsSandbox/setupStart on the app-server.
 func (c *Client) WindowsSandboxSetupStart(ctx context.Context, params protocol.WindowsSandboxSetupStartParams) (*protocol.WindowsSandboxSetupStartResponse, error) {
 	var result protocol.WindowsSandboxSetupStartResponse
 	if err := c.Call(ctx, "windowsSandbox/setupStart", params, &result); err != nil {

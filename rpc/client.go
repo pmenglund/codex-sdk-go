@@ -623,6 +623,7 @@ type NotificationOverflowError struct {
 	Capacity int
 }
 
+// Error describes the notification overflow and the exhausted buffer capacity.
 func (e *NotificationOverflowError) Error() string {
 	return fmt.Sprintf("%s (capacity %d)", ErrNotificationOverflow, e.Capacity)
 }
