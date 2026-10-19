@@ -294,9 +294,29 @@ before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
 
+### Updating to protocol 0.163.0
+
+This SDK targets Codex CLI 0.163.x. `ThreadListOptions.ExcludedThreadIDs` and
+`protocol.ThreadListParams.ExcludedThreadIDs` exclude up to 100 thread IDs before
+the server applies the page limit. Send the same exclusions on each page; nil
+or empty means no exclusions. Invalid IDs or more than 100 entries are rejected
+by the server.
+
+Codex 0.163.0's default scan-and-repair listing can return an empty page for
+same-second archived threads when `Limit` is 1 and the first thread is excluded.
+The indexed path (`UseStateDBOnly: &enabled`, with `enabled := true`) returns the
+remaining thread in this case; it skips rollout scanning and metadata repair.
+
+`TurnToolOutput.Retain` requests retention of supplied output in model history.
+The low-level notification parser recognizes `thread/readState/changed`, with
+revision tokens and tagged unread positions. Response-item status, encrypted
+content, and output-text annotations/logprobs remain available through the
+raw-preserving union wrappers. Generated realtime voice constants include the
+new upstream values.
+
 ### Updating to protocol 0.162.1
 
-This SDK targets Codex CLI 0.162.x. Low-level RPC adds
+The 0.162.1 update added
 `ThreadAttachmentOwnerList` for reverse attachment lookup and
 `thread/prediction/updated` notifications with raw-preserving completed/failed
 results. `TurnStartParams.ParentTurnID` and `RootTurnID` attribute delegated work;

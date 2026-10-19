@@ -49,6 +49,37 @@ func TestListThreadsOriginators(t *testing.T) {
 	}
 }
 
+func TestListThreadsExcludedThreadIDs(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		ids    []string
+		params string
+	}{
+		{"omitted", nil, `{}`},
+		{"empty", []string{}, `{"excludedThreadIds":[]}`},
+		{"filtered", []string{"thread-a", "thread-b"}, `{"excludedThreadIds":["thread-a","thread-b"]}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c, _ := lifecycleReplay(t, "thread/list", json.RawMessage(tt.params), json.RawMessage(`{"data":[]}`))
+			result, err := c.ListThreads(context.Background(), ThreadListOptions{ExcludedThreadIDs: tt.ids})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result == nil || len(result.Data) != 0 {
+				t.Fatalf("excluded listing = %#v", result)
+			}
+		})
+	}
+}
+
+func TestListThreadsExclusionsWithLimit(t *testing.T) {
+	limit := 1
+	c, _ := lifecycleReplay(t, "thread/list", json.RawMessage(`{"limit":1,"excludedThreadIds":["thread-a"]}`), json.RawMessage(`{"data":[]}`))
+	if _, err := c.ListThreads(context.Background(), ThreadListOptions{Limit: &limit, ExcludedThreadIDs: []string{"thread-a"}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDirectLifecycleRequests(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range []struct {

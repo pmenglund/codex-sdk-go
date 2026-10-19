@@ -13,6 +13,9 @@ type ThreadListOptions struct {
 	Archived *bool
 	Cursor   string
 	Cwd      any
+	// ExcludedThreadIDs excludes up to 100 thread IDs before applying Limit.
+	// Send the same exclusions on each page. Nil or empty means no exclusions.
+	ExcludedThreadIDs []string
 	// IsPinned is retained for source compatibility with Codex versions before
 	// 0.147. Codex 0.147 replaces pinned-thread organization with sections.
 	//
@@ -55,6 +58,9 @@ func (o ThreadListOptions) toParams() (protocol.ThreadListParams, error) {
 		SortDirection:  o.SortDirection,
 		SortKey:        o.SortKey,
 		UseStateDbOnly: o.UseStateDBOnly,
+	}
+	if o.ExcludedThreadIDs != nil {
+		params.ExcludedThreadIDs = &o.ExcludedThreadIDs
 	}
 	if o.Unsectioned {
 		var unsectioned *string

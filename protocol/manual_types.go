@@ -505,6 +505,9 @@ type ThreadListParams struct {
 	Archived *bool   `json:"archived,omitempty"`
 	Cursor   *string `json:"cursor,omitempty"`
 	Cwd      any     `json:"cwd,omitempty"`
+	// ExcludedThreadIDs excludes up to 100 IDs before applying the page limit.
+	// Send the same exclusions on each page; nil, null, and empty mean no exclusions.
+	ExcludedThreadIDs *[]string `json:"excludedThreadIds,omitempty"`
 	// IsPinned is retained for source compatibility with Codex versions before
 	// 0.147. Codex 0.147 ignores this filter and uses SectionID instead.
 	//
