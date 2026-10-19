@@ -21,8 +21,10 @@ Workflow: `WORKFLOW.md`. Linear project: P-COLIN-6 (codex-sdk). Issue: COLIN-226
 - [x] (2026-10-19 UTC) Repaired exclusion pass-through, added protocol/RPC/replay and real-CLI regressions, updated verified CLI metadata and SDK 0.163.0, and passed focused tests/schema coverage.
 - [x] (2026-10-19 UTC) Final authoritative updater passed two identical generations, formatting, metadata/installer fixtures, vet, all unit/race tests, Staticcheck 0.8.1, govulncheck 1.3.0, and diff hygiene. Native Go 1.27.2 vet/unit/race/vulnerability checks and release-policy fixtures also pass.
 - [x] (2026-10-19 UTC) Completed independent QA and architecture reviews. QA requested the documented present-null raw-union regression; added it and passed the full unit suite plus protocol race checks on Go 1.26.9/1.27.2. Architecture found no actionable issue and reviewed the QA addition.
-- [ ] Stage named reviewed paths, commit with COLIN-226, publish and merge the protected PR after required checks.
-- [ ] Monitor automatic Release through trusted E2E/publication, verify immutable v0.163.0, record final evidence, and complete Linear.
+- [x] (2026-10-19 UTC) Staged 21 reviewed named paths, committed 8e114032766ebd63be6965b71cd64697217c291e, pushed the feature branch, and opened PR #18. Version-transition validation passed. Codecov project/patch checks pass.
+- [x] (2026-10-19 UTC) Required Go 1.26, Go 1.27, Coverage report, and Codecov statuses passed. Merged exact reviewed PR #18 head through protection at 649395559fa6e36219c70e219865d4b4ce4efd66 and deleted the remote feature branch. Preserved the local plan edit and fast-forwarded main to the merge.
+- [x] (2026-10-19 UTC) Automatic Release 39315374167 passed validation, both Quality toolchains, coverage, trusted E2E, and publication. Verified annotated v0.163.0 peels to exact gated merge 649395559fa6e36219c70e219865d4b4ce4efd66 using GitHub API and independent git ls-remote.
+- [x] (2026-10-19 UTC) Recorded final release evidence and completed outcomes for the protected documentation closeout; completed COLIN-226 after publication verification.
 
 ## Surprises & Discoveries
 
@@ -34,6 +36,8 @@ Initial protocol regressions fail because ThreadListParams drops empty/populated
 The first full gate failed one new test that incorrectly expected the raw union wrapper to reject a present turnId:null. Existing wrappers validate the discriminator and required-key presence, rather than performing full schema-value validation. Corrected that new test to exercise the established contract; missing turnId still fails. Nullable firstUnread decodes correctly through the existing null-aware union wrapper. No production change or broader validation policy change is needed.
 
 The official 0.163.0 CLI has a reproduced listing limitation: two freshly archived same-second threads appear in an unbounded listing, but excluding its first row with limit=1 on the default scan-and-repair path returns no data/cursor. A direct credential-free JSON-RPC reproducer, independent of this SDK, confirms default limits 2/10 and indexed limits 1/2/10 return the remaining thread. Upstream thread_processor.rs list_threads_common filters exclusions while paging the store; the exact deeper cursor cause is not proven. Do not claim the SDK fixes upstream pagination. README documents the observed case and that indexed listing skips rollout scanning/repair.
+
+GitHub's Actions/Pages/Webhooks incident began 2026-10-19 15:49 UTC: https://www.githubstatus.com/incidents/8tzbpcnl75jp. During the first handoff, GitHub CLI and the independent connector reported required jobs queued, so protection blocked merge. On resumption, all required Quality 39285854839 and Codecov statuses were successful and the reviewed PR was mergeable. No gate or protection was bypassed. Repository auto-merge remains disabled.
 
 The planner's proposed experimental read-state response fields, item-read/update RPCs, prediction fork mode, and environment websocket metadata must be checked against the actual stable exporter. Checked source JSON omits read-state fields from ThreadListResponse and ThreadReadResponse, so Rust source alone does not justify adding those fields. Also reject the proposed standalone `go test ./thread_lifecycle_test.go`; run package tests instead. Validate script argument contracts before using proposed commands.
 
@@ -57,7 +61,11 @@ Preserve upstream listing behavior and defaults; add no SDK-side pagination work
 ## Outcomes & Retrospective
 
 
-Generated protocol/RPC output now targets exact upstream 83086188ae0614bd882818ff1aa23f3194962012. Stable exclusions, retained tool-output requests, read-state notification/unions, and voice constants are covered. All local gates, both supported Go toolchains, schema coverage, release fixtures, and credential-free real-CLI tests pass. The upstream pagination limitation is reproduced and documented. QA's sole coverage request is fixed and verified; architecture found no actionable issue. Protected publication remains outstanding.
+Generated protocol/RPC output now targets exact upstream 83086188ae0614bd882818ff1aa23f3194962012. Stable exclusions, retained tool-output requests, read-state notification/unions, and voice constants are covered. All local gates, both supported Go toolchains, schema coverage, release fixtures, and credential-free real-CLI tests pass. The upstream pagination limitation is reproduced and documented. QA's sole coverage request is fixed and verified; architecture found no actionable issue.
+
+SDK v0.163.0 is published from protected-main commit 649395559fa6e36219c70e219865d4b4ce4efd66. [PR #18](https://github.com/pmenglund/codex-sdk-go/pull/18), reviewed commit 8e114032766ebd63be6965b71cd64697217c291e, passed required Go 1.26, Go 1.27, and Coverage report checks plus Codecov project/patch checks, merged through protection, and had its remote feature branch deleted. [Automatic Release 39315374167](https://github.com/pmenglund/codex-sdk-go/actions/runs/39315374167) passed candidate validation, both Quality toolchains, coverage, trusted E2E, and publication.
+
+GitHub API and independent git ls-remote confirm annotated tag object 9ea9443fe83a99e45b46ee771166ce69124291f1 peels to exact gated merge 649395559fa6e36219c70e219865d4b4ce4efd66. The annotation identifies github-actions[bot] and publication at 2026-10-19 20:01:17 UTC. The tag's SDK version is 0.163.0 and generated upstream source is 83086188ae0614bd882818ff1aa23f3194962012. No local tag was created or moved, no direct main push or alternative publication path was used, no gate was bypassed, and no environment approval or policy change was needed. COLIN-226 is complete. This documentation closeout changes no release input and triggers no additional release.
 
 ## Context and Orientation
 
@@ -107,12 +115,16 @@ Requests preserve omission/empty/populated exclusion lists, and existing high-le
 
 Recheck status before mutations and preserve concurrent edits. Never stage everything, push main, create or move a local tag, bypass a failed gate, or approve environment jobs. If a newer stable upstream appears before accepted generation, revise the target and plan before continuing. If unrelated edits appear, stop at that boundary. For an unpublished failed Release, retry only the exact failed candidate or a reviewed corrective main merge, retaining the unpublished version. After publication use a higher corrective immutable version.
 
+PR #18 is merged, its remote branch is deleted, and Release 39315374167 successfully published the verified immutable tag. Preserve v0.163.0 permanently. Any future correction must use a higher SDK version and the protected release workflow. A repeat check of the completed run, tag object, and peeled commit is read-only. Publish this plan-only documentation closeout through a protected PR without changing SDK or CLI metadata.
+
 ## Artifacts and Notes
 
 
 Evidence directory: /private/tmp/codex-01630-review. Official release https://github.com/openai/codex/releases/tag/rust-v0.163.0 was published 2026-10-15. API asset SHA-256 digests: 61c4d9a92521bdb42b0c1d9f87c673f6da628a06de5945cbdd9a0010632f6d10 (Darwin arm64), 562a1aea0e5686283a467687d268ae33705f02fd4d40f1bc4110a415c5c1c7b1 (Darwin x86_64), a7261e65f4a96d8f4ca65a069c6cf2dc2c33defc341e48078acefda9461fffe4 (Linux arm64 musl), beb339e8ecd9ba057a6bb2dc81ad8ca474812edfbf0fc5056ca818797648dde4 (Linux x86_64 musl).
 
 Authoritative success log: final-updater.log. Every generated header names the target commit. Both printed source-exported inventories exactly equal all 451 reviewed source entries; the opaque digest stays unchanged. Direct upstream-only pagination reproducer: reproduce-exclusions.py. Temporary logs/reproducers stay outside source control.
+
+Publication evidence: PR #18 merge 649395559fa6e36219c70e219865d4b4ce4efd66; automatic push-triggered Release 39315374167; annotated tag v0.163.0 object 9ea9443fe83a99e45b46ee771166ce69124291f1; peeled commit 649395559fa6e36219c70e219865d4b4ce4efd66. The live v* ruleset remains active, rejects deletion/non-fast-forward updates, and has no bypass actors. Both e2e/release environments remain protected-branches-only without required reviewers.
 
 ## Interfaces and Dependencies
 
@@ -134,3 +146,9 @@ Revision note: Final full gate and Go 1.27.2 checks passed with no vulnerabiliti
 Revision note: QA requested a positive regression for the documented required-key boundary. Added turnId:null to known unread-position round trips, asserting exact raw preservation and IsKnown while retaining the missing-key rejection. No production or generated code changed; affected unit/race checks will be rerun before staging.
 
 Revision note: Review is complete. Full unit tests and affected protocol race tests on both supported toolchains pass after the QA test-only addition. Architecture reviewed the final diff and found no actionable issues. Rechecked clean scope, unchanged origin/main, available v0.163.0, release tag validation, and diff hygiene before named-path staging.
+
+Revision note: Recorded committed/pushed PR #18, passing Codecov statuses, and the current GitHub Actions incident blocking required checks. Left this plan-only status update local to preserve the queued candidate. Protected merge, automatic trusted E2E/publication, immutable-tag verification, and final documentation closeout remain required; this update is not marked complete.
+
+Revision note: Resumed after successful required check reporting, preserved the plan-only edit, merged the exact reviewed PR head through protection, deleted its remote branch, and located automatic Release 39315374167 for the exact merged commit. Candidate validation passed; final release gates and immutable publication remain under observation.
+
+Revision note: Automatic Release passed every gate and published v0.163.0. Independently verified its annotated object and exact peeled commit, recorded final outcomes and protections, and completed Linear. This plan-only closeout records the finished release without changing release inputs.
