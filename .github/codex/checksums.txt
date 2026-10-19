@@ -1,4 +1,4 @@
-b293a0fcdd871900a44c0a4f40a1aa401b31e02854f790ebdb8bd5d1177fd1fe  codex-aarch64-apple-darwin.tar.gz
-bf3ca2719f1143b1440fbd85c149379e696c782c50ad7991f8bfcec60b2600c1  codex-aarch64-unknown-linux-musl.tar.gz
-d68e39d8f62639f33f7d00656554cb9c3ef7809e664a3827e62ab3ace3c21b21  codex-x86_64-apple-darwin.tar.gz
-86f268d81b898f3e144c5ecff2ad2fda2c5802e042d6195b72538fe0fa125057  codex-x86_64-unknown-linux-musl.tar.gz
+61c4d9a92521bdb42b0c1d9f87c673f6da628a06de5945cbdd9a0010632f6d10  codex-aarch64-apple-darwin.tar.gz
+a7261e65f4a96d8f4ca65a069c6cf2dc2c33defc341e48078acefda9461fffe4  codex-aarch64-unknown-linux-musl.tar.gz
+562a1aea0e5686283a467687d268ae33705f02fd4d40f1bc4110a415c5c1c7b1  codex-x86_64-apple-darwin.tar.gz
+beb339e8ecd9ba057a6bb2dc81ad8ca474812edfbf0fc5056ca818797648dde4  codex-x86_64-unknown-linux-musl.tar.gz

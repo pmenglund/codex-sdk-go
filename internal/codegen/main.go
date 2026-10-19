@@ -28,7 +28,7 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "0a713f8e5cdc656a268e0a295111528b7cf7787cf8bf9e61c286f396c0bb310b"
+	approvedUnionInventorySHA256 = "d1e367d3013d9aaa81fc25baff6c81ce52140d96abfe0155fefa4eb9947f373c"
 )
 
 var approvedOpaqueInterfaceInventorySHA256 = "aa9797066f9ef641746535a494de20b16e172ee23352cb1dcd8d1bf398e4a743"

@@ -147,6 +147,44 @@ func TestRealCodexEmptyThreadArchiveRoundTrip(t *testing.T) {
 	}
 }
 
+func TestRealCodexThreadListExclusions(t *testing.T) {
+	client, ctx, stderr, requests := newArchiveTestClient(t, nil)
+	cwd := t.TempDir()
+	for range 2 {
+		thread := test.StartThread(t, client, ctx, stderr, cwd)
+		if _, err := thread.Archive(ctx); err != nil {
+			t.Fatalf("persist archived thread: %v\nstderr:\n%s", err, stderr.String())
+		}
+	}
+	archived := true
+	page, err := client.ListThreads(ctx, codex.ThreadListOptions{Archived: &archived, Cwd: cwd})
+	if err != nil || page == nil || len(page.Data) != 2 {
+		t.Fatalf("initial listing: %#v, %v\nstderr:\n%s", page, err, stderr.String())
+	}
+	for _, tt := range []struct {
+		name        string
+		limit       int
+		stateDBOnly bool
+	}{
+		// The 0.163.0 scan-and-repair path can skip same-second rows at limit=1.
+		{"scan_and_repair", 2, false},
+		{"indexed_before_limit", 1, true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			filtered, err := client.ListThreads(ctx, codex.ThreadListOptions{
+				Archived: &archived, Cwd: cwd, Limit: &tt.limit, UseStateDBOnly: &tt.stateDBOnly,
+				ExcludedThreadIDs: []string{page.Data[0].ID},
+			})
+			if err != nil || filtered == nil || len(filtered.Data) != 1 || filtered.Data[0].ID != page.Data[1].ID {
+				t.Fatalf("excluded listing: %#v, %v\nstderr:\n%s", filtered, err, stderr.String())
+			}
+		})
+	}
+	if requests.Load() != 0 {
+		t.Fatalf("listing made %d model requests", requests.Load())
+	}
+}
+
 func TestRealCodexThreadArchiveRoundTripWithMockProvider(t *testing.T) {
 	for _, viaThread := range []bool{false, true} {
 		name := "client"
