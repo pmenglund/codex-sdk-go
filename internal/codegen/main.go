@@ -20,6 +20,7 @@ import (
 	"unicode"
 
 	"github.com/atombender/go-jsonschema/pkg/generator"
+	"github.com/atombender/go-jsonschema/pkg/schemas"
 )
 
 const (
@@ -28,7 +29,7 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "d1e367d3013d9aaa81fc25baff6c81ce52140d96abfe0155fefa4eb9947f373c"
+	approvedUnionInventorySHA256 = "e648ec95284956a8bff9f105b8f9beed1d701f3e98766b1ebee682f03aacd4d9"
 )
 
 var approvedOpaqueInterfaceInventorySHA256 = "aa9797066f9ef641746535a494de20b16e172ee23352cb1dcd8d1bf398e4a743"
@@ -124,6 +125,7 @@ func generateProtocolTypes(schemaDir, repoRoot, codexCommit, codexVersion string
 		Tags:               []string{"json"},
 		Capitalizations:    []string{"ID", "JSON", "RPC", "MCP", "OAuth", "HTTP", "URL", "SSE", "UUID"},
 		OnlyModels:         true,
+		Loader:             protocolSchemaLoader{schemas.NewDefaultCacheLoader(nil, nil)},
 	}
 	gen, err := generator.New(cfg)
 	if err != nil {

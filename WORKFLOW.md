@@ -56,7 +56,7 @@ If Linear MCP is unavailable, proceed using the best available context and note 
 
 The required `Quality` workflow is secretless and runs on pushes and pull
 requests with stable check names `Go 1.26` and `Go 1.27`, backed by pinned
-toolchains 1.26.9 and 1.27.2. It checks formatting,
+toolchains 1.26.10 and 1.27.3. It checks formatting,
 the checksum-verifying Codex installer fixtures, vet, unit tests, race tests,
 Staticcheck v0.8.1, and govulncheck v1.3.0. The Go 1.26 job also records an
 atomic coverage profile; a separate least-privilege job publishes it to
@@ -65,8 +65,8 @@ percent while excluding generated files, executable examples, and credentialed
 test support. The workflow must be safe for fork pull requests: it receives no
 API credential and does not download or execute Codex.
 
-Staticcheck v0.8.1 builds and analyzes the complete SDK with Go 1.26.9 in both
-matrix jobs because it cannot decode Go 1.27.2 export-data version 5. Vet,
+Staticcheck v0.8.1 builds and analyzes the complete SDK with Go 1.26.10 in both
+matrix jobs because it cannot decode Go 1.27.3 export-data version 5. Vet,
 unit/race tests, and govulncheck use each matrix job's native toolchain.
 
 The `Trusted E2E` workflow runs by manual dispatch or as the reusable release
