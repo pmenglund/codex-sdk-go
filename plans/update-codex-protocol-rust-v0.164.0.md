@@ -20,9 +20,9 @@ Workflow: `WORKFLOW.md`. Linear project: P-COLIN-6 (codex-sdk). COLIN-228 owns e
 - [x] (2026-10-25 21:25 UTC) Source-built exporter under verified Rust 1.99.1 exactly matched all 455 reviewed official canonical union entries; approved e648ec95284956a8bff9f105b8f9beed1d701f3e98766b1ebee682f03aacd4d9. Opaque inventory review remains part of regeneration below.
 - [x] (2026-10-25 21:36 UTC) Reviewed all generated changes and exact commit headers, retained all 104 baseline opaque declarations, passed new protocol/RPC regressions, and updated official CLI metadata, SDK 0.164.0, and README.
 - [x] (2026-10-25 21:42 UTC) Final authoritative patched-updater.log passes two identical generations, matching reviewed 455-union and 104-opaque inventories, formatting, metadata/installer fixtures, vet, all unit/race tests, Staticcheck 0.8.1, govulncheck 1.3.0 (no vulnerabilities), and diff hygiene. Native Go 1.27.3 and official CLI race checks, actionlint, and release-policy fixtures also pass.
-- [x] (2026-10-25 21:47 UTC) Completed independent QA, architecture, and security review. Architecture/security found no actionable issues. Added QA-requested nonempty managed-hook key round trips and sci/sci_plus constant regressions; QA confirmed resolution. Full unit suites and protocol race checks pass on both supported Go patches. Named-path staging remains the next handoff action.
-- [ ] Commit, push, open protected PR, pass checks, merge, and delete the remote feature branch.
-- [ ] Verify automatic Release validation, Quality, E2E, publication, and immutable tag at the exact merged commit; record evidence and complete COLIN-228.
+- [x] (2026-10-25 21:45 UTC) Completed independent QA, architecture, and security review. Architecture/security found no actionable issues. Added QA-requested nonempty managed-hook key round trips and sci/sci_plus constant regressions; QA confirmed resolution. Full unit suites and protocol race checks pass on both supported Go patches. Staged only 24 reviewed named paths after scope/credential-pattern checks.
+- [x] (2026-10-25 21:49 UTC) Committed a7993f8293b0fc5250bb28ddaf277e50352351ae, pushed, and opened PR #21. Go 1.26, Go 1.27, and Coverage report passed; protected merge created 6ad34300cd9b71b86130ac0dc060032fa9976bbf. Deleted the remote feature branch and fast-forwarded clean main. Automatic push-triggered Release 40237264473 is running for that exact merge.
+- [x] (2026-10-25 21:53 UTC) Automatic Release 40237264473 passed validation, both Quality toolchains, coverage, trusted E2E, and publication. GitHub API and independent git ls-remote confirm annotated v0.164.0 object a74eca12b0938df1332e9dd08dbd5f39b4e8c0fc peels to exact gated merge 6ad34300cd9b71b86130ac0dc060032fa9976bbf. Recorded evidence and confirmed COLIN-228 Done; prepared this protected documentation closeout.
 
 ## Surprises & Discoveries
 
@@ -59,7 +59,11 @@ Decision (2026-10-25): Raise the minimum supported Go patch to 1.26.10 and CI's 
 ## Outcomes & Retrospective
 
 
-Local implementation, validation, and independent review are complete: stable 0.164.0 APIs are generated from the exact source commit, raw metadata and native path types are preserved, and the new Go standard-library advisory is fixed in supported CI toolchains. QA's test-coverage finding is resolved; architecture and security found no actionable issues. Protected merge and publication remain unfinished. No release success is claimed until the remote immutable tag is independently verified.
+Completed and published SDK v0.164.0 from stable Codex 0.164.0. Callers can save local feedback ZIPs through the generated RPC binding, retain native storage paths and exact MCP metadata, and decode inline or file-backed image results. Existing handwritten APIs and compatibility aliases are preserved. All generated files identify the selected source commit. The necessary Go security patches are included in the module minimum and CI.
+
+The authoritative local gate, native second-toolchain checks, official CLI credential-free race tests, independent QA/architecture/security reviews, required PR checks, automatic Release Quality, trusted E2E, and publication all succeeded. QA's sole coverage finding was resolved with hook-key and plan-constant tests. Protected PR #21 merged at 6ad34300cd9b71b86130ac0dc060032fa9976bbf; the published annotated tag independently resolves to that exact gated commit. COLIN-228 is Done. This documentation-only closeout records the finished release without changing its inputs.
+
+The practical lessons are to build with upstream's pinned Rust when required, inspect actual post-fix opaque inventories rather than predicting them, and rerun the mandatory vulnerability gate against current supported Go patches. No unresolved compatibility or review findings remain.
 
 ## Context and Orientation
 
@@ -110,10 +114,14 @@ Recheck status before mutations and preserve concurrent edits. Never stage every
 
 If generation and required handwritten work are unchanged, remove only this task-owned plan, return to clean main, and delete only this unpublished local branch, leaving no PR or release. If unrelated dirty files appear, stop at the skill's boundary and report their exact paths. The shared upstream checkout remains on its existing branch; the updater uses a temporary detached worktree.
 
+This update is complete. Preserve v0.164.0 permanently. Any later correction must use a higher immutable SDK version and the protected release workflow. Rechecking the completed run, annotated tag object, and peeled commit is read-only. Publish this plan-only evidence closeout through a protected PR with no SDK or CLI metadata change.
+
 ## Artifacts and Notes
 
 
 Source: https://github.com/openai/codex/releases/tag/rust-v0.164.0, published 2026-10-23. Exact peeled source commit: 6aaac694803004a63c6f393d153c96d22521a6b9. Evidence and scratch output live under /private/tmp/codex-01640-review. Live main requires Go 1.26, Go 1.27, and Coverage report with strict/admin enforcement, zero mandatory reviewers, and no force pushes or deletion. Active v* tag rules prohibit deletion/non-fast-forward updates without bypass actors.
+
+Publication evidence: https://github.com/pmenglund/codex-sdk-go/pull/21; automatic push-triggered https://github.com/pmenglund/codex-sdk-go/actions/runs/40237264473; reviewed head a7993f8293b0fc5250bb28ddaf277e50352351ae; gated main merge 6ad34300cd9b71b86130ac0dc060032fa9976bbf; annotated v0.164.0 object a74eca12b0938df1332e9dd08dbd5f39b4e8c0fc, peeled to that exact merge. Both e2e/release environments remain protected-branches-only with no required reviewers. Immutable tag rules remain active without bypass actors. The upstream checkout is clean on its original branch.
 
 ## Interfaces and Dependencies
 
@@ -137,3 +145,7 @@ Revision note: Patched vulnerability checks, native Go 1.27.3 verification, work
 Revision note: The authoritative updater passed every check under Go 1.26.10. Both generations print the exact reviewed inventories and remain byte-identical. Implementation is ready for QA, architecture, and security review before named-path staging.
 
 Revision note: Completed all three reviews. Added QA's missing managed-model-hook and plan-type regressions, reran full unit and affected protocol race checks on Go 1.26.10/1.27.3, and received QA confirmation. No production or generated code changed after the authoritative gate. Rechecked unchanged origin/main, available SDK v0.164.0, exact generated headers, valid release tag, and protected automatic-release environments.
+
+Revision note: Committed the reviewed scope, validated the actual SDK version transition, and merged PR #21 through all required checks at 6ad34300cd9b71b86130ac0dc060032fa9976bbf. The remote update branch is deleted. Release 40237264473 is automatic and still running; trusted E2E, publication, immutable-tag proof, and final documentation closeout remain pending. Corrected the review timestamp to its actual pre-commit period.
+
+Revision note: Release 40237264473 passed every gate and published v0.164.0. Independently verified the annotated object and exact gated commit, confirmed unchanged protections and completed Linear, and finalized outcomes. This plan-only closeout records finished work; the preceding running-state note is historical.
