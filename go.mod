@@ -1,6 +1,6 @@
 module github.com/pmenglund/codex-sdk-go
 
-go 1.26.9
+go 1.26.10
 
 require github.com/atombender/go-jsonschema v0.23.1
 

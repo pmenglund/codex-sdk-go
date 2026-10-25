@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,39 @@ import (
 	"github.com/pmenglund/codex-sdk-go/protocol"
 	"github.com/pmenglund/codex-sdk-go/test"
 )
+
+func TestRealCodexFeedbackSaveWithoutModelRequest(t *testing.T) {
+	client, ctx, stderr, requests := newArchiveTestClient(t, nil)
+	thread := test.StartThread(t, client, ctx, stderr, t.TempDir())
+	threadID := thread.ID()
+	path := filepath.Join(t.TempDir(), "feedback.zip")
+	includeLogs := false
+	params := protocol.FeedbackSaveParams{
+		Classification: "bug", SavePath: protocol.LegacyAppPathString(path),
+		IncludeLogs: &includeLogs, ThreadID: &threadID,
+	}
+	response, err := client.Client().FeedbackSave(ctx, params)
+	if err != nil {
+		t.Fatalf("save feedback: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if response.SavedPath != protocol.LegacyAppPathString(path) || response.ThreadID != threadID {
+		t.Fatalf("unexpected feedback response: %#v", response)
+	}
+	archive, err := zip.OpenReader(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	if len(archive.File) == 0 {
+		t.Fatal("feedback ZIP is empty")
+	}
+	if _, err := client.Client().FeedbackSave(ctx, params); err == nil {
+		t.Fatal("feedback save overwrote an existing archive")
+	}
+	if requests.Load() != 0 {
+		t.Fatal("feedback save issued a model request")
+	}
+}
 
 func TestRealCodexMockProviderDoesNotInheritCredentials(t *testing.T) {
 	if runtime.GOOS == "windows" {

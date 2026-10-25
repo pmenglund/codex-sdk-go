@@ -9,7 +9,7 @@ This SDK speaks JSON-RPC to the `codex app-server` process. By default it spawns
 
 ## Requirements
 
-- Go 1.26.9 or newer
+- Go 1.26.10 or newer (use 1.27.3 or newer on the Go 1.27 branch)
 - `codex` available on your `PATH`
 
 ## Install
@@ -294,10 +294,25 @@ before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
 
+### Updating to protocol 0.164.0
+
+This SDK targets Codex CLI 0.164.x. `rpc.Client.FeedbackSave` saves a feedback
+ZIP to a previously unused absolute path on the app-server host and returns
+that path. The caller owns the archive, including after a disconnected request.
+
+Application requirements expose optional storage paths. MCP server status
+exposes `ToolListMeta` as `json.RawMessage`, preserving opaque metadata and exact
+numbers. Hook notification payloads can report `preModelRequest` and
+`postModelRequest`, and plan types include `sci` and `sci_plus`.
+
+Image-generation thread items accept inline `result` data, a durable `fileId`,
+or both during the upstream migration. Their raw union wrappers preserve
+`inputImages` provenance and unknown fields.
+
 ### Updating to protocol 0.163.0
 
-This SDK targets Codex CLI 0.163.x. `ThreadListOptions.ExcludedThreadIDs` and
-`protocol.ThreadListParams.ExcludedThreadIDs` exclude up to 100 thread IDs before
+The 0.163.0 update added `ThreadListOptions.ExcludedThreadIDs` and
+`protocol.ThreadListParams.ExcludedThreadIDs` to exclude up to 100 thread IDs before
 the server applies the page limit. Send the same exclusions on each page; nil
 or empty means no exclusions. Invalid IDs or more than 100 entries are rejected
 by the server.

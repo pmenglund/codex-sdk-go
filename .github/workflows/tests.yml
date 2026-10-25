@@ -23,10 +23,10 @@ jobs:
       matrix:
         include:
           - go-series: "1.26"
-            go-version: "1.26.9"
+            go-version: "1.26.10"
             coverage: true
           - go-series: "1.27"
-            go-version: "1.27.2"
+            go-version: "1.27.3"
             coverage: false
     steps:
       - name: Checkout
@@ -102,8 +102,8 @@ jobs:
 
       - name: Staticcheck
         env:
-          # Staticcheck 0.8.1 cannot decode Go 1.27.2 export-data version 5.
-          GOTOOLCHAIN: go1.26.9
+          # Staticcheck 0.8.1 cannot decode Go 1.27.3 export-data version 5.
+          GOTOOLCHAIN: go1.26.10
         run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
 
       - name: Vulnerability scan
