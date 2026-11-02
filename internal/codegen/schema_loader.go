@@ -8,7 +8,7 @@ type protocolSchemaLoader struct {
 	schemas.Loader
 }
 
-// Load supplies lossless MCP metadata and the native feedback-save path type.
+// Load supplies lossless MCP metadata, native feedback paths, and hook enums.
 func (loader protocolSchemaLoader) Load(uri, parentURI string) (*schemas.Schema, error) {
 	schema, err := loader.Loader.Load(uri, parentURI)
 	if err != nil {
@@ -29,6 +29,13 @@ func (loader protocolSchemaLoader) Load(uri, parentURI string) (*schemas.Schema,
 			// its wire string type instead of exposing an opaque interface{}.
 			pathType := "LegacyAppPathString"
 			path.GoJSONSchemaExtension = &schemas.GoJSONSchemaExtension{Type: &pathType}
+		}
+	}
+	if hook := protocolSchemaObject(schema, "HookRunSummary"); hook != nil {
+		if source := hook.Properties["source"]; source != nil {
+			// Sanitization drops the allOf reference beside the default value.
+			sourceType := "HookSource"
+			source.GoJSONSchemaExtension = &schemas.GoJSONSchemaExtension{Type: &sourceType}
 		}
 	}
 	return schema, nil

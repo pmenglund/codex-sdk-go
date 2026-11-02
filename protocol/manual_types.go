@@ -6,6 +6,17 @@ import (
 	"fmt"
 )
 
+// OtelExporter preserves the mixed string/object OTEL exporter configuration.
+// Stable values are "none", "statsig", or an object keyed by "otlp-http" or
+// "otlp-grpc". Raw JSON retains future exporter shapes and exact numbers.
+type OtelExporter = json.RawMessage
+
+// ReviewDeliveryDetached retains the former detached review wire value.
+//
+// Deprecated: Codex 0.166.x accepts only inline reviews. Start a separate thread
+// and pass its ID to review/start instead.
+const ReviewDeliveryDetached ReviewDelivery = "detached"
+
 // ReviewDecisionKind identifies a legacy approval-decision variant.
 type ReviewDecisionKind string
 
