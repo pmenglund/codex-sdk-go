@@ -20,9 +20,9 @@ Workflow: `WORKFLOW.md`. Project: codex-sdk. Issue: COLIN-229, https://linear.ap
 - [x] (2026-11-02 17:38 UTC) Provisional compatibility suites, native Go 1.27.3 vet/unit/race/vulnerability checks, all five credential-free official-CLI race groups, metadata and release-policy fixtures pass. Reviewed the complete provisional generated diff. Source confirmation remains mandatory.
 - [x] (2026-11-02 17:47 UTC) Final authoritative updater exited 0 with two identical source generations and every required check passing. Native Go 1.27.3 and all five credential-free official-CLI race groups also pass.
 - [x] (2026-11-02 17:49 UTC) QA, architecture and security reviews returned no actionable findings. QA/architecture independently reran affected tests successfully. Confirmed unchanged origin/main and available v0.166.0 before named-path staging.
-- [ ] Commit named reviewed paths, push, open protected PR, pass required checks, and merge exact reviewed head.
-- [ ] Observe automatic Release success and independently prove annotated v0.166.0 resolves to its exact gated main commit.
-- [ ] Finalize this plan and COLIN-229; publish any final evidence through a protected documentation-only PR.
+- [x] (2026-11-02 17:53 UTC) Committed 2bca0aa1093919ac768464dcee7d0ea9194fed7b, pushed and opened PR #23. Go 1.26, Go 1.27 and Coverage report passed; protected merge created 32921f875fb50fd69ef92c34d0f5e4ac8499bd67. Deleted the remote feature branch and fast-forwarded clean main. Automatic push-triggered Release 41495298682 is running for the exact merge.
+- [x] (2026-11-02 17:56 UTC) Automatic Release 41495298682 passed validation, both Quality toolchains, coverage, trusted E2E and publication. GitHub API and independent git ls-remote confirm annotated v0.166.0 object f70da8b5f8c5216a93fafda7fa99075ffd599e27 peels to exact gated merge 32921f875fb50fd69ef92c34d0f5e4ac8499bd67.
+- [x] (2026-11-02 17:57 UTC) Finalized release evidence and COLIN-229 Done; prepared this protected documentation-only closeout without changing release inputs.
 
 ## Surprises & Discoveries
 
@@ -58,7 +58,11 @@ Decision (2026-11-02): The authoritative source run confirmed both exact invento
 
 ## Outcomes & Retrospective
 
-Implementation, local validation and independent QA/architecture/security review are complete. Stable source and official CLI exports agree on every reviewed union entry, the original opaque inventory remains unchanged, and the authoritative updater passes fully. Native Go 1.27.3, production schema coverage, real-CLI mock-provider tests, and release-policy fixtures pass. No actionable review findings remain. Protected PR merge and automatic publication remain pending; no release has been created.
+Completed and published SDK v0.166.0 from stable Codex 0.166.0. Callers can access new process, usage, hook, account, provider-error and managed-configuration data. Existing raw item wrappers retain lifecycle timestamps and image generation IDs. OTEL exporter JSON remains lossless, the hook source enum remains typed, and the retired detached-review constant remains available with deprecation guidance. The README documents the intentional hook notification source change and server review migration.
+
+Source-built and official schemas agree on every reviewed union entry; the opaque inventory is unchanged. The complete authoritative local gate, native second-toolchain checks, production schema coverage, five credential-free official-CLI race groups, independent QA/architecture/security reviews, required PR checks, and automatic Release validation/Quality/E2E/publication succeeded. No actionable review findings remain. PR #23 merged at 32921f875fb50fd69ef92c34d0f5e4ac8499bd67; the annotated tag independently resolves to that exact gated commit. COLIN-229 is Done. This documentation-only closeout records the finished release.
+
+The reusable lessons are to use upstream's pinned Rust and Git CLI fetching when the default submodule transport fails, compare actual canonical inventories before approving digests, preserve mixed unions as deliberate lossless JSON, and annotate only intentional deprecated-API compatibility fixtures. No unresolved compatibility or release work remains.
 
 ## Context and Orientation
 
@@ -82,9 +86,9 @@ Milestone 4 rechecks concurrent edits and the full final diff, stages reviewed f
 
 Run from /Users/pme/src/pmenglund/codex-sdk-go. Never source or print .envrc. Before each allow-dirty run, classify every dirty path as COLIN-229 and stop if unrelated edits appear.
 
-    env -u CODEX_REPO_REF CODEX_REPO_ROOT=/Users/pme/src/openai/codex GOTOOLCHAIN=go1.26.10 CARGO_TARGET_DIR=/private/tmp/codex-01640-cargo .codex/skills/update-codex-protocol/scripts/update_codex_protocol.sh --allow-dirty
+    env -u CODEX_REPO_REF PATH=/private/tmp/codex-01660-review/rust-toolchain/bin:$PATH CODEX_REPO_ROOT=/Users/pme/src/openai/codex GOTOOLCHAIN=go1.26.10 CARGO_TARGET_DIR=/private/tmp/codex-01640-cargo CARGO_NET_GIT_FETCH_WITH_CLI=true .codex/skills/update-codex-protocol/scripts/update_codex_protocol.sh --allow-dirty
 
-Reuse the existing Cargo target cache to avoid unnecessary compilation; it is build output, not a source override. If a temporary Rust installation is necessary prepend its bin directory to PATH. On inventory failure rerun with CODEX_PRINT_UNION_INVENTORY=1 and CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY=1. Review full sorted hashes and JSON before updating approvedUnionInventorySHA256 or approvedOpaqueInterfaceInventorySHA256.
+Reuse the existing Cargo target cache to avoid unnecessary compilation; it is build output, not a source override. The validated command uses the checksum-verified temporary Rust 1.95.0 installation and Git CLI fetching. On inventory failure rerun with CODEX_PRINT_UNION_INVENTORY=1 and CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY=1. Review full sorted hashes and JSON before updating approvedUnionInventorySHA256 or approvedOpaqueInterfaceInventorySHA256.
 
     GOTOOLCHAIN=go1.26.10 go test ./internal/codegen ./protocol ./rpc .
     CODEX_SCHEMA_TEST_DIR=/private/tmp/codex-01660-review/stable GOTOOLCHAIN=go1.26.10 go test ./internal/codegen
@@ -104,9 +108,13 @@ The updater exports from a temporary detached worktree and never publishes. Repe
 
 If no generated or handwritten change is needed, remove only task-owned planning changes and unpublished local branch, returning to clean main without a PR/release. If a new stable tag appears during work, record the change before deciding scope; never mix source versions. For a failed Release, retain the unpublished SDK version; manual retry names the exact failed candidate or exact reviewed corrective main merge and reruns all release gates. If permissions or required review block progress, report the exact recovery action.
 
+This update is complete. Preserve v0.166.0 permanently. Any later correction must use a higher immutable SDK version and the protected release workflow. Rechecking the completed run and tag objects is read-only. Publish this plan-only evidence closeout through a protected PR without SDK or CLI metadata changes.
+
 ## Artifacts and Notes
 
 Source release: https://github.com/openai/codex/releases/tag/rust-v0.166.0, published 2026-10-29. Initial protected main base: 38c43efe8465c8ae0b2cd06bea565ec8cf38a8b0. GitHub main requires strict Go 1.26, Go 1.27 and Coverage report checks with admin enforcement and zero mandatory approving reviewers. Force pushes and deletion are disabled. e2e/release allow protected branches only and have no required reviewers. Active v* tag rules forbid deletion/non-fast-forward updates without bypass actors.
+
+Publication evidence: https://github.com/pmenglund/codex-sdk-go/pull/23; successful automatic push-triggered https://github.com/pmenglund/codex-sdk-go/actions/runs/41495298682; reviewed head 2bca0aa1093919ac768464dcee7d0ea9194fed7b; gated main merge 32921f875fb50fd69ef92c34d0f5e4ac8499bd67; annotated v0.166.0 object f70da8b5f8c5216a93fafda7fa99075ffd599e27, peeled to that exact merge. Both release environments remain protected-branches-only without required reviewers. Immutable tag rules remain active without bypass actors. The upstream checkout remains clean on its original branch. This documentation-only closeout changes only the plan and does not alter release inputs.
 
 ## Interfaces and Dependencies
 
@@ -125,3 +133,7 @@ Revision note: Authoritative source generation matched twice and exactly matched
 Revision note: Final authoritative updater exited 0 with deterministic generation and all required checks passing. Marked implementation/local validation complete and prepared independent reviews before staging.
 
 Revision note: All three independent reviews returned no actionable findings; recorded their scope and independent affected-test runs. Reconfirmed unchanged remote main, available release tag, clean diff hygiene and the exact task-owned paths. Corrected the final-gate timestamp from an estimate to observed UTC time.
+
+Revision note: PR #23 passed all required checks and merged the exact reviewed head through protection. Recorded its merge and automatic Release URL, deleted the remote update branch, and prepared this documentation-only closeout. Publication remains pending.
+
+Revision note: Automatic Release 41495298682 passed every job and published v0.166.0. Independently verified the annotated object and exact gated commit, confirmed unchanged release protections and clean upstream source, completed Linear and finalized outcomes. The preceding running-state note is historical. This plan-only closeout records finished work without changing its release inputs.
