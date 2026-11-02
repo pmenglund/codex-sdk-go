@@ -29,7 +29,7 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "e648ec95284956a8bff9f105b8f9beed1d701f3e98766b1ebee682f03aacd4d9"
+	approvedUnionInventorySHA256 = "c06fc3bf26e02becb5ca915a4363b72ba7957f9bbc1b496470c0f185b355733d"
 )
 
 var approvedOpaqueInterfaceInventorySHA256 = "aa9797066f9ef641746535a494de20b16e172ee23352cb1dcd8d1bf398e4a743"
@@ -1779,6 +1779,7 @@ func clientMethodName(method rpcMethod) string {
 
 func manualProtocolTypes() map[string]struct{} {
 	return map[string]struct{}{
+		"OtelExporter":                                     {},
 		"CodexErrorInfo":                                   {},
 		"ThreadAttachment":                                 {},
 		"ThreadAttachmentAddParams":                        {},

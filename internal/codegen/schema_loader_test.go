@@ -72,3 +72,32 @@ func TestFeedbackSavePathUsesNativePathString(t *testing.T) {
 		t.Fatalf("feedback path lost its wire type:\n%s", source)
 	}
 }
+
+func TestHookRunSourceKeepsItsEnum(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "HookRunSummary.json")
+	if err := os.WriteFile(path, []byte(`{
+		"title":"HookRunSummary","type":"object",
+		"properties":{"source":{"allOf":[{"$ref":"#/definitions/HookSource"}],"default":"unknown"}},
+		"required":["source"],"definitions":{"HookSource":{"type":"string","enum":["unknown","user"]}}
+	}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	gen, err := generator.New(generator.Config{
+		DefaultPackageName: "protocol", DefaultOutputName: "types.go", OnlyModels: true,
+		Loader: protocolSchemaLoader{schemas.NewDefaultCacheLoader(nil, nil)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := safeDoFile(gen, path); err != nil {
+		t.Fatal(err)
+	}
+	sources, err := gen.Sources()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if source := string(sources["types.go"]); !strings.Contains(source, "Source HookSource") {
+		t.Fatalf("hook source lost its enum:\n%s", source)
+	}
+}

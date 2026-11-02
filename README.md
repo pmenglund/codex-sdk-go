@@ -294,9 +294,34 @@ before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
 
+### Updating to protocol 0.166.0
+
+This SDK targets Codex CLI 0.166.x. Thread-item raw wrappers preserve optional
+`startedAtMs`/`completedAtMs` lifecycle timestamps and image `generationId`.
+Process-exit notifications expose optional `OutputDrainTimedOut`, and thread
+usage exposes optional `NativeUsageUsdMicros`, preserving an explicit zero.
+
+Hook listing accepts `ThreadID` to inspect a loaded thread's environment hooks;
+omit `Cwds` in that mode. Hook metadata retains `environmentId`. Hook run
+notifications now have generated structs with a typed `HookRunSummary`, including
+native `SourcePath` strings. Code assigning arbitrary values to the former
+`HookStartedNotification` or `HookCompletedNotification` interfaces must use the
+new structs. Existing handler signatures are unchanged.
+
+Managed requirements include OTEL settings and network `ReviewDomains`. The
+mixed string/object `OtelExporter` is `json.RawMessage`; other OTEL fields remain
+typed. Exporter header values are redacted by the server. Account payloads
+recognize GCP and retain ChatGPT `workspaceName`; `ModelProviderError` preserves
+structured provider errors and unknown future variants. Additional context may
+include an optional `Name`.
+
+`review/start` now accepts inline delivery only. To review on another thread,
+start that thread first and pass its ID. `ReviewDeliveryDetached` remains as a
+deprecated source compatibility constant; Codex 0.166.x rejects its wire value.
+
 ### Updating to protocol 0.164.0
 
-This SDK targets Codex CLI 0.164.x. `rpc.Client.FeedbackSave` saves a feedback
+The 0.164.0 update added `rpc.Client.FeedbackSave`, which saves a feedback
 ZIP to a previously unused absolute path on the app-server host and returns
 that path. The caller owns the archive, including after a disconnected request.
 
