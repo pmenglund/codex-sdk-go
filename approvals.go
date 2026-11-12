@@ -8,17 +8,28 @@ import (
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
 
-// AutoApproveHandler accepts every approval request it can. Use it only in a
-// trusted environment. Logger controls redacted approval logging. Command
+// AutoApproveHandler accepts approval requests except humanCommand checkpoints,
+// which require a custom handler that obtains a fresh human decision. Use it only
+// in a trusted environment. Logger controls redacted approval logging. Command
 // bodies, paths, working directories, and permission payloads are never logged.
 // When Logger is nil, logs are discarded.
 type AutoApproveHandler struct {
 	Logger *slog.Logger
 }
 
-// ItemCommandExecutionRequestApproval approves command execution requests.
+// ItemCommandExecutionRequestApproval approves command execution requests and
+// declines humanCommand checkpoints that require a fresh human decision.
 func (h AutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	logger := resolveLogger(h.Logger)
+	if params.Kind == protocol.CommandExecutionApprovalKindHumanCommand {
+		logger.Info(
+			"codex auto-approve handler declining command requiring human approval",
+			"thread_id", params.ThreadID,
+			"turn_id", params.TurnID,
+			"item_id", params.ItemID,
+		)
+		return &protocol.CommandExecutionRequestApprovalResponse{Decision: protocol.MustCommandExecutionApprovalDecision("decline")}, nil
+	}
 	logger.Info(
 		"codex auto-approving command execution",
 		"thread_id", params.ThreadID,
@@ -254,7 +265,8 @@ func NewUnsafeLoggingAutoApproveHandler(logger *slog.Logger) UnsafeLoggingAutoAp
 	return UnsafeLoggingAutoApproveHandler{AutoApproveHandler: AutoApproveHandler{Logger: logger}}
 }
 
-// ItemCommandExecutionRequestApproval accepts command execution and logs the command and directory.
+// ItemCommandExecutionRequestApproval logs the command and directory, approves
+// command execution requests, and declines humanCommand checkpoints.
 func (h UnsafeLoggingAutoApproveHandler) ItemCommandExecutionRequestApproval(ctx context.Context, params protocol.CommandExecutionRequestApprovalParams) (*protocol.CommandExecutionRequestApprovalResponse, error) {
 	resolveLogger(h.Logger).Info("codex auto-approval sensitive details", "request_kind", "command_execution", "command", optionalString(params.Command), "cwd", optionalString(params.Cwd))
 	return h.AutoApproveHandler.ItemCommandExecutionRequestApproval(ctx, params)

@@ -65,6 +65,64 @@ func TestDiscriminatedUnionNestedRequiredAlternatives(t *testing.T) {
 const testCodexCommit = "0123456789abcdef0123456789abcdef01234567"
 const testCodexVersion = "1.2.3"
 
+func TestStringEnumUnionKeepsApprovalKindTyped(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ApprovalKind.json")
+	if err := os.WriteFile(path, []byte(`{"type":"object","properties":{"kind":{"$ref":"#/definitions/CommandExecutionApprovalKind"},"stream":{"$ref":"#/definitions/ProcessOutputStream"}},"definitions":{"CommandExecutionApprovalKind":{"oneOf":[{"type":"string","enum":["command","writeStdin"]},{"type":"string","enum":["humanCommand"],"description":"Requires a fresh human decision."}]},"ProcessOutputStream":{"oneOf":[{"type":"string","enum":["stdout","stderr"]}]}}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	gen, err := generator.New(generator.Config{DefaultPackageName: "protocol", DefaultOutputName: "types_gen.go", OnlyModels: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := safeDoFile(gen, path); err != nil {
+		t.Fatal(err)
+	}
+	sources, err := gen.Sources()
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := string(sources["types_gen.go"])
+	for _, declaration := range []string{
+		"type CommandExecutionApprovalKind string",
+		`CommandExecutionApprovalKindCommand CommandExecutionApprovalKind = "command"`,
+		`CommandExecutionApprovalKindWriteStdin CommandExecutionApprovalKind = "writeStdin"`,
+		`CommandExecutionApprovalKindHumanCommand CommandExecutionApprovalKind = "humanCommand"`,
+	} {
+		if !strings.Contains(source, declaration) {
+			t.Fatalf("missing typed enum declaration %q:\n%s", declaration, source)
+		}
+	}
+	if !strings.Contains(source, "type ProcessOutputStream interface{}") {
+		t.Fatalf("unrelated opaque type changed:\n%s", source)
+	}
+}
+
+func TestStringEnumUnionDoesNotWidenConstraints(t *testing.T) {
+	for _, payload := range []string{
+		`{"oneOf":[{"type":"string","enum":["shared"]},{"type":"string","enum":["shared","other"]}]}`,
+		`{"oneOf":[{"type":"string","enum":["value"],"minLength":10}]}`,
+		`{"oneOf":[{"type":"string","enum":["value"]},{"type":"null"}]}`,
+		`{"enum":["restricted"],"oneOf":[{"type":"string","enum":["value"]}]}`,
+	} {
+		var node map[string]any
+		if err := json.Unmarshal([]byte(payload), &node); err != nil {
+			t.Fatal(err)
+		}
+		collapseStringEnumOneOf(node)
+		encoded, err := json.Marshal(node)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var original map[string]any
+		if err := json.Unmarshal([]byte(payload), &original); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(original, node) {
+			t.Fatalf("unsupported enum constraints changed: %s -> %s", payload, encoded)
+		}
+	}
+}
+
 func TestNullableRPCParamsPreserveLegacyCall(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ClientRequest.json")
 	if err := os.WriteFile(path, []byte(`{"oneOf":[{"properties":{"method":{"enum":["account/usage/read"]},"params":{"anyOf":[{"$ref":"#/definitions/GetAccountTokenUsageParams"},{"type":"null"}]}}}]}`), 0o600); err != nil {
