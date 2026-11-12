@@ -11,6 +11,69 @@ import (
 	"github.com/pmenglund/codex-sdk-go/protocol"
 )
 
+func TestAutomaticCommandApprovalKinds(t *testing.T) {
+	for _, variant := range []struct {
+		name string
+		make func(*slog.Logger) ApprovalCallbackHandler
+	}{
+		{"redacted", func(logger *slog.Logger) ApprovalCallbackHandler { return AutoApproveHandler{Logger: logger} }},
+		{"unsafe logging", func(logger *slog.Logger) ApprovalCallbackHandler { return NewUnsafeLoggingAutoApproveHandler(logger) }},
+	} {
+		for _, request := range []struct {
+			name string
+			kind protocol.CommandExecutionApprovalKind
+			want string
+		}{
+			{"human command", protocol.CommandExecutionApprovalKindHumanCommand, `{"decision":"decline"}`},
+			{"command", protocol.CommandExecutionApprovalKindCommand, `{"decision":"accept"}`},
+			{"stdin", protocol.CommandExecutionApprovalKindWriteStdin, `{"decision":"accept"}`},
+			{"unspecified", "", `{"decision":"accept"}`},
+		} {
+			t.Run(variant.name+"/"+request.name, func(t *testing.T) {
+				var logs bytes.Buffer
+				handler := variant.make(slog.New(slog.NewTextHandler(&logs, nil)))
+				response, err := AutoApproveCallbacks(handler).ApproveCommandExecution(context.Background(), protocol.CommandExecutionRequestApprovalParams{
+					Kind: request.kind, ThreadID: "thread", TurnID: "turn", ItemID: "item",
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				data, err := json.Marshal(response)
+				if err != nil || string(data) != request.want {
+					t.Fatalf("approval=%s err=%v, want %s", data, err, request.want)
+				}
+				if request.name == "human command" && strings.Contains(logs.String(), "auto-approving") {
+					t.Fatalf("human command refusal logged as approval: %s", logs.String())
+				}
+			})
+		}
+	}
+}
+
+func TestAutoApproveHandlerRedactsHumanCommandRefusal(t *testing.T) {
+	const marker = "HUMAN-COMMAND-SENSITIVE-PAYLOAD"
+	var logs bytes.Buffer
+	handler := AutoApproveHandler{Logger: slog.New(slog.NewTextHandler(&logs, nil))}
+	command, cwd, reason := "echo "+marker, "/tmp/"+marker, "reason "+marker
+	response, err := handler.ItemCommandExecutionRequestApproval(context.Background(), protocol.CommandExecutionRequestApprovalParams{
+		Kind: protocol.CommandExecutionApprovalKindHumanCommand, ThreadID: "thread", TurnID: "turn", ItemID: "item",
+		Command: &command, Cwd: &cwd, Reason: &reason,
+		AdditionalPermissions: map[string]any{"path": cwd}, ProposedExecpolicyAmendment: []string{command},
+	})
+	if err != nil || response == nil {
+		t.Fatalf("human command refusal=%#v err=%v", response, err)
+	}
+	if got := string(response.Decision.RawJSON()); got != `"decline"` {
+		t.Fatalf("human command decision=%s, want one-time decline", got)
+	}
+	if logs.Len() == 0 {
+		t.Fatal("human command refusal was not logged")
+	}
+	if strings.Contains(logs.String(), marker) {
+		t.Fatalf("human command refusal leaked sensitive payload: %s", logs.String())
+	}
+}
+
 func TestUnsafeApprovalLoggingAndDecisions(t *testing.T) {
 	const marker = "explicit-sensitive-payload"
 	ctx := context.Background()

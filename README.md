@@ -9,7 +9,7 @@ This SDK speaks JSON-RPC to the `codex app-server` process. By default it spawns
 
 ## Requirements
 
-- Go 1.26.10 or newer (use 1.27.3 or newer on the Go 1.27 branch)
+- Go 1.26.11 or newer (use 1.27.4 or newer on the Go 1.27 branch)
 - `codex` available on your `PATH`
 
 ## Install
@@ -294,9 +294,32 @@ before the process starts. Set `CompatibilityPolicy: codex.Warn` only after
 validating compatibility (and provide a logger to see the warning), or
 `codex.Ignore` to skip the probe. Custom transports are never probed.
 
+### Updating to protocol 0.167.2
+
+This SDK targets Codex CLI 0.167.x. `protocol.UserInput` accepts audio with
+either `url` or an uploaded `fileId`; `protocol.ContentItem` uses `audio_url`
+or `file_id`. The raw-preserving wrappers retain both forms and unknown fields.
+Existing `codex.AudioInput` and `codex.LocalAudioInput` constructors keep their
+current wire format. Use the low-level protocol API for uploaded audio.
+
+`thread/section/changed` is a typed notification. Its `sectionId` is a string
+when a thread moves into a section and null when it leaves. Managed OTEL
+requirements expose `LogSSEDeltas` as `log_sse_deltas`, including explicit false.
+
+`CommandExecutionApprovalKindHumanCommand` requires a fresh human decision.
+Both automatic approval handlers decline these requests. Low-level clients
+opting into `InitializeCapabilities.RequiredHumanApproval` must also enable
+`ExperimentalApi` and provide a custom callback that consults a person and
+returns a one-time `accept`, `decline`, or `cancel`. The high-level client does
+not advertise this capability. The experimental `thread/guardianReview` RPC
+is outside this stable protocol export.
+
+The minimum Go patch versions are now 1.26.11 and 1.27.4 to include the
+standard-library security fix for [GO-2026-6859](https://pkg.go.dev/vuln/GO-2026-6859).
+
 ### Updating to protocol 0.166.0
 
-This SDK targets Codex CLI 0.166.x. Thread-item raw wrappers preserve optional
+The 0.166.0 update made thread-item raw wrappers preserve optional
 `startedAtMs`/`completedAtMs` lifecycle timestamps and image `generationId`.
 Process-exit notifications expose optional `OutputDrainTimedOut`, and thread
 usage exposes optional `NativeUsageUsdMicros`, preserving an explicit zero.

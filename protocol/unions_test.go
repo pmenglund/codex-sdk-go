@@ -315,8 +315,8 @@ func TestGeneratedUnionRejectsKnownVariantMissingRequiredField(t *testing.T) {
 	if _, err := NewScheduledTaskSchedule(map[string]any{"type": "weekly", "time": "09:00"}); err == nil || !strings.Contains(err.Error(), "days") {
 		t.Fatalf("expected missing weekly days validation, got %v", err)
 	}
-	if _, err := NewContentItem(map[string]any{"type": "input_audio"}); err == nil || !strings.Contains(err.Error(), "audio_url") {
-		t.Fatalf("expected missing audio_url validation, got %v", err)
+	if _, err := NewContentItem(map[string]any{"type": "input_audio"}); err == nil || !strings.Contains(err.Error(), "required alternative") {
+		t.Fatalf("expected missing audio reference validation, got %v", err)
 	}
 }
 

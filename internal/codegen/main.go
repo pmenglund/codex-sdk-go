@@ -29,7 +29,7 @@ const (
 	codexRepoRootEnv             = "CODEX_REPO_ROOT"
 	codexRepoRefEnv              = "CODEX_REPO_REF"
 	opaqueInterfaceInventoryEnv  = "CODEX_PRINT_OPAQUE_INTERFACE_INVENTORY"
-	approvedUnionInventorySHA256 = "c06fc3bf26e02becb5ca915a4363b72ba7957f9bbc1b496470c0f185b355733d"
+	approvedUnionInventorySHA256 = "60f77fa7958aae5e9426404d2d9c0ff93dc66cf3a4b4f54eeee7dbb1c06d8826"
 )
 
 var approvedOpaqueInterfaceInventorySHA256 = "aa9797066f9ef641746535a494de20b16e172ee23352cb1dcd8d1bf398e4a743"
@@ -2210,6 +2210,11 @@ func sanitizeSchemaFile(path string) (string, func(), error) {
 		return "", nil, err
 	}
 	preserveRemovedProtocolFields(node)
+	if root, ok := node.(map[string]any); ok {
+		if kind := namedSchemaObjects(root)["CommandExecutionApprovalKind"]; kind != nil {
+			collapseStringEnumOneOf(kind)
+		}
+	}
 	stripSubschemas(node)
 	out, err := json.Marshal(node)
 	if err != nil {
@@ -2295,6 +2300,47 @@ func stripSubschemas(node any) {
 			stripSubschemas(child)
 		}
 	}
+}
+
+// collapseStringEnumOneOf preserves scalar enums whose variants carry descriptions.
+// Only disjoint string enums can replace oneOf without changing which values match.
+func collapseStringEnumOneOf(node map[string]any) {
+	options, ok := node["oneOf"].([]any)
+	if !ok || len(options) == 0 || node["enum"] != nil {
+		return
+	}
+	if kind, exists := node["type"]; exists && kind != "string" {
+		return
+	}
+	var values []any
+	seen := make(map[string]bool)
+	for _, option := range options {
+		shape, ok := option.(map[string]any)
+		if !ok || shape["type"] != "string" {
+			return
+		}
+		for key := range shape {
+			switch key {
+			case "type", "enum", "description", "title":
+			default:
+				return
+			}
+		}
+		enum, ok := shape["enum"].([]any)
+		if !ok || len(enum) == 0 {
+			return
+		}
+		for _, value := range enum {
+			text, ok := value.(string)
+			if !ok || seen[text] {
+				return
+			}
+			seen[text] = true
+			values = append(values, text)
+		}
+	}
+	node["type"] = "string"
+	node["enum"] = values
 }
 
 func collapseNullableReference(node map[string]any) {
