@@ -25,15 +25,15 @@ Workflow: `WORKFLOW.md`. Project: codex-sdk. Issue: COLIN-230, https://linear.ap
 - [x] (2026-11-12 00:00 UTC) Updated Go minimum/matrix/docs; native Go 1.27.4 vet/unit/race/vulnerability checks and Go 1.26.11 production-schema/real-CLI checks pass. No vulnerabilities remain.
 - [x] (2026-11-12 00:00 UTC) Final authoritative updater exited 0 on Go 1.26.11: two identical source generations, unchanged 104-entry opaque inventory, formatting, metadata/installer fixtures, vet, all unit/race tests, Staticcheck, govulncheck and diff hygiene pass. Release/version/content-manifest fixtures also pass.
 - [x] (2026-11-12 00:05 UTC) Independent security, QA and architecture reviews found no actionable issues. QA reran all four affected packages; security reran focused approval/enum/dispatch tests; those checks and diff hygiene pass. No review-driven code changes were needed.
-- [ ] Commit reviewed named paths, publish the feature branch and protected PR, and pass required checks.
-- [ ] Merge the exact reviewed head, monitor automatic Release through publication, verify the immutable remote tag, and finish Linear and this plan.
+- [x] (2026-11-12 00:11 UTC) Committed 992d5b5e256e30847a870684c7ebe9bc8bcc0bc6, published PR #26, and passed Go 1.26, Go 1.27, Coverage report and Codecov project/patch checks. Protected merge created 08f64497f42df7291da262070ed0a9862bf2dfdc; deleted the remote update branch and fast-forwarded clean main. Automatic Release 43125199205 is running for that exact merge. Prepared this documentation-only closeout branch without changing release inputs.
+- [x] (2026-11-12 00:13 UTC) Automatic Release 43125199205 passed validation, both Quality toolchains, coverage, trusted E2E and publication. GitHub API and independent git ls-remote prove annotated v0.167.2 object fb80ab94d69f79f1ead806815df8a048468264c0 peels to exact gated merge 08f64497f42df7291da262070ed0a9862bf2dfdc. Immutable tag rules remain active without bypass actors. Completed COLIN-230 and finalized this plan-only evidence closeout without changing release inputs.
 
 ## Surprises & Discoveries
 
 
 Sandboxed gh cannot access the login keychain and reports an invalid token. With normal keychain access, gh authenticates successfully with repo/workflow permissions. SSH authentication fails; public HTTPS fetching works. Use authenticated HTTPS for branch publication without changing the user's remote configuration. The GitHub connector cannot read branch protection, so gh verified the current settings.
 
-Stable source and the official export add audio alternatives, requiredHumanApproval, humanCommand, log_sse_deltas and thread/section/changed. The source's thread/guardianReview RPC is experimental and is absent from the ordinary stable request schema. High-level initialization currently advertises no capabilities. AutoApproveHandler currently accepts every command approval kind, which conflicts with upstream's requirement for a fresh human decision on humanCommand.
+Stable source and the official export add audio alternatives, requiredHumanApproval, humanCommand, log_sse_deltas and thread/section/changed. The source's thread/guardianReview RPC is experimental and is absent from the ordinary stable request schema. High-level initialization advertises no capabilities. At the start of this update, AutoApproveHandler accepted every command approval kind, which conflicted with upstream's new requirement for a fresh human decision on humanCommand.
 
 The first source build finished in 4m51s. Both official old/new exports were checksum verified. The old canonical inventory matches the approved c06fc3bf26e02becb5ca915a4363b72ba7957f9bbc1b496470c0f185b355733d exactly. Reviewed all nine removed and twelve added union nodes: audio parent/alternative nodes and their enclosing request/notification schemas, three versions of the new section notification envelope, and the scalar approval kind union. Dense hashes and structural JSON differences are in union-delta.json and union-review.txt under the temporary directory.
 
@@ -69,7 +69,11 @@ Decision (2026-11-11): The new standard-library advisory supersedes the original
 ## Outcomes & Retrospective
 
 
-Implementation and all local validation are complete. Source and official exports agree exactly; the reviewed enum and automatic approval behavior retain the intended public types and human-decision requirement. The authoritative Go 1.26.11 updater proved deterministic source generation and passed every required check. Native Go 1.27.4 checks, production-schema coverage, release-policy fixtures and credential-free official-CLI race tests pass. Independent security, QA and architecture reviews found no actionable issues. Protected publication remains pending. No release has been published yet.
+Completed and published SDK v0.167.2 for stable Codex 0.167.2. Callers can use inline or uploaded audio references, receive typed section notifications, and access human approval and OTEL SSE-delta settings. The approval kind remains a typed string; both automatic handlers decline human-only checkpoints. Existing opaque aliases and high-level capability negotiation remain compatible. The Go security baseline is now 1.26.11/1.27.4.
+
+Source and official schemas agree byte for byte and on every reviewed union entry. The 104-entry opaque inventory is unchanged. The authoritative deterministic local updater, native second-toolchain checks, production-schema coverage, release-policy fixtures, five credential-free real-CLI race groups, independent security/QA/architecture reviews, protected PR checks and automatic Release validation/Quality/E2E/publication all passed. No actionable review findings remain. PR #26 merged at 08f64497f42df7291da262070ed0a9862bf2dfdc; the immutable annotated tag independently resolves to that exact gated commit. COLIN-230 is Done. This documentation-only closeout records the finished release.
+
+The reusable lessons are to compare source and official exports, constrain new scalar-enum handling to its reviewed named schema, and preserve opaque inventories rather than narrowing unrelated public APIs. A fresh standard-library advisory can invalidate a previously valid compiler pin; update the minimum as well as both CI families so trusted E2E also uses the fix. No implementation or publication work remains.
 
 ## Context and Orientation
 
@@ -120,12 +124,16 @@ The updater exports from temporary detached worktrees and never stages or publis
 
 For a failed Release, retain unpublished SDK 0.167.2 and retry only the exact failed candidate or exact reviewed corrective merge through the authorized workflow. If no generated or handwritten change is needed, remove only this task's unpublished plan/branch and return to clean main. If permissions, required review, unrelated edits or an ambiguous version block handoff, report the exact recovery action. A later correction after publication requires a higher immutable SDK version.
 
+This update is complete. Preserve v0.167.2 permanently. Rechecking the completed run and tag objects is read-only. Publish this plan-only evidence closeout through a protected PR without SDK or CLI metadata changes.
+
 ## Artifacts and Notes
 
 
 Source release: https://github.com/openai/codex/releases/tag/rust-v0.167.2, published 2026-11-11 22:44:46 UTC. Main base: 21a5e539e703e5ad59b7b61ca033b96880956f1d. Live main protection requires strict Go 1.26, Go 1.27 and Coverage report checks with admin enforcement and zero mandatory reviews; force pushes and deletion are disabled. e2e/release permit protected branches only without reviewers. Active v* tag rules forbid deletion and non-fast-forward changes without bypass actors.
 
 Temporary evidence directory: /private/tmp/codex-01672-review. Official aarch64 Darwin CLI archive SHA256: 7511163b7a0152bcf0e1229092bd2545fdccff64fc8d92ad7c6e01f0ca4681df. Rust 1.95.0 aarch64 Darwin archive SHA256: 0382ac0e7acab0daa24710701442e9fd284148b75265bdb2f59e38b60b03ac3c. Dense command logs and schema comparisons stay outside the final repository diff.
+
+Publication evidence: https://github.com/pmenglund/codex-sdk-go/pull/26; reviewed head 992d5b5e256e30847a870684c7ebe9bc8bcc0bc6; main merge 08f64497f42df7291da262070ed0a9862bf2dfdc; successful automatic push-triggered https://github.com/pmenglund/codex-sdk-go/actions/runs/43125199205; annotated v0.167.2 object fb80ab94d69f79f1ead806815df8a048468264c0, peeled to that exact merge. Validation, both Quality toolchains, coverage, trusted E2E and publication succeeded. Immutable v* protection remains active with no bypass actors. The connector's workflow lookup route is unavailable; authenticated gh found the exact-candidate Release run. This documentation-only closeout changes no release inputs.
 
 ## Interfaces and Dependencies
 
@@ -149,3 +157,7 @@ Revision note: Updated Go minimum/CI/doc pins, passed all native Go 1.27.4 check
 Revision note: Final patched-baseline updater exited 0 with deterministic source generation and every required check passing. Marked local implementation/validation complete and prepared independent reviews before any staging.
 
 Revision note: All three independent reviews found no actionable findings; QA and security independently passed focused checks. Reconfirmed unchanged protected-main base, available SDK tag and required branch/environment protections before named-path staging.
+
+Revision note: PR #26 passed required and Codecov checks and merged the exact reviewed head through protection. Recorded the automatic Release URL and prepared the planned documentation-only closeout; publication remains pending.
+
+Revision note: Automatic Release succeeded through publication. Independently verified annotated tag and exact gated commit, reconfirmed immutable protection, completed Linear and finalized outcomes. The preceding running-state revision is historical. This plan-only closeout records the finished release without changing its inputs.
